@@ -16,38 +16,197 @@ class ImageInfo :
         self.rot = None      # None means we don't know yet, 0 means stay at 0
         # Note: use 270 for counter-clockwise rotation, not -90.
 
-class MetaPhoWindow(object):
+class MetaPhoGTKViewer(gtk.DrawingArea):
+    '''A PyGTK image viewer widget for MetaPho.
+    '''
 
-    def quit(self, widget=None, data=None):
-        gtk.main_quit()
+    def __init__(self) :
+        super(MetaPhoGTKViewer, self).__init__()
+        self.connect("expose-event", self.expose_handler)
+        self.gc = None
+        self.pixbuf = None
+        self.imgwidth = None
+        self.imgheight = None
+        self.cur_img = None
+
+    def expose_handler(self, widget, event) :
+        print "Expose"
+
+        if not self.gc :
+            self.gc = widget.window.new_gc()
+            x, y, self.imgwidth, self.imgheight = self.get_allocation()
+            print "viewer is %d x %d" % (self.imgwidth, self.imgheight)
+
+            # Have we had loadImage called, but we weren't ready for it?
+            # Now, theoretically, we are ... so call it again.
+            if self.cur_img and not self.pixbuf :
+                self.loadImage(self.cur_img)
+
+        self.showImage()
+
+    # Mapping from EXIF orientation tag to degrees rotated.
+    # http://sylvana.net/jpegcrop/exif_orientation.html
+    exif_rot_table = [ 0, 0, 180, 180, 270, 270, 90, 90 ]
+    # Note that orientations 2, 4, 5 and 7 also involve a flip.
+    # We're not implementing that right now, because nobody
+    # uses it in practice.
+
+    def loadImage(self, img) :
+        '''Load the image passed in, and show it.
+           img is an ImageInfo object.
+           Return True for success, False for error.
+        '''
+
+        self.cur_img = img
+
+        if not self.imgwidth :
+            print "Can't actually load before drawingArea is exposed"
+            return True
+
+        # Clean up memory from any existing pixbuf.
+        # This still needs to be garbage collected before returning.
+        if self.pixbuf :
+            self.pixbuf = None
+
+        try :
+            newpb = gtk.gdk.pixbuf_new_from_file(img.filename)
+
+            # Do we need to check rotation info for this image?
+            if img.rot == None :
+                # Get the EXIF embedded rotation info.
+                print "Getting orientation for", img.filename,
+                print "got", newpb.get_option('orientation')
+                orient = newpb.get_option('orientation')
+                if orient == None :    # No orientation specified; use 0
+                    orient = 0
+                else :                 # convert to int array index
+                    orient = int(orient) - 1
+                img.rot = self.exif_rot_table[orient]
+                print "Rotation is", img.rot,
+                print "exif tag", newpb.get_option('orientation')
+
+            # Scale the image to our display image size.
+            # We need it to fit in the space available.
+            # If we're not changing aspect ratios, that's easy.
+            oldw = newpb.get_width()
+            oldh = newpb.get_height()
+            print "Orig size:", oldw, oldh
+            if img.rot in [ 0, 180] :
+                if oldw > oldh :     # horizontal format photo
+                    neww = self.imgwidth
+                    newh = oldh * self.imgwidth / oldw
+                else :               # vertical format
+                    newh = self.imgheight
+                    neww = oldw * self.imgheight / oldh
+
+            # If the image needs to be rotated 90 or 270 degrees,
+            # scale so that the scaled width will fit in the image
+            # height area -- even though it's still width because we
+            # haven't rotated yet.
+            else :     # We'll be changing aspect ratios
+                print "......... Changing aspect ratio!"
+                if oldw > oldh :     # horizontal format, will be vertical
+                    neww = self.imgheight
+                    newh = oldh * self.imgheight / oldw
+                else :               # vertical format, will be horiz
+                    neww = self.imgwidth
+                    newh = oldh * self.imgwidth / oldw
+
+            # Finally, do the scale:
+            newpb = newpb.scale_simple(neww, newh,
+                                             gtk.gdk.INTERP_BILINEAR)
+
+            # Rotate the image if needed
+            if img.rot != 0 :
+                print "Rotating by", img.rot
+                newpb = newpb.rotate_simple(img.rot)
+
+            # newpb = newpb.apply_embedded_orientation()
+
+            self.pixbuf = newpb
+
+            print "Loaded", img.filename
+            self.showImage()
+            loaded = True
+
+        except glib.GError :
+            print "Oops, couldn't load", img.filename
+            self.pixbuf = None
+            loaded = False
+
+        # garbage collect the old pixbuf, if any, and the one we just read in:
+        newpb = None
+        gc.collect()
+
+        return loaded
+
+    def showImage(self) :
+        if not self.gc :
+            print "Not ready yet"
+            return
+
+        if not self.pixbuf :
+            print "No image loaded yet, can't show"
+            return
+
+        # if not self.pixbuf :
+        #     self.loadImage()
+        #     if not self.pixbuf :
+        #         return
+
+        # Clear the drawingarea first
+        self.window.draw_rectangle(self.gc, True, 0, 0,
+                                                self.imgwidth, self.imgheight)
+
+        x = (self.imgwidth - self.pixbuf.get_width()) / 2
+        y = (self.imgheight - self.pixbuf.get_height()) / 2
+        self.window.draw_pixbuf(self.gc, self.pixbuf, 0, 0, x, y)
+
+    def rotate(self, rot) :
+        self.cur_img.rot = (self.cur_img.rot + rot + 360) % 360
+
+        # XXX we don't always need to reload: can make this more efficient.
+        self.loadImage(self.cur_img)
+
+class MetaPhoWindow(object):
+    '''The main controller window for MetaPho.
+       This holds any child widgets, like the image viewer and tags window,
+       and manages key events and other user commands.
+    '''
 
     def __init__(self, file_list):
+        print "initializing"
         self.imagelist = []
         for filename in file_list :
             self.imagelist.append(ImageInfo(filename))
         self.imgno = 0
-        self.gc = None
-        self.pixbuf = None
 
+        # Window size.
         # Eventually, calculate these somehow or read from prefs
         self.width = 1024
-        self.height = 600
+        self.height = 768
+
         # The size of the image viewing area:
         self.imgwidth = 640
         self.imgheight = 600
 
         self.win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.win.set_border_width(10)
+
         self.win.connect("delete_event", self.quit)
         self.win.connect("destroy", self.quit)
-        self.win.set_border_width(10)
+
+        # Showing the first image is a problem. We need to call
+        # firstImage() at some point, but we can't load any images
+        # until after the viewer has been exposed at least once.
+        # So even though blah blah XXX
+        # self.win.connect_after("expose", self.realize_handler)
 
         main_hbox = gtk.HBox(spacing=8)
 
-        self.drawing_area = gtk.DrawingArea()
-        self.drawing_area.connect("expose-event", self.expose_handler)
-        self.drawing_area.set_size_request(self.imgwidth, self.imgheight)
-        main_hbox.pack_start(self.drawing_area)
-        #self.drawing_area.show()
+        self.viewer = MetaPhoGTKViewer()
+        self.viewer.set_size_request(self.imgwidth, self.imgheight)
+        main_hbox.pack_start(self.viewer)
 
         keywords_vbox = gtk.VBox(spacing=6)
         main_hbox.pack_start(keywords_vbox, expand=True)
@@ -63,180 +222,85 @@ class MetaPhoWindow(object):
         self.win.set_default_size(self.width, self.height)
         self.win.add(main_hbox)
 
-        #main_hbox.show()
-
         self.win.connect("key-press-event", self.key_press_event)
         self.win.show_all();
 
-    def expose_handler(self, widget, event) :
-        print "Expose"
+    def realize_handler(self, widget, event) :
+        self.firstImage()
 
-        if not self.gc :
-            self.gc = widget.window.new_gc()
+    def quit(self, widget=None, data=None):
+        gtk.main_quit()
 
-        self.showImage()
+    def firstImage(self) :
+        self.imgno = -1
+        self.nextImage()
+
+    def lastImage(self) :
+        self.imgno = len(self.imagelist)
+        self.prevImage()
+
+    def nextImage(self) :
+        '''Advance to the next image, if possible.
+           Tell the viewer to load and show the image.
+        '''
+        loaded = False
+        while self.imgno < len(self.imagelist)-1 and not loaded :
+            self.imgno += 1
+            loaded = self.viewer.loadImage(self.imagelist[self.imgno])
+            if not loaded :
+                print "Ignoring", self.imagelist[self.imgno].filename
+                del(self.imagelist[self.imgno])
+
+        if not loaded :      # couldn't load anything in the list
+            print "Can't go beyond last image"
+
+    def prevImage(self) :
+        loaded = False
+        while self.imgno >= 1 and not loaded :
+            self.imgno -= 1
+            loaded = self.viewer.loadImage(self.imagelist[self.imgno])
+            if not loaded :
+                print "Ignoring", self.imagelist[self.imgno].filename
+                del(self.imagelist[self.imgno])
+
+        if not loaded :      # couldn't load anything in the list
+            print "Can't go before first image"
 
     # Called whenever any key is pressed:
     def key_press_event(self, widget, event) :
-        if event.string == " " :
-            self.nextImage()
-            return True 
         if event.string == "q" :
             self.quit()
             return True
+        if event.string == " " :
+            self.nextImage()
+            return True 
         if event.keyval == gtk.keysyms.BackSpace :
             self.prevImage()
             return True
         if event.keyval == gtk.keysyms.Home :
-            self.imgno = 0
-            self.loadImage()
-            self.showImage()
+            self.firstImage()
             return True
         if event.keyval == gtk.keysyms.End :
-            self.imgno = len(self.imagelist) - 1
-            self.loadImage()
-            self.showImage()
+            self.lastImage()
             return True
         if event.keyval == gtk.keysyms.Right :
-            self.imagelist[self.imgno].rot = \
-                (self.imagelist[self.imgno].rot + 270) % 360
-            self.loadImage()
-            self.showImage()
+            self.viewer.rotate(270)
             return True
         if event.keyval == gtk.keysyms.Left :
-            self.imagelist[self.imgno].rot = \
-                (self.imagelist[self.imgno].rot + 90) % 360
-            self.loadImage()
-            self.showImage()
+            self.viewer.rotate(90)
             return True
         if event.keyval in [ gtk.keysyms.Up, gtk.keysyms.Down ] :
-            self.imagelist[self.imgno].rot = \
-                (self.imagelist[self.imgno].rot + 180) % 360
-            self.loadImage()
-            self.showImage()
+            self.viewer.rotate(180)
             return True
 
+        # A key we didn't understand
         print "Read key:", event.string, "keyval", event.keyval
-
-    # Mapping from EXIF orientation tag to degrees rotated.
-    # http://sylvana.net/jpegcrop/exif_orientation.html
-    exif_rot_table = [ 0, 0, 180, 180, 270, 270, 90, 90 ]
-    # Note that orientations 2, 4, 5 and 7 also involve a flip.
-    # We're not implementing that right now, because nobody
-    # uses it in practice.
-
-    def loadImage(self) :
-        if self.pixbuf :
-            self.pixbuf = None
-
-        while self.imgno < len(self.imagelist) :
-            try :
-                newpb = gtk.gdk.pixbuf_new_from_file( \
-                    self.imagelist[self.imgno].filename )
-
-                # Do we need to check rotation info for this image?
-                if self.imagelist[self.imgno].rot == None :
-                    # Get the EXIF embedded rotation info.
-                    orient = int(newpb.get_option('orientation')) - 1
-                    self.imagelist[self.imgno].rot = self.exif_rot_table[orient]
-                    print "Rotation is", self.imagelist[self.imgno].rot,
-                    print "exif tag", newpb.get_option('orientation')
-
-                # Scale the image to our display image size.
-                # We need it to fit in the space available.
-                # If we're not changing aspect ratios, that's easy.
-                oldw = newpb.get_width()
-                oldh = newpb.get_height()
-                print "Orig size:", oldw, oldh
-                if self.imagelist[self.imgno].rot in [ 0, 180] :
-                    if oldw > oldh :     # horizontal format photo
-                        neww = self.imgwidth
-                        newh = oldh * self.imgwidth / oldw
-                    else :               # vertical format
-                        newh = self.imgheight
-                        neww = oldw * self.imgheight / oldh
-
-                # If the image needs to be rotated 90 or 270 degrees,
-                # scale so that the scaled width will fit in the image
-                # height area -- even though it's still width because we
-                # haven't rotated yet.
-                else :     # We'll be changing aspect ratios
-                    print "......... Changing aspect ratio!"
-                    if oldw > oldh :     # horizontal format, will be vertical
-                        neww = self.imgheight
-                        newh = oldh * self.imgheight / oldw
-                    else :               # vertical format, will be horiz
-                        neww = self.imgwidth
-                        newh = oldh * self.imgwidth / oldw
-
-                # Finally, do the scale:
-                newpb = newpb.scale_simple(neww, newh,
-                                                 gtk.gdk.INTERP_BILINEAR)
-
-                # Rotate the image if needed
-                if self.imagelist[self.imgno].rot != 0 :
-                    print "Rotating by", self.imagelist[self.imgno].rot
-                    newpb = newpb.rotate_simple(self.imagelist[self.imgno].rot)
-
-                # newpb = newpb.apply_embedded_orientation()
-
-                self.pixbuf = newpb
-
-                print "Loaded", self.imagelist[self.imgno].filename
-                break
-            except glib.GError :
-                print "Oops, couldn't load", self.imagelist[self.imgno].filename
-                del(self.imagelist[self.imgno])
-                self.pixbuf = None
-
-        # We're through the loop. Did we find anything that loaded?
-        if not self.pixbuf :
-            print "No files to show"
-
-        # garbage collect the old pixbuf, if any, and the one we just read in:
-        newpb = None
-        gc.collect()
-
-    def nextImage(self) :
-        if len(self.imagelist) <= self.imgno + 1 :
-            print "Can't go beyond last image"
-            return
-        self.imgno += 1
-        self.loadImage()
-        self.showImage()
-
-    def prevImage(self) :
-        if self.imgno < 0 :
-            print "Can't go beyond first image"
-            return
-        self.imgno -= 1
-        self.loadImage()
-        self.showImage()
-
-    def showImage(self) :
-        if not self.gc :
-            print "Not ready yet"
-            return
-
-        if not self.pixbuf :
-            self.loadImage()
-            if not self.pixbuf :
-                return
-
-        # Clear the drawingarea first
-        self.drawing_area.window.draw_rectangle(self.gc, True, 0, 0,
-                                                self.imgwidth, self.imgheight)
-
-        x = (self.imgwidth - self.pixbuf.get_width()) / 2
-        y = (self.imgheight - self.pixbuf.get_height()) / 2
-        self.drawing_area.window.draw_pixbuf(self.gc, self.pixbuf, 0, 0, x, y)
-        #pixmap.draw_pixbuf(None, pixbuf, 0, 0, x, y, -1, -1,
-        #                   gtk.gdk.RGB_DITHER_NONE, 0, 0)
+        return False
 
     def main(self):
         gtk.main()
 
-
 if __name__ == '__main__':
     metapho = MetaPhoWindow(sys.argv[1:])
+    metapho.firstImage()
     metapho.main()
