@@ -7,16 +7,75 @@
 import gtk
 import glib
 import gc
-import sys
+import sys, os
 
-class ImageInfo :
+class MetaPhoImage :
+    '''An image, with additional info such as rotation and tags.
+       Eventually methods like delete() to delete the file from disk
+       will probably also live in this class.
+    '''
+
+    # The list of tags is common to every image in the application,
+    # so tags will be shared.
+    globalTagList = None
+
     def __init__(self, filename) :
         self.filename = filename
         self.flags = 0
         self.rot = None      # None means we don't know yet, 0 means stay at 0
         # Note: use 270 for counter-clockwise rotation, not -90.
 
-class MetaPhoGTKViewer(gtk.DrawingArea):
+    def addTag(self, tag) :
+        '''Add a tag to this image.
+           tag may be a string, which can be a new string or an existing one,
+           or an integer index into the tag list.
+           Return the index of the tag just added, or None if error.
+        '''
+        return None
+
+    def matchTag(self, pattern) :
+        '''Return a list of tags matching the pattern.'''
+        return None
+
+class MetaPhoTagger(object) :
+    '''Manages tags for images.
+    '''
+
+    def __init__(self, imagelist) :
+        '''imagelist: a list of MetaPhoImages'''
+        self.cur_img = None
+
+    def setImage(self, img) :
+        self.cur_img = img
+
+class MetaPhoGTKTagViewer(MetaPhoTagger, gtk.VBox) :
+    '''A PyGTK widget for showing tags.
+    '''
+    def __init__(self) :
+        gtk.VBox.__init__(self)
+
+        self.title = gtk.Label("Tags")
+        self.pack_start(self.title, expand=False)
+        self.title.show()
+
+        entry = gtk.Entry()
+        entry.set_width_chars(35)
+        self.pack_start(entry, expand=False)
+        entry.show()
+
+        entry = gtk.Entry()
+        entry.set_width_chars(20)
+        self.pack_start(entry, expand=False)
+        entry.show()
+
+        self.show()
+
+    def setImage(self, img) :
+        MetaPhoTagger.setImage(self, img)
+
+        self.title.set_text(os.path.basename(img.filename))
+
+class MetaPhoGTKViewer(gtk.DrawingArea) :
     '''A PyGTK image viewer widget for MetaPho.
     '''
 
@@ -53,15 +112,12 @@ class MetaPhoGTKViewer(gtk.DrawingArea):
 
     def loadImage(self, img) :
         '''Load the image passed in, and show it.
-           img is an ImageInfo object.
+           img is a MetaPhoImage object.
            Return True for success, False for error.
         '''
 
+        print "viewer: Trying to load", img.filename
         self.cur_img = img
-
-        if not self.imgwidth :
-            print "Can't actually load before drawingArea is exposed"
-            return True
 
         # Clean up memory from any existing pixbuf.
         # This still needs to be garbage collected before returning.
@@ -70,6 +126,17 @@ class MetaPhoGTKViewer(gtk.DrawingArea):
 
         try :
             newpb = gtk.gdk.pixbuf_new_from_file(img.filename)
+
+            # We can't do any of the rotation until the window appears
+            # so we know our window size.
+            # But we have to load the first pixbuf anyway, because
+            # otherwise we may end up pointing to an image that can't
+            # be loaded. Super annoying! We'll end up reloading the
+            # pixbuf again after the window appears, so this will
+            # slow down the initial window slightly.
+            if not self.imgwidth :
+                print "Can't finish loading before drawingArea is exposed"
+                return True
 
             # Do we need to check rotation info for this image?
             if img.rot == None :
@@ -178,13 +245,13 @@ class MetaPhoWindow(object):
         print "initializing"
         self.imagelist = []
         for filename in file_list :
-            self.imagelist.append(ImageInfo(filename))
+            self.imagelist.append(MetaPhoImage(filename))
         self.imgno = 0
 
         # Window size.
         # Eventually, calculate these somehow or read from prefs
-        self.width = 1024
-        self.height = 768
+        #self.width = 1024
+        #self.height = 768
 
         # The size of the image viewing area:
         self.imgwidth = 640
@@ -208,18 +275,11 @@ class MetaPhoWindow(object):
         self.viewer.set_size_request(self.imgwidth, self.imgheight)
         main_hbox.pack_start(self.viewer)
 
-        keywords_vbox = gtk.VBox(spacing=6)
-        main_hbox.pack_start(keywords_vbox, expand=True)
+        self.tagger = MetaPhoGTKTagViewer()
+        main_hbox.pack_start(self.tagger, expand=True)
 
-        entry = gtk.Entry()
-        entry.set_width_chars(20)
-        keywords_vbox.pack_start(entry, expand=False)
+        #self.win.set_default_size(self.width, self.height)
 
-        entry = gtk.Entry()
-        entry.set_width_chars(20)
-        keywords_vbox.pack_start(entry, expand=False)
-
-        self.win.set_default_size(self.width, self.height)
         self.win.add(main_hbox)
 
         self.win.connect("key-press-event", self.key_press_event)
@@ -251,7 +311,10 @@ class MetaPhoWindow(object):
                 print "Ignoring", self.imagelist[self.imgno].filename
                 del(self.imagelist[self.imgno])
 
-        if not loaded :      # couldn't load anything in the list
+        if loaded :
+            self.tagger.setImage(self.imagelist[self.imgno])
+
+        else :           # couldn't load anything in the list
             print "Can't go beyond last image"
 
     def prevImage(self) :
