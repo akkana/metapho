@@ -30,6 +30,11 @@ class MetaPhoImage :
         if self.rot :
             str += " (rotation %s)" % self.rot
 
+        if self.tags :
+            str += " Tags: " + self.tags.__repr__()
+
+        str += '\n'
+
         return str
 
     # Next two perhaps belong in MetaPhoTagger, not here.
@@ -170,15 +175,7 @@ class MetaPhoGTKTagViewer(MetaPhoTagger, gtk.VBox) :
         self.pack_start(self.title, expand=False)
         self.title.show()
 
-        entry = gtk.Entry()
-        entry.set_width_chars(35)
-        self.pack_start(entry, expand=False)
-        entry.show()
-
-        entry = gtk.Entry()
-        entry.set_width_chars(20)
-        self.pack_start(entry, expand=False)
-        entry.show()
+        self.entries = []
 
         self.show()
 
@@ -186,6 +183,34 @@ class MetaPhoGTKTagViewer(MetaPhoTagger, gtk.VBox) :
         MetaPhoTagger.setImage(self, img)
 
         self.title.set_text(os.path.basename(img.filename))
+
+        for i, tagstr in enumerate(img.tags) :
+            self.set_tag_n(i, tagstr)
+
+        # If there were any showing before, hide them
+        if len(self.entries) > len(img.tags) :
+            for i in range(len(img.tags), len(self.entries)) :
+                self.entries[i].hide()
+
+    def set_tag_n(self, n, tag) :
+        '''Display a tag string in the Nth entry.'''
+        print "set_tag_n", n, tag, MetaPhoTagger.gTagList[tag]
+        # First, create any that aren't there yet:
+        if len(self.entries) < n+2 :
+            print "Making new entries"
+            for i in range(len(self.entries), n+1) :
+                print "new", i
+                entry = gtk.Entry()
+                entry.set_width_chars(35)
+                self.pack_start(entry, expand=False)
+                entry.show()
+                self.entries.append(entry)
+
+        # Then set the string
+        print "Setting entry", n, "of", len(self.entries), \
+            "to", tag, MetaPhoTagger.gTagList[tag]
+        self.entries[n].set_text(MetaPhoTagger.gTagList[tag])
+        self.entries[n].show()
 
 class MetaPhoGTKViewer(gtk.DrawingArea) :
     '''A PyGTK image viewer widget for MetaPho.
@@ -415,6 +440,9 @@ class MetaPhoWindow(object):
                 dirlist.append(dirname)
                 self.tagger.readTags(dirname)
 
+        print "All tags:", MetaPhoTagger.gTagList
+        print "All images:", MetaPhoImage.gImageList
+
     def firstImage(self) :
         self.imgno = -1
         self.nextImage()
@@ -455,7 +483,9 @@ class MetaPhoWindow(object):
                 print "Ignoring", MetaPhoImage.gImageList[self.imgno].filename
                 del(MetaPhoImage.gImageList[self.imgno])
 
-        if not loaded :      # couldn't load anything in the list
+        if loaded :
+            self.tagger.setImage(MetaPhoImage.gImageList[self.imgno])
+        else :          # couldn't load anything in the list
             print "Can't go before first image"
 
     # Called whenever any key is pressed:
