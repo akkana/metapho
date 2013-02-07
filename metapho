@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# metapho: an image categorizer (by keyword) and viewer.
+# metapho: an image tagger and viewer.
 
 # Copyright 2013 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
@@ -102,14 +102,8 @@ tag Denmark: p103050.jpg, p103051.jpg
 
             # Now we know we have tagname, typename or photoname.
             # Get the list of objects after the colon.
-            # Unfortunately this is complicated because it's
-            # space separated, but with possible quoted strings,
-            # e.g. aaa.jpg bbb.jpg "cc cc.jpg" ddd.jpg
-            # Possible answer (for semicolons rather than spaces):
-            # http://stackoverflow.com/questions/2785755/how-to-split-but-ignore-separators-in-quoted-strings-in-python
-            # Better answers:
-            # http://stackoverflow.com/questions/79968/split-a-string-by-spaces-preserving-quoted-substrings-in-python
-            # http://stackoverflow.com/questions/524541/splitting-arguments-preserving-quoted-substrings-in-python
+            # Use shlex to handle quoted and backslashed
+            # filenames with embedded spaces.
             try :
                 objects = shlex.split(line[colon+1:].strip())
             except ValueError:
