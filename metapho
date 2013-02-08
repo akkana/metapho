@@ -4,162 +4,14 @@
 
 # Copyright 2013 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
+import MetaPho
+
 import gtk
 import glib
 import gc
 import sys, os
-import shlex
 
-class MetaPhoImage :
-    '''An image, with additional info such as rotation and tags.
-       Eventually methods like delete() to delete the file from disk
-       will probably also live in this class.
-    '''
-
-    gImageList = []
-
-    def __init__(self, filename) :
-        self.filename = filename
-        self.tags = []
-        self.rot = None      # None means we don't know yet, 0 means stay at 0
-        # Note: use 270 for counter-clockwise rotation, not -90.
-
-    def __repr__(self) :
-        str = "Image %s" % self.filename
-
-        if self.rot :
-            str += " (rotation %s)" % self.rot
-
-        if self.tags :
-            str += " Tags: " + self.tags.__repr__()
-
-        str += '\n'
-
-        return str
-
-    # Next two perhaps belong in MetaPhoTagger, not here.
-    def addTag(self, tag) :
-        '''Add a tag to this image.
-           tag may be a string, which can be a new string or an existing one,
-           or an integer index into the tag list.
-           Return the index of the tag just added, or None if error.
-        '''
-        return None
-
-    def matchTag(self, pattern) :
-        '''Return a list of tags matching the pattern.'''
-        return None
-
-class MetaPhoTagger(object) :
-    '''Manages tags for images.
-    '''
-
-    gTagList = []
-    '''The list of tags is common to every image in the application.
-    '''
-
-    def __init__(self) :
-        '''imagelist: a list of MetaPhoImages'''
-        pass
-
-    def readTags(self, dirname) :
-        '''Read in tags from files named in the given directory,
-           and tag images in the imagelist appropriately.
-           Tags will be appended to MetaPhoTagger.gTagList.
-        '''
-        # Might want to be recursive and use os.walk ...
-        # or maybe go the other way, search for Tags files
-        # *above* the current directory but not below.
-        # For now, only take the given directory.
-        '''off-the-cuff example format:
-tagtype People: Alice, Bill, Charlie, Dennis
-tagtype Places: America, Belgium, Czech Republic, Denmark
-photo p103049.jpg: Alice, Belgium
-photo p103050.jpg: Charlie, Denmark
-photo p103051.jpg: Charlie, Bill, Denmark
-tag Alice: p103049.jpg
-tag Belgium: p103049.jpg
-tag Bill: p103051.jpg
-tag Charlie: p103050.jpg, p103051.jpg
-tag Denmark: p103050.jpg, p103051.jpg
-        '''
-        try :
-            pathname = os.path.join(dirname, "Tags")
-            fp = open(pathname)
-            print "Opened", pathname
-        except IOError :
-            try :
-                pathname = os.path.join(dirname, "Keywords")
-                fp = open(pathname)
-            except IOError :
-                print "No Tags file in", dirname
-                return
-
-        for line in fp :
-            colon = line.find(':')
-            if colon < 0 :
-                continue    # If there's no colon, it's not a legal tag line
-
-            # Now we know we have tagname, typename or photoname.
-            # Get the list of objects after the colon.
-            # Use shlex to handle quoted and backslashed
-            # filenames with embedded spaces.
-            try :
-                objects = shlex.split(line[colon+1:].strip())
-            except ValueError:
-                print pathname, "Couldn't parse:", line
-                continue
-
-            if line.startswith('tag ') :
-                tagname = line[4:colon].strip()
-                print "Tag", tagname, ": objects", objects
-                self.processTag(tagname, objects)
-
-            elif line.startswith('tagtype ') :
-                typename = line[8:colon].strip()
-
-            elif line.startswith('photo ') :
-                photoname = line[6:colon].strip()
-
-            else :
-                # Assume it's a tag: file file file line
-                tagname = line[:colon].strip()
-                print "Keyword", tagname, ": objects", objects
-                self.processTag(tagname, objects)
-
-        fp.close()
-
-    def processTag(self, tagname, filenames) :
-        '''After reading a tag from a tags file, add it to the global
-           tags list if it isn't there already, and add the given filenames
-           to it.
-        '''
-        try :
-            tagindex = MetaPhoTagger.gTagList.index(tagname)
-        except :
-            tagindex = len(MetaPhoTagger.gTagList)
-            MetaPhoTagger.gTagList.append(tagname)
-
-        # Search for images matching the names in filenames
-        # XXX pathname issue here: filenames in tag files generally don't
-        # have absolute pathnames, so we're only matching basenames and
-        # there could be collisions.
-        for img in MetaPhoImage.gImageList :
-            for fil in filenames :
-                if img.filename.endswith(fil) and tagindex not in img.tags :
-                    img.tags.append(tagindex)
-
-    def setImage(self, img) :
-        '''Set the current image to img (a MetaPhoImage).
-           Load the associated tags, and (in derived classes) show them
-           in whatever way is appropriate.
-        '''
-        print "Current", img
-        print "Current tags:", img.tags
-        for tagindex in img.tags :
-            print "  ", MetaPhoTagger.gTagList[tagindex]
-
-class MetaPhoGTKTagViewer(MetaPhoTagger, gtk.VBox) :
+class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.VBox) :
     '''A PyGTK widget for showing tags.
     '''
     def __init__(self) :
@@ -174,7 +26,7 @@ class MetaPhoGTKTagViewer(MetaPhoTagger, gtk.VBox) :
         self.show()
 
     def setImage(self, img) :
-        MetaPhoTagger.setImage(self, img)
+        MetaPho.Tagger.setImage(self, img)
 
         self.title.set_text(os.path.basename(img.filename))
 
@@ -188,7 +40,7 @@ class MetaPhoGTKTagViewer(MetaPhoTagger, gtk.VBox) :
 
     def set_tag_n(self, n, tag) :
         '''Display a tag string in the Nth entry.'''
-        print "set_tag_n", n, tag, MetaPhoTagger.gTagList[tag]
+        print "set_tag_n", n, tag, MetaPho.Tagger.gTagList[tag]
         # First, create any that aren't there yet:
         if len(self.entries) < n+2 :
             print "Making new entries"
@@ -202,8 +54,8 @@ class MetaPhoGTKTagViewer(MetaPhoTagger, gtk.VBox) :
 
         # Then set the string
         print "Setting entry", n, "of", len(self.entries), \
-            "to", tag, MetaPhoTagger.gTagList[tag]
-        self.entries[n].set_text(MetaPhoTagger.gTagList[tag])
+            "to", tag, MetaPho.Tagger.gTagList[tag]
+        self.entries[n].set_text(MetaPho.Tagger.gTagList[tag])
         self.entries[n].show()
 
 class MetaPhoGTKViewer(gtk.DrawingArea) :
@@ -243,7 +95,7 @@ class MetaPhoGTKViewer(gtk.DrawingArea) :
 
     def loadImage(self, img) :
         '''Load the image passed in, and show it.
-           img is a MetaPhoImage object.
+           img is a MetaPho.Image object.
            Return True for success, False for error.
         '''
 
@@ -375,7 +227,7 @@ class MetaPhoWindow(object):
     def __init__(self, file_list):
         print "initializing from", file_list
         for filename in file_list :
-            MetaPhoImage.gImageList.append(MetaPhoImage(filename))
+            MetaPho.Image.gImageList.append(MetaPho.Image(filename))
         self.imgno = 0
 
         # Window size.
@@ -428,21 +280,21 @@ class MetaPhoWindow(object):
            XXX But for now, just take the dirname of the first image.
         '''
         dirlist = []
-        for img in MetaPhoImage.gImageList :
+        for img in MetaPho.Image.gImageList :
             dirname = os.path.dirname(img.filename)
             if dirname not in dirlist :
                 dirlist.append(dirname)
                 self.tagger.readTags(dirname)
 
-        print "All tags:", MetaPhoTagger.gTagList
-        print "All images:", MetaPhoImage.gImageList
+        print "All tags:", MetaPho.Tagger.gTagList
+        print "All images:", MetaPho.Image.gImageList
 
     def firstImage(self) :
         self.imgno = -1
         self.nextImage()
 
     def lastImage(self) :
-        self.imgno = len(MetaPhoImage.gImageList)
+        self.imgno = len(MetaPho.Image.gImageList)
         self.prevImage()
 
     def nextImage(self) :
@@ -450,12 +302,12 @@ class MetaPhoWindow(object):
            Tell the viewer to load and show the image.
         '''
         loaded = False
-        while self.imgno < len(MetaPhoImage.gImageList)-1 and not loaded :
+        while self.imgno < len(MetaPho.Image.gImageList)-1 and not loaded :
             self.imgno += 1
-            loaded = self.viewer.loadImage(MetaPhoImage.gImageList[self.imgno])
+            loaded = self.viewer.loadImage(MetaPho.Image.gImageList[self.imgno])
             if not loaded :
-                print "Ignoring", MetaPhoImage.gImageList[self.imgno].filename
-                del(MetaPhoImage.gImageList[self.imgno])
+                print "Ignoring", MetaPho.Image.gImageList[self.imgno].filename
+                del(MetaPho.Image.gImageList[self.imgno])
                 # We're about to increment imgno, but we actually want it
                 # to stay the same since deleting the nonexistent image
                 # slid the next image into the current position;
@@ -463,7 +315,7 @@ class MetaPhoWindow(object):
                 self.imgno -= 1
 
         if loaded :
-            self.tagger.setImage(MetaPhoImage.gImageList[self.imgno])
+            self.tagger.setImage(MetaPho.Image.gImageList[self.imgno])
 
         else :           # couldn't load anything in the list
             print "No more images"
@@ -472,13 +324,13 @@ class MetaPhoWindow(object):
         loaded = False
         while self.imgno >= 1 and not loaded :
             self.imgno -= 1
-            loaded = self.viewer.loadImage(MetaPhoImage.gImageList[self.imgno])
+            loaded = self.viewer.loadImage(MetaPho.Image.gImageList[self.imgno])
             if not loaded :
-                print "Ignoring", MetaPhoImage.gImageList[self.imgno].filename
-                del(MetaPhoImage.gImageList[self.imgno])
+                print "Ignoring", MetaPho.Image.gImageList[self.imgno].filename
+                del(MetaPho.Image.gImageList[self.imgno])
 
         if loaded :
-            self.tagger.setImage(MetaPhoImage.gImageList[self.imgno])
+            self.tagger.setImage(MetaPho.Image.gImageList[self.imgno])
         else :          # couldn't load anything in the list
             print "Can't go before first image"
 
