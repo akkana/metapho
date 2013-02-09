@@ -15,6 +15,8 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
     '''A PyGTK widget for showing tags.
     '''
     def __init__(self) :
+        print "Global tag list:", MetaPho.Tagger.gTagList
+
         gtk.Table.__init__(self, 2, 20, False)
 
         self.title = gtk.Label("Tags")
@@ -25,7 +27,6 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
         self.buttons = []
         self.entries = []
         for i in range(0, 20) :
-            print "new", i
             button = gtk.ToggleButton(str(i))
             self.attach_defaults(button, 0, 1, i, i+1 );
             self.buttons.append(button)
@@ -37,14 +38,42 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
 
         self.show()
 
+    def displayTags(self) :
+        '''Call this after readTags() has been read for all directories.'''
+
+        for i in range(len(self.entries)) :
+            if i < len(MetaPho.Tagger.gTagList) :
+                print "Tag", i, ":", MetaPho.Tagger.gTagList[i]
+                self.entries[i].set_text(MetaPho.Tagger.gTagList[i])
+
+        if len(MetaPho.Tagger.gTagList) > len(self.entries) :
+            print "Too many tags -- can't show all", \
+                len(MetaPho.Tagger.gTagList)
+
+    def highlightTag(self, tagno, val) :
+        '''Turn tag number tagno on (if val=True) or off (val=False).'''
+        self.buttons[tagno].set_active(val)
+        if val :
+            self.entries[tagno].modify_base(gtk.STATE_NORMAL,
+                                            gtk.gdk.color_parse("#FFFFFF"))
+
+        else :
+            self.entries[tagno].modify_base(gtk.STATE_NORMAL,
+                                            gtk.gdk.color_parse("#DDDDDD"))
+
     def setImage(self, img) :
         MetaPho.Tagger.setImage(self, img)
 
         self.title.set_text(os.path.basename(img.filename))
 
-        for i, tagstr in enumerate(img.tags) :
-            self.set_tag_n(i, tagstr)
+        for i in xrange(len(self.entries)) :
+            self.highlightTag(i, False)
 
+        for i, tagstr in enumerate(img.tags) :
+            self.highlightTag(img.tags[i], True)
+            #self.set_tag_n(i, tagstr)
+
+        return
         # un-highlight any remaining entries.
         if len(self.entries) > len(img.tags) :
             for i in range(len(img.tags), len(self.entries)) :
@@ -53,13 +82,6 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
                 # background color
                 self.entries[i].modify_base(gtk.STATE_NORMAL,
                                             gtk.gdk.color_parse("#DDDDDD"))
-                # frame color
-                #self.entries[i].modify_bg(gtk.STATE_NORMAL,
-                #                          gtk.gdk.color_parse("#0000FF"))
-                # text color
-                #self.entries[i].modify_text(gtk.STATE_NORMAL,
-                #                            gtk.gdk.color_parse("#00FF00"))
-                #self.entries[i].set_has_frame(False)
 
     def set_tag_n(self, n, tag) :
         '''Display a tag string in the Nth entry.'''
@@ -300,8 +322,9 @@ class MetaPhoWindow(object):
             if dirname not in dirlist :
                 dirlist.append(dirname)
                 self.tagger.readTags(dirname)
+        self.tagger.displayTags()
 
-        print "All tags:", MetaPho.Tagger.gTagList
+        print "All tags:", '\n'.join(MetaPho.Tagger.gTagList)
         print "All images:", MetaPho.Image.gImageList
 
     def firstImage(self) :
