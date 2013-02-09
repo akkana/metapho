@@ -46,19 +46,6 @@ class Image :
 
         return str
 
-    # Next two perhaps belong in Tagger, not here.
-    def addTag(self, tag) :
-        '''Add a tag to this image.
-           tag may be a string, which can be a new string or an existing one,
-           or an integer index into the tag list.
-           Return the index of the tag just added, or None if error.
-        '''
-        return None
-
-    def matchTag(self, pattern) :
-        '''Return a list of tags matching the pattern.'''
-        return None
-
 import os
 import shlex
 
@@ -170,3 +157,40 @@ tag Denmark: p103050.jpg, p103051.jpg
         print "Current tags:", img.tags
         for tagindex in img.tags :
             print "  ", Tagger.gTagList[tagindex]
+
+    def addTag(self, tag, img) :
+        '''Add a tag to the given image.
+           img is a MetaPho.Image.
+           tag may be a string, which can be a new string or an existing one,
+           or an integer index into the tag list.
+           Return the index (in the global tags list) of the tag just added,
+           or None if error.
+        '''
+        if type(tag) is int :
+            if tag not in img.tags :
+                img.tags.append(tag)
+            return tag
+
+        # Else it's a string. Make a new tag.
+        if tag in MetaPho.Tagger.gTagList :
+            return MetaPho.Tagger.gTagList.index(tag)
+        MetaPho.Tagger.gTagList.append(tag)
+        newindex = len(MetaPho.Tagger.gTagList) - 1
+        img.tags.append(newindex)
+        return newindex
+
+    def toggleTag(self, tagno, img) :
+        '''Toggle tag number tagno for the given img.'''
+        if tagno in img.tags :
+            img.tags.remove(tagno)
+            return
+
+        # It's not there yet. See if it exists in the global tag list.
+        if tagno > len(Tagger.gTagList) :
+            print "Warning: adding a not yet existent tag", tagno
+
+        img.tags.append(tagno)
+
+    def matchTag(self, pattern) :
+        '''Return a list of tags matching the pattern.'''
+        return None

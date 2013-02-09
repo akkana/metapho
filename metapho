@@ -71,29 +71,31 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
 
         for i, tagstr in enumerate(img.tags) :
             self.highlightTag(img.tags[i], True)
-            #self.set_tag_n(i, tagstr)
 
         return
-        # un-highlight any remaining entries.
-        if len(self.entries) > len(img.tags) :
-            for i in range(len(img.tags), len(self.entries)) :
-                self.buttons[i].set_active(False)
-                self.entries[i].set_text("")
-                # background color
-                self.entries[i].modify_base(gtk.STATE_NORMAL,
-                                            gtk.gdk.color_parse("#DDDDDD"))
 
-    def set_tag_n(self, n, tag) :
-        '''Display a tag string in the Nth entry.'''
-        print "set_tag_n", n, tag, MetaPho.Tagger.gTagList[tag]
+    def addTag(self, tag, img) :
+        '''Add a tag to the given image.
+           img is a MetaPho.Image.
+           tag may be a string, which can be a new string or an existing one,
+           or an integer index into the tag list.
+           Return the index (in the global tags list) of the tag just added,
+           or None if error.
+        '''
+        # Call the base class to make sure the tag is there:
+        tagindex = MetaPho.Tagger.addTag(self, tag, img)
 
-        # Then set the string
-        print "Setting entry", n, "of", len(self.entries), \
-            "to", tag, MetaPho.Tagger.gTagList[tag]
-        self.buttons[n].set_active(True)
-        self.entries[n].set_text(MetaPho.Tagger.gTagList[tag])
-        self.entries[n].modify_base(gtk.STATE_NORMAL,
-                                    gtk.gdk.color_parse("#FFFFFF"))
+        # Now display it, if possible
+        if tagindex < len(self.entries) :
+            self.highlightTag(tagindex, True)
+
+        return tagindex
+
+    def toggleTag(self, tagno, img) :
+        '''Toggle tag number tagno for the given img.'''
+        MetaPho.Tagger.toggleTag(self, tagno, img)
+        if tagno < len(self.entries) :
+            self.highlightTag(tagno, not self.buttons[tagno].get_active())
 
 class MetaPhoGTKViewer(gtk.DrawingArea) :
     '''A PyGTK image viewer widget for MetaPho.
@@ -236,14 +238,9 @@ class MetaPhoGTKViewer(gtk.DrawingArea) :
             print "No image loaded yet, can't show"
             return
 
-        # if not self.pixbuf :
-        #     self.loadImage()
-        #     if not self.pixbuf :
-        #         return
-
-        # Clear the drawingarea first
+        # Clear the drawing area first
         self.window.draw_rectangle(self.gc, True, 0, 0,
-                                                self.imgwidth, self.imgheight)
+                                   self.imgwidth, self.imgheight)
 
         x = (self.imgwidth - self.pixbuf.get_width()) / 2
         y = (self.imgheight - self.pixbuf.get_height()) / 2
@@ -252,7 +249,7 @@ class MetaPhoGTKViewer(gtk.DrawingArea) :
     def rotate(self, rot) :
         self.cur_img.rot = (self.cur_img.rot + rot + 360) % 360
 
-        # XXX we don't always need to reload: can make this more efficient.
+        # XXX we don't always need to reload: could make this more efficient.
         self.loadImage(self.cur_img)
 
 class MetaPhoWindow(object):
@@ -314,7 +311,6 @@ class MetaPhoWindow(object):
 
     def readAllTags(self) :
         '''Read tags in all directories used by images in argv.
-           XXX But for now, just take the dirname of the first image.
         '''
         dirlist = []
         for img in MetaPho.Image.gImageList :
@@ -346,8 +342,8 @@ class MetaPhoWindow(object):
             if not loaded :
                 print "Ignoring", MetaPho.Image.gImageList[self.imgno].filename
                 del(MetaPho.Image.gImageList[self.imgno])
-                # We're about to increment imgno, but we actually want it
-                # to stay the same since deleting the nonexistent image
+                # The loop is about to increment imgno, but we actually want
+                # it to stay the same since deleting the nonexistent image
                 # slid the next image into the current position;
                 # so decrement imgno now.
                 self.imgno -= 1
@@ -397,6 +393,10 @@ class MetaPhoWindow(object):
             return True
         if event.keyval in [ gtk.keysyms.Up, gtk.keysyms.Down ] :
             self.viewer.rotate(180)
+            return True
+        if event.string in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9') :
+            self.tagger.toggleTag(int(event.string),
+                                  MetaPho.Image.gImageList[self.imgno])
             return True
 
         # A key we didn't understand
