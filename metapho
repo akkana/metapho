@@ -11,17 +11,29 @@ import glib
 import gc
 import sys, os
 
-class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.VBox) :
+class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
     '''A PyGTK widget for showing tags.
     '''
     def __init__(self) :
-        gtk.VBox.__init__(self)
+        gtk.Table.__init__(self, 2, 20, False)
 
         self.title = gtk.Label("Tags")
-        self.pack_start(self.title, expand=False)
+        self.attach_defaults(self.title, 0, 2, 0, 1 );
         self.title.show()
 
+        # Set up a bunch of entries, also setting the table size:
+        self.buttons = []
         self.entries = []
+        for i in range(0, 20) :
+            print "new", i
+            button = gtk.ToggleButton(str(i))
+            self.attach_defaults(button, 0, 1, i, i+1 );
+            self.buttons.append(button)
+
+            entry = gtk.Entry()
+            entry.set_width_chars(35)
+            self.attach_defaults(entry, 1, 2, i, i+1 );
+            self.entries.append(entry)
 
         self.show()
 
@@ -33,30 +45,33 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.VBox) :
         for i, tagstr in enumerate(img.tags) :
             self.set_tag_n(i, tagstr)
 
-        # If there were any showing before, hide them
+        # un-highlight any remaining entries.
         if len(self.entries) > len(img.tags) :
             for i in range(len(img.tags), len(self.entries)) :
-                self.entries[i].hide()
+                self.buttons[i].set_active(False)
+                self.entries[i].set_text("")
+                # background color
+                self.entries[i].modify_base(gtk.STATE_NORMAL,
+                                            gtk.gdk.color_parse("#DDDDDD"))
+                # frame color
+                #self.entries[i].modify_bg(gtk.STATE_NORMAL,
+                #                          gtk.gdk.color_parse("#0000FF"))
+                # text color
+                #self.entries[i].modify_text(gtk.STATE_NORMAL,
+                #                            gtk.gdk.color_parse("#00FF00"))
+                #self.entries[i].set_has_frame(False)
 
     def set_tag_n(self, n, tag) :
         '''Display a tag string in the Nth entry.'''
         print "set_tag_n", n, tag, MetaPho.Tagger.gTagList[tag]
-        # First, create any that aren't there yet:
-        if len(self.entries) < n+2 :
-            print "Making new entries"
-            for i in range(len(self.entries), n+1) :
-                print "new", i
-                entry = gtk.Entry()
-                entry.set_width_chars(35)
-                self.pack_start(entry, expand=False)
-                entry.show()
-                self.entries.append(entry)
 
         # Then set the string
         print "Setting entry", n, "of", len(self.entries), \
             "to", tag, MetaPho.Tagger.gTagList[tag]
+        self.buttons[n].set_active(True)
         self.entries[n].set_text(MetaPho.Tagger.gTagList[tag])
-        self.entries[n].show()
+        self.entries[n].modify_base(gtk.STATE_NORMAL,
+                                    gtk.gdk.color_parse("#FFFFFF"))
 
 class MetaPhoGTKViewer(gtk.DrawingArea) :
     '''A PyGTK image viewer widget for MetaPho.
