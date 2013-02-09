@@ -61,6 +61,20 @@ class Tagger(object) :
         '''imagelist: a list of MetaPho Images'''
         pass
 
+    def __repr__(self) :
+        '''Returns a string summarizing all known images and tags,
+           suitable for printing on stdout or pasting into a Tags file.
+        '''
+        outstr = ''
+        for tagno, tagstr in enumerate(Tagger.gTagList) :
+            outstr += "tag %s :" % tagstr
+            for img in Image.gImageList :
+                if tagno in img.tags :
+                    outstr += ' ' + img.filename
+            outstr += '\n'
+
+        return outstr
+
     def readTags(self, dirname) :
         '''Read in tags from files named in the given directory,
            and tag images in the imagelist appropriately.
@@ -194,3 +208,4 @@ tag Denmark: p103050.jpg, p103051.jpg
     def matchTag(self, pattern) :
         '''Return a list of tags matching the pattern.'''
         return None
+

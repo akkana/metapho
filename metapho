@@ -307,6 +307,8 @@ class MetaPhoWindow(object):
         self.firstImage()
 
     def quit(self, widget=None, data=None):
+        print "==========="
+        print self.tagger
         gtk.main_quit()
 
     def readAllTags(self) :
