@@ -162,16 +162,6 @@ tag Denmark: p103050.jpg, p103051.jpg
                 if img.filename.endswith(fil) and tagindex not in img.tags :
                     img.tags.append(tagindex)
 
-    def setImage(self, img) :
-        '''Set the current image to img (a MetaPho Image).
-           Load the associated tags, and (in derived classes) show them
-           in whatever way is appropriate.
-        '''
-        print "Current", img
-        print "Current tags:", img.tags
-        for tagindex in img.tags :
-            print "  ", Tagger.gTagList[tagindex]
-
     def addTag(self, tag, img) :
         '''Add a tag to the given image.
            img is a MetaPho.Image.
@@ -186,10 +176,10 @@ tag Denmark: p103050.jpg, p103051.jpg
             return tag
 
         # Else it's a string. Make a new tag.
-        if tag in MetaPho.Tagger.gTagList :
-            return MetaPho.Tagger.gTagList.index(tag)
-        MetaPho.Tagger.gTagList.append(tag)
-        newindex = len(MetaPho.Tagger.gTagList) - 1
+        if tag in Tagger.gTagList :
+            return Tagger.gTagList.index(tag)
+        Tagger.gTagList.append(tag)
+        newindex = len(Tagger.gTagList) - 1
         img.tags.append(newindex)
         return newindex
 

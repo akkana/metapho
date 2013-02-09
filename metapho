@@ -15,28 +15,60 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
     '''A PyGTK widget for showing tags.
     '''
     def __init__(self) :
-        print "Global tag list:", MetaPho.Tagger.gTagList
-
         gtk.Table.__init__(self, 2, 20, False)
 
         self.title = gtk.Label("Tags")
         self.attach_defaults(self.title, 0, 2, 0, 1 );
         self.title.show()
+        self.focused_entry = None
+        self.cur_img = None
 
         # Set up a bunch of entries, also setting the table size:
         self.buttons = []
         self.entries = []
         for i in range(0, 20) :
             button = gtk.ToggleButton(str(i))
-            self.attach_defaults(button, 0, 1, i, i+1 );
+            self.attach_defaults(button, 0, 1, i+1, i+2 );
             self.buttons.append(button)
 
             entry = gtk.Entry()
             entry.set_width_chars(35)
-            self.attach_defaults(entry, 1, 2, i, i+1 );
+            #entry.connect("changed", self.entry_changed, i)
+            #entry.connect("focus-in-event", self.focus_in, i)
+            entry.connect("focus-out-event", self.focus_out, i)
+            self.attach_defaults(entry, 1, 2, i+1, i+2 );
             self.entries.append(entry)
 
         self.show()
+
+    #def entry_changed(self, entry, event, tagno) :
+    #    return True
+
+    def focus_out(self, entry, event, tagno) :
+        print "Changed entry", tagno
+        if tagno < len(MetaPho.Tagger.gTagList) :
+            print MetaPho.Tagger.gTagList[tagno], "should change to",
+            MetaPho.Tagger.gTagList[tagno] = entry.get_text()
+            print MetaPho.Tagger.gTagList[tagno]
+        else :
+            newtag = self.addTag(entry.get_text(), self.cur_img)
+            self.highlightTag(newtag, True)
+        return True
+
+    def focus_in(self, entry, event, tagno) :
+        self.focused_entry = entry
+        # Return False to let the normal Entry functions work,
+        # to do things like show a text cursor.
+        return False
+
+    def check_entry_tag(focused_widget) :
+        '''At certain times, such as just before exit, the main window
+           may call us to alert us that a tag may have changed.
+           We need to find out which entry contains it and check the tag.
+        '''
+        for i, ent in enumerate(self.entries) :
+            if focused_widget == ent :
+                self.focus_out(ent, None, i)
 
     def displayTags(self) :
         '''Call this after readTags() has been read for all directories.'''
@@ -62,13 +94,15 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
                                             gtk.gdk.color_parse("#DDDDDD"))
 
     def setImage(self, img) :
-        MetaPho.Tagger.setImage(self, img)
+        self.cur_img = img
 
         self.title.set_text(os.path.basename(img.filename))
 
+        # Clear all currently highlighted tags
         for i in xrange(len(self.entries)) :
             self.highlightTag(i, False)
 
+        # Highlight just the ones associated with this image
         for i, tagstr in enumerate(img.tags) :
             self.highlightTag(img.tags[i], True)
 
@@ -307,6 +341,12 @@ class MetaPhoWindow(object):
         self.firstImage()
 
     def quit(self, widget=None, data=None):
+        # If focus is currently in a text entry, there may be changed
+        # text that hasn't been updated yet in the tags list.
+        # Call the tagger to warn about that.
+        if type(self.win.get_focus()) is gtk.Entry :
+            tagger.check_entry_tag(self.win.get_focus())
+
         print "==========="
         print self.tagger
         gtk.main_quit()
@@ -372,6 +412,14 @@ class MetaPhoWindow(object):
 
     # Called whenever any key is pressed:
     def key_press_event(self, widget, event) :
+        # If focus is in one of the text entries, then just let the user type
+        # (for now).
+        # But how do we move back to navigation mode?
+        # Tab works; what else should we allow?
+        if type(self.win.get_focus()) is gtk.Entry :
+            #print "Focus is in an entry"
+            return False
+
         if event.string == "q" :
             self.quit()
             return True
