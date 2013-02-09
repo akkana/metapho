@@ -114,16 +114,13 @@ class Tagger(object) :
         '''
         # Keep track of the dir common to all directories we use:
         if self.commondir == None :
-            print "======= Initializing commondir to", dirname
             self.commondir = dirname
         else :
-            print "======= What's common to", self.commondir, "and", dirname, "?"
             self.commondir = os.path.commonprefix([self.commondir, dirname])
                 # commonpre has a bug, see
                 # http://rosettacode.org/wiki/Find_common_directory_path#Python
                 # but this causes other problems:
                 # .rpartition(os.path.sep)[0]
-            print "Commondir becomes", self.commondir
 
         # Might want to be recursive and use os.walk ...
         # or maybe go the other way, search for Tags files
@@ -151,7 +148,7 @@ tag Denmark: p103050.jpg, p103051.jpg
                 fp = open(pathname)
                 self.tagfiles.append(pathname)
             except IOError :
-                print "No Tags file in", dirname
+                # print "No Tags file in", dirname
                 return
 
         for line in fp :
@@ -171,7 +168,6 @@ tag Denmark: p103050.jpg, p103051.jpg
 
             if line.startswith('tag ') :
                 tagname = line[4:colon].strip()
-                print "Tag", tagname, ": objects", objects
                 self.processTag(tagname, objects)
 
             elif line.startswith('tagtype ') :
@@ -183,7 +179,6 @@ tag Denmark: p103050.jpg, p103051.jpg
             else :
                 # Assume it's a tag: file file file line
                 tagname = line[:colon].strip()
-                print "Keyword", tagname, ": objects", objects
                 self.processTag(tagname, objects)
 
         fp.close()
@@ -231,6 +226,19 @@ tag Denmark: p103050.jpg, p103051.jpg
         img.tags.append(newindex)
         return newindex
 
+    def removeTag(self, tag, img) :
+        self.changed = True
+
+        if type(tag) is int :
+            if tag in img.tags :
+                img.tags.remove(tag)
+
+        # Else it's a string. Remove it if it's there.
+        try :
+            Tagger.gTagList.remove(tag)
+        except :
+            pass
+
     def toggleTag(self, tagno, img) :
         '''Toggle tag number tagno for the given img.'''
         self.changed = True
@@ -240,8 +248,8 @@ tag Denmark: p103050.jpg, p103051.jpg
             return
 
         # It's not there yet. See if it exists in the global tag list.
-        if tagno > len(Tagger.gTagList) :
-            print "Warning: adding a not yet existent tag", tagno
+        # if tagno > len(Tagger.gTagList) :
+        #     print "Warning: adding a not yet existent tag", tagno
 
         img.tags.append(tagno)
 

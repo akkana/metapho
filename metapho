@@ -22,6 +22,9 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
         self.attach_defaults(self.title, 0, 2, 0, 1 );
         self.title.show()
         self.cur_img = None
+        self.highlightBG = gtk.gdk.color_parse("#FFFFFF")
+        self.greyBG = gtk.gdk.color_parse("#DDDDDD")
+        self.ignore_events = False
 
         # Set up a bunch of entries, also setting the table size:
         self.buttons = []
@@ -30,6 +33,7 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
             button = gtk.ToggleButton(str(i))
             self.attach_defaults(button, 0, 1, i+1, i+2 );
             self.buttons.append(button)
+            button.connect("toggled", self.toggled, i)
 
             entry = gtk.Entry()
             entry.set_width_chars(35)
@@ -56,6 +60,22 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
         self.change_tag(tagno, entry_text)
         return True
 
+    def toggled(self, button, tagno) :
+        # We'll get a recursion loop if we don't block events here --
+        # adding and removing tags update the GUI state, which
+        # changes the toggle button state, which calls toggled() again.
+        if self.ignore_events :
+            return
+
+        # get_active() is the state *after* the button has been pressed.
+        if button.get_active() :
+            # Was off, now on, so add the tag.
+            self.addTag(tagno, self.cur_img)
+        else :
+            # It's already on, so toggle it off.
+            self.removeTag(tagno, self.cur_img)
+        return True
+
     def check_entry_tag(focused_widget) :
         '''At certain times, such as just before exit, the main window
            may call us to alert us that a tag may have changed.
@@ -70,7 +90,7 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
 
         for i in range(len(self.entries)) :
             if i < len(MetaPho.Tagger.gTagList) :
-                print "Tag", i, ":", MetaPho.Tagger.gTagList[i]
+                # print "Tag", i, ":", MetaPho.Tagger.gTagList[i]
                 self.entries[i].set_text(MetaPho.Tagger.gTagList[i])
 
         if len(MetaPho.Tagger.gTagList) > len(self.entries) :
@@ -79,14 +99,15 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
 
     def highlightTag(self, tagno, val) :
         '''Turn tag number tagno on (if val=True) or off (val=False).'''
-        self.buttons[tagno].set_active(val)
-        if val :
-            self.entries[tagno].modify_base(gtk.STATE_NORMAL,
-                                            gtk.gdk.color_parse("#FFFFFF"))
+        if self.buttons[tagno].get_active() != val :
+            self.ignore_events = True
+            self.buttons[tagno].set_active(val)
+            self.ignore_events = False
 
+        if val :
+            self.entries[tagno].modify_base(gtk.STATE_NORMAL, self.highlightBG)
         else :
-            self.entries[tagno].modify_base(gtk.STATE_NORMAL,
-                                            gtk.gdk.color_parse("#DDDDDD"))
+            self.entries[tagno].modify_base(gtk.STATE_NORMAL, self.greyBG)
 
     def setImage(self, img) :
         self.cur_img = img
@@ -119,6 +140,18 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
             self.highlightTag(tagindex, True)
 
         return tagindex
+
+    def removeTag(self, tag, img) :
+        if not type(tag) is int :
+            tagstr = tag
+            tag = MetaPho.Tagger.gTagList.index(tagstr)
+            if tagstr < 0 :
+                print "No such tag", tagstr
+                return
+
+        MetaPho.Tagger.removeTag(self, tag, img)
+
+        self.highlightTag(tag, False)
 
     def toggleTag(self, tagno, img) :
         '''Toggle tag number tagno for the given img.'''
@@ -156,12 +189,11 @@ class MetaPhoGTKViewer(gtk.DrawingArea) :
         self.cur_img = None
 
     def expose_handler(self, widget, event) :
-        print "Expose"
+        #print "Expose"
 
         if not self.gc :
             self.gc = widget.window.new_gc()
             x, y, self.imgwidth, self.imgheight = self.get_allocation()
-            print "viewer is %d x %d" % (self.imgwidth, self.imgheight)
 
             # Have we had loadImage called, but we weren't ready for it?
             # Now, theoretically, we are ... so call it again.
@@ -183,7 +215,6 @@ class MetaPhoGTKViewer(gtk.DrawingArea) :
            Return True for success, False for error.
         '''
 
-        print "viewer: Trying to load", img.filename
         self.cur_img = img
 
         # Clean up memory from any existing pixbuf.
@@ -202,29 +233,23 @@ class MetaPhoGTKViewer(gtk.DrawingArea) :
             # pixbuf again after the window appears, so this will
             # slow down the initial window slightly.
             if not self.imgwidth :
-                print "Can't finish loading before drawingArea is exposed"
                 return True
 
             # Do we need to check rotation info for this image?
             if img.rot == None :
                 # Get the EXIF embedded rotation info.
-                print "Getting orientation for", img.filename,
-                print "got", newpb.get_option('orientation')
                 orient = newpb.get_option('orientation')
                 if orient == None :    # No orientation specified; use 0
                     orient = 0
                 else :                 # convert to int array index
                     orient = int(orient) - 1
                 img.rot = self.exif_rot_table[orient]
-                print "Rotation is", img.rot,
-                print "exif tag", newpb.get_option('orientation')
 
             # Scale the image to our display image size.
             # We need it to fit in the space available.
             # If we're not changing aspect ratios, that's easy.
             oldw = newpb.get_width()
             oldh = newpb.get_height()
-            print "Orig size:", oldw, oldh
             if img.rot in [ 0, 180] :
                 if oldw > oldh :     # horizontal format photo
                     neww = self.imgwidth
@@ -238,7 +263,6 @@ class MetaPhoGTKViewer(gtk.DrawingArea) :
             # height area -- even though it's still width because we
             # haven't rotated yet.
             else :     # We'll be changing aspect ratios
-                print "......... Changing aspect ratio!"
                 if oldw > oldh :     # horizontal format, will be vertical
                     neww = self.imgheight
                     newh = oldh * self.imgheight / oldw
@@ -252,19 +276,16 @@ class MetaPhoGTKViewer(gtk.DrawingArea) :
 
             # Rotate the image if needed
             if img.rot != 0 :
-                print "Rotating by", img.rot
                 newpb = newpb.rotate_simple(img.rot)
 
             # newpb = newpb.apply_embedded_orientation()
 
             self.pixbuf = newpb
 
-            print "Loaded", img.filename
             self.showImage()
             loaded = True
 
         except glib.GError :
-            print "Oops, couldn't load", img.filename
             self.pixbuf = None
             loaded = False
 
@@ -276,11 +297,9 @@ class MetaPhoGTKViewer(gtk.DrawingArea) :
 
     def showImage(self) :
         if not self.gc :
-            print "Not ready yet"
             return
 
         if not self.pixbuf :
-            print "No image loaded yet, can't show"
             return
 
         # Clear the drawing area first
@@ -304,7 +323,6 @@ class MetaPhoWindow(object):
     '''
 
     def __init__(self, file_list):
-        print "initializing from", file_list
         for filename in file_list :
             MetaPho.Image.gImageList.append(MetaPho.Image(filename))
         self.imgno = 0
@@ -374,9 +392,6 @@ class MetaPhoWindow(object):
                 self.tagger.readTags(dirname)
         self.tagger.displayTags()
 
-        print "All tags:", '\n'.join(MetaPho.Tagger.gTagList)
-        print "All images:", MetaPho.Image.gImageList
-
     def firstImage(self) :
         self.imgno = -1
         self.nextImage()
@@ -394,7 +409,6 @@ class MetaPhoWindow(object):
             self.imgno += 1
             loaded = self.viewer.loadImage(MetaPho.Image.gImageList[self.imgno])
             if not loaded :
-                print "Ignoring", MetaPho.Image.gImageList[self.imgno].filename
                 del(MetaPho.Image.gImageList[self.imgno])
                 # The loop is about to increment imgno, but we actually want
                 # it to stay the same since deleting the nonexistent image
@@ -414,7 +428,6 @@ class MetaPhoWindow(object):
             self.imgno -= 1
             loaded = self.viewer.loadImage(MetaPho.Image.gImageList[self.imgno])
             if not loaded :
-                print "Ignoring", MetaPho.Image.gImageList[self.imgno].filename
                 del(MetaPho.Image.gImageList[self.imgno])
 
         if loaded :
@@ -432,14 +445,12 @@ class MetaPhoWindow(object):
                 (event.keyval == gtk.keysyms.space and \
                  event.state & gtk.gdk.CONTROL_MASK) :
             if entry_focused :
-                print "Setting focus to drawingarea"
                 self.win.set_focus(None)
             else :
                 self.tagger.focus_next_entry(self.win)
             return True 
 
         if event.keyval == gtk.keysyms.Return and entry_focused :
-            print "Going to next entry"
             # Return when in an entry goes to the next entry
             self.tagger.focus_next_entry(self.win)
             return True
@@ -480,7 +491,7 @@ class MetaPhoWindow(object):
             return True
 
         # A key we didn't understand
-        print "Read key:", event.string, "keyval", event.keyval
+        #print "Read key:", event.string, "keyval", event.keyval
         return False
 
     def main(self):
