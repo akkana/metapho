@@ -15,12 +15,12 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
     '''A PyGTK widget for showing tags.
     '''
     def __init__(self) :
+        MetaPho.Tagger.__init__(self)
         gtk.Table.__init__(self, 2, 20, False)
 
         self.title = gtk.Label("Tags")
         self.attach_defaults(self.title, 0, 2, 0, 1 );
         self.title.show()
-        self.focused_entry = None
         self.cur_img = None
 
         # Set up a bunch of entries, also setting the table size:
@@ -41,25 +41,20 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
 
         self.show()
 
-    #def entry_changed(self, entry, event, tagno) :
-    #    return True
+    def change_tag(self, tagno, newstr) :
+        if tagno < len(MetaPho.Tagger.gTagList) :
+            MetaPho.Tagger.gTagList[tagno] = newstr
+        else :
+            newtag = self.addTag(newstr, self.cur_img)
+            self.highlightTag(newtag, True)
 
     def focus_out(self, entry, event, tagno) :
-        print "Changed entry", tagno
-        if tagno < len(MetaPho.Tagger.gTagList) :
-            print MetaPho.Tagger.gTagList[tagno], "should change to",
-            MetaPho.Tagger.gTagList[tagno] = entry.get_text()
-            print MetaPho.Tagger.gTagList[tagno]
-        else :
-            newtag = self.addTag(entry.get_text(), self.cur_img)
-            self.highlightTag(newtag, True)
+        entry_text = entry.get_text()
+        # Ignore blank entries
+        if entry_text.strip() == '' :
+            return
+        self.change_tag(tagno, entry_text)
         return True
-
-    def focus_in(self, entry, event, tagno) :
-        self.focused_entry = entry
-        # Return False to let the normal Entry functions work,
-        # to do things like show a text cursor.
-        return False
 
     def check_entry_tag(focused_widget) :
         '''At certain times, such as just before exit, the main window
@@ -130,6 +125,22 @@ class MetaPhoGTKTagViewer(MetaPho.Tagger, gtk.Table) :
         MetaPho.Tagger.toggleTag(self, tagno, img)
         if tagno < len(self.entries) :
             self.highlightTag(tagno, not self.buttons[tagno].get_active())
+
+    def focus_next_entry(self, win) :
+        '''Set focus to the next available entry.
+           If we're already typing in a new tag entry that hasn't been
+           saved yet, save it first before switching to the new one.
+        '''
+        newindex = len(MetaPho.Tagger.gTagList)
+        curtext = self.entries[newindex].get_text()
+
+        if curtext.strip() != '' :
+            # user just typed something, so save it as if we got a focus out
+            self.change_tag(newindex, curtext)
+            newindex += 1
+
+        win.set_focus(self.entries[newindex])
+        self.highlightTag(newindex, True)
 
 class MetaPhoGTKViewer(gtk.DrawingArea) :
     '''A PyGTK image viewer widget for MetaPho.
@@ -349,6 +360,7 @@ class MetaPhoWindow(object):
 
         print "==========="
         print self.tagger
+        self.tagger.writeTagFile()
         gtk.main_quit()
 
     def readAllTags(self) :
@@ -412,11 +424,29 @@ class MetaPhoWindow(object):
 
     # Called whenever any key is pressed:
     def key_press_event(self, widget, event) :
-        # If focus is in one of the text entries, then just let the user type
-        # (for now).
-        # But how do we move back to navigation mode?
-        # Tab works; what else should we allow?
-        if type(self.win.get_focus()) is gtk.Entry :
+        entry_focused = (type(self.win.get_focus()) is gtk.Entry)
+
+        # ESC or ctrl-space shifts focus to the next tag entry,
+        # or out of the entries if we're already typing in one.
+        if event.keyval == gtk.keysyms.Escape or \
+                (event.keyval == gtk.keysyms.space and \
+                 event.state & gtk.gdk.CONTROL_MASK) :
+            if entry_focused :
+                print "Setting focus to drawingarea"
+                self.win.set_focus(None)
+            else :
+                self.tagger.focus_next_entry(self.win)
+            return True 
+
+        if event.keyval == gtk.keysyms.Return and entry_focused :
+            print "Going to next entry"
+            # Return when in an entry goes to the next entry
+            self.tagger.focus_next_entry(self.win)
+            return True
+
+        # For any other keys, if focus is in a text entry, just let
+        # the user type, and don't try to navigate.
+        if entry_focused :
             #print "Focus is in an entry"
             return False
 
