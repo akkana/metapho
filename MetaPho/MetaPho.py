@@ -9,6 +9,8 @@
 # MetaPho.Image.Image. I haven't found any way that lets me split
 # the classes into separate files. Sigh!
 
+import os
+
 class Image :
     '''An image, with additional info such as rotation and tags.
        Eventually methods like delete() to delete the file from disk
@@ -35,6 +37,15 @@ class Image :
         str += '\n'
 
         return str
+
+    def delete(self) :
+        '''Delete the image file FROM DISK, and the image object
+           from gImageList. DOES NOT ASK FOR CONFIRMATION --
+           do that (if desired) from the calling program.
+        '''
+        print "Deleting", self.filename
+        os.unlink(self.filename)
+        Image.gImageList.remove(self)
 
 import os
 import shlex

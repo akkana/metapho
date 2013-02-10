@@ -130,13 +130,47 @@ class MetaPhoWindow(object):
         else :          # couldn't load anything in the list
             print "Can't go before first image"
 
+    def deleteConfirm(self) :
+        '''Ask the user whether to really delete an image.
+           Return True for yes, False for no.
+           Accept some keystrokes beyond the usual ones,
+           e.g. d or ctrl-d confirms the delete.
+        '''
+        dialog = gtk.MessageDialog(self.win, 
+                                   gtk.DIALOG_DESTROY_WITH_PARENT,
+                                   gtk.MESSAGE_QUESTION, 
+                                   #gtk.BUTTONS_YES_NO,
+                                   gtk.BUTTONS_CANCEL,
+                                   "Delete %s ?" % \
+                                     MetaPho.Image.gImageList[self.imgno])
+        delete_btn = dialog.add_button("Delete", gtk.RESPONSE_YES)
+
+        # Handle key events on the dialog,
+        # to make it easier for the user to respond.
+        def delete_dialog_key_press(widget, event, dialog) :
+            if event.string == 'q' :
+                dialog.emit("response", gtk.RESPONSE_NO)
+                return True
+            elif event.keyval == gtk.keysyms.d :  # d with or without ctrl
+                dialog.emit("response", gtk.RESPONSE_YES)
+                return True
+            return False
+        dialog.connect("key-press-event", delete_dialog_key_press, dialog)
+
+        response = dialog.run()
+        dialog.destroy()
+        if response == gtk.RESPONSE_YES :
+            return True
+        return False
+
     # Called whenever any key is pressed:
     def key_press_event(self, widget, event) :
         entry_focused = (type(self.win.get_focus()) is gtk.Entry)
 
-        # ESC or ctrl-space shifts focus to the next tag entry,
+        # ESC, Return or ctrl-space shifts focus to the next tag entry,
         # or out of the entries if we're already typing in one.
         if event.keyval == gtk.keysyms.Escape or \
+                event.keyval == gtk.keysyms.Return or \
                 (event.keyval == gtk.keysyms.space and \
                  event.state & gtk.gdk.CONTROL_MASK) :
             if entry_focused :
@@ -155,6 +189,15 @@ class MetaPhoWindow(object):
         if entry_focused :
             #print "Focus is in an entry"
             return False
+
+        # Ctrl-d means delete the current image (after confirmation)
+        if event.keyval == gtk.keysyms.d and \
+                event.state & gtk.gdk.CONTROL_MASK :
+            if self.deleteConfirm() :
+                MetaPho.Image.gImageList[self.imgno].delete()
+                self.imgno -= 1
+                self.nextImage()
+            return True
 
         if event.string == "q" :
             self.quit()
