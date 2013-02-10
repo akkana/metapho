@@ -13,16 +13,18 @@ import os
 
 class Image :
     '''An image, with additional info such as rotation and tags.
-       Eventually methods like delete() to delete the file from disk
-       will probably also live in this class.
     '''
+
     gImageList = []
 
     def __init__(self, filename) :
         self.filename = filename
         self.tags = []
-        self.rot = None      # None means we don't know yet, 0 means stay at 0
+
+        # Rotation of the image relative to what it is on disk.
+        # None means we don't know yet, 0 means stay at 0.
         # Note: use 270 for counter-clockwise rotation, not -90.
+        self.rot = None
 
     def __repr__(self) :
         str = "Image %s" % self.filename
@@ -39,7 +41,7 @@ class Image :
 
     def delete(self) :
         '''Delete the image file FROM DISK, and the image object
-           from gImageList. DOES NOT ASK FOR CONFIRMATION --
+           from the imageList. DOES NOT ASK FOR CONFIRMATION --
            do that (if desired) from the calling program.
         '''
         print "Deleting", self.filename
