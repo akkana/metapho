@@ -16,7 +16,6 @@ class Image :
        Eventually methods like delete() to delete the file from disk
        will probably also live in this class.
     '''
-
     gImageList = []
 
     def __init__(self, filename) :
@@ -54,13 +53,22 @@ class Tagger(object) :
     '''Manages tags for images.
     '''
 
-    gTagList = []
-    '''The list of tags is common to every image in the application.
-    '''
-
     def __init__(self) :
         '''tagger: an object to manage MetaPho image tags'''
+
+        # The category list is a list of lists:
+        # [ [ "First category", 3, 5, 11 ] ]
+        # means category 0 has the name "First category" and includes
+        # tags 3, 5 and 11 from the tagList.
+        self.categories = {}
+
+        # The tag list is just a list of all tags we know about.
+        # A tag may be in several categories.
+        self.tagList = []
+
+        # Files from which we've read tags
         self.tagfiles = []
+        # the directory common to them, where we'll try to store tags
         self.commondir = None
 
         # Have any tags changed during this run?
@@ -78,7 +86,7 @@ class Tagger(object) :
         # outstr += "Common dir: " + self.commondir + "\n"
 
         outstr = ''
-        for tagno, tagstr in enumerate(Tagger.gTagList) :
+        for tagno, tagstr in enumerate(self.tagList) :
             # No empty tags
             if tagstr.strip() == '' :
                 continue
@@ -111,7 +119,7 @@ class Tagger(object) :
     def readTags(self, dirname) :
         '''Read in tags from files named in the given directory,
            and tag images in the imagelist appropriately.
-           Tags will be appended to Tagger.gTagList.
+           Tags will be appended to the tagList.
         '''
         # Keep track of the dir common to all directories we use:
         if self.commondir == None :
@@ -190,10 +198,10 @@ tag Denmark: p103050.jpg, p103051.jpg
            to it.
         '''
         try :
-            tagindex = Tagger.gTagList.index(tagname)
+            tagindex = self.tagList.index(tagname)
         except :
-            tagindex = len(Tagger.gTagList)
-            Tagger.gTagList.append(tagname)
+            tagindex = len(self.tagList)
+            self.tagList.append(tagname)
 
         # Search for images matching the names in filenames
         # XXX pathname issue here: filenames in tag files generally don't
@@ -220,10 +228,10 @@ tag Denmark: p103050.jpg, p103051.jpg
             return tag
 
         # Else it's a string. Make a new tag.
-        if tag in Tagger.gTagList :
-            return Tagger.gTagList.index(tag)
-        Tagger.gTagList.append(tag)
-        newindex = len(Tagger.gTagList) - 1
+        if tag in self.tagList :
+            return self.tagList.index(tag)
+        self.tagList.append(tag)
+        newindex = len(self.tagList) - 1
         img.tags.append(newindex)
         return newindex
 
@@ -236,7 +244,7 @@ tag Denmark: p103050.jpg, p103051.jpg
 
         # Else it's a string. Remove it if it's there.
         try :
-            Tagger.gTagList.remove(tag)
+            self.tagList.remove(tag)
         except :
             pass
 
@@ -249,7 +257,7 @@ tag Denmark: p103050.jpg, p103051.jpg
             return
 
         # It's not there yet. See if it exists in the global tag list.
-        # if tagno > len(Tagger.gTagList) :
+        # if tagno > len(self.tagList) :
         #     print "Warning: adding a not yet existent tag", tagno
 
         img.tags.append(tagno)

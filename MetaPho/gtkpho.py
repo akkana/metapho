@@ -46,8 +46,8 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.show()
 
     def change_tag(self, tagno, newstr) :
-        if tagno < len(MetaPho.Tagger.gTagList) :
-            MetaPho.Tagger.gTagList[tagno] = newstr
+        if tagno < len(self.tagList) :
+            self.tagList[tagno] = newstr
         else :
             newtag = self.addTag(newstr, self.cur_img)
             self.highlightTag(newtag, True)
@@ -89,13 +89,13 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         '''Call this after readTags() has been read for all directories.'''
 
         for i in range(len(self.entries)) :
-            if i < len(MetaPho.Tagger.gTagList) :
-                # print "Tag", i, ":", MetaPho.Tagger.gTagList[i]
-                self.entries[i].set_text(MetaPho.Tagger.gTagList[i])
+            if i < len(self.tagList) :
+                # print "Tag", i, ":", self.tagList[i]
+                self.entries[i].set_text(self.tagList[i])
 
-        if len(MetaPho.Tagger.gTagList) > len(self.entries) :
+        if len(self.tagList) > len(self.entries) :
             print "Too many tags -- can't show all", \
-                len(MetaPho.Tagger.gTagList)
+                len(self.tagList)
 
     def highlightTag(self, tagno, val) :
         '''Turn tag number tagno on (if val=True) or off (val=False).'''
@@ -144,7 +144,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
     def removeTag(self, tag, img) :
         if not type(tag) is int :
             tagstr = tag
-            tag = MetaPho.Tagger.gTagList.index(tagstr)
+            tag = self.tagList.index(tagstr)
             if tagstr < 0 :
                 print "No such tag", tagstr
                 return
@@ -164,7 +164,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
            If we're already typing in a new tag entry that hasn't been
            saved yet, save it first before switching to the new one.
         '''
-        newindex = len(MetaPho.Tagger.gTagList)
+        newindex = len(self.tagList)
         curtext = self.entries[newindex].get_text()
 
         if curtext.strip() != '' :
