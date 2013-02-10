@@ -147,8 +147,10 @@ class MetaPhoWindow(object):
 
         # Handle key events on the dialog,
         # to make it easier for the user to respond.
+        # d (with or without ctrl) confirms the delete.
+        # n or q cancels (in addition to the usual ESC).
         def delete_dialog_key_press(widget, event, dialog) :
-            if event.string == 'q' :
+            if event.string in ('q', 'n') :
                 dialog.emit("response", gtk.RESPONSE_NO)
                 return True
             elif event.keyval == gtk.keysyms.d :  # d with or without ctrl
@@ -199,7 +201,9 @@ class MetaPhoWindow(object):
                 self.nextImage()
             return True
 
-        if event.string == "q" :
+        # Eventually we may want to require ctrl-q to quit,
+        # freeing q for tags/categories.
+        if event.keyval == gtk.keysyms.q :
             self.quit()
             return True
         if event.string == " " :
@@ -223,7 +227,10 @@ class MetaPhoWindow(object):
         if event.keyval in [ gtk.keysyms.Up, gtk.keysyms.Down ] :
             self.viewer.rotate(180)
             return True
-        if event.string in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9') :
+
+        # Digits: it's a tag category
+        if event.string.isdigit() :
+        #if event.string in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9') :
             self.tagger.toggleTag(int(event.string),
                                   MetaPho.Image.gImageList[self.imgno])
             return True
