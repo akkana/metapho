@@ -14,9 +14,11 @@ import os
 class TagViewer(MetaPho.Tagger, gtk.Table) :
     '''A PyGTK widget for showing tags.
     '''
-    def __init__(self) :
+    def __init__(self, parentwin) :
         MetaPho.Tagger.__init__(self)
         gtk.Table.__init__(self, 2, 20, False)
+
+        self.parentwin = parentwin
 
         self.title = gtk.Label("Tags")
         self.attach_defaults(self.title, 0, 2, 0, 1 );
@@ -29,19 +31,29 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         # Set up a bunch of entries, also setting the table size:
         self.buttons = []
         self.entries = []
-        for i in range(0, 20) :
-            button = gtk.ToggleButton(str(i))
-            self.attach_defaults(button, 0, 1, i+1, i+2 );
-            self.buttons.append(button)
-            button.connect("toggled", self.toggled, i)
+        self.button_names = []
+        num_y_buttons = 20
+        for j in range(0, 2) :
+            for i in range(0, num_y_buttons) :
+                if j <= 0 :
+                    buttonchar = chr(i + ord('a'))
+                    left = 0
+                else :
+                    buttonchar = chr(i + ord('A'))
+                    left = 2
 
-            entry = gtk.Entry()
-            entry.set_width_chars(35)
-            #entry.connect("changed", self.entry_changed, i)
-            #entry.connect("focus-in-event", self.focus_in, i)
-            entry.connect("focus-out-event", self.focus_out, i)
-            self.attach_defaults(entry, 1, 2, i+1, i+2 );
-            self.entries.append(entry)
+                button = gtk.ToggleButton(buttonchar)
+                self.attach_defaults(button, left, left+1, i+1, i+2 );
+                self.buttons.append(button)
+                button.connect("toggled", self.toggled, i)
+
+                entry = gtk.Entry()
+                entry.set_width_chars(25)
+                #entry.connect("changed", self.entry_changed, i)
+                #entry.connect("focus-in-event", self.focus_in, i)
+                entry.connect("focus-out-event", self.focus_out, i)
+                self.attach_defaults(entry, left+1, left+2, i+1, i+2 );
+                self.entries.append(entry)
 
         self.show()
 
@@ -106,6 +118,10 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
 
         if val :
             self.entries[tagno].modify_base(gtk.STATE_NORMAL, self.highlightBG)
+            # If a tag is highlighted and the associated entry is empty,
+            # put focus there so the user can type something.
+            if not self.entries[tagno].get_text().strip() :
+                self.parentwin.set_focus(self.entries[tagno])
         else :
             self.entries[tagno].modify_base(gtk.STATE_NORMAL, self.greyBG)
 
@@ -159,7 +175,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         if tagno < len(self.entries) :
             self.highlightTag(tagno, not self.buttons[tagno].get_active())
 
-    def focus_next_entry(self, win) :
+    def focus_next_entry(self) :
         '''Set focus to the next available entry.
            If we're already typing in a new tag entry that hasn't been
            saved yet, save it first before switching to the new one.
@@ -172,7 +188,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
             self.change_tag(newindex, curtext)
             newindex += 1
 
-        win.set_focus(self.entries[newindex])
+        self.parentwin.set_focus(self.entries[newindex])
         self.highlightTag(newindex, True)
 
 class ImageViewer(gtk.DrawingArea) :
