@@ -17,9 +17,16 @@ class Image :
 
     gImageList = []
 
-    def __init__(self, filename) :
+    def __init__(self, filename, displayed=True) :
+        '''Initialize an image filename.
+           Pass displayed=False if this image isn't to be shown
+           in the current session, only used for remembering
+           previously set tags.
+        '''
         self.filename = filename
         self.tags = []
+
+        self.displayed = displayed
 
         # Rotation of the image relative to what it is on disk.
         # None means we don't know yet, 0 means stay at 0.
@@ -209,10 +216,19 @@ tag Denmark: p103050.jpg, p103051.jpg
         # XXX pathname issue here: filenames in tag files generally don't
         # have absolute pathnames, so we're only matching basenames and
         # there could be collisions.
-        for img in Image.gImageList :
-            for fil in filenames :
+        for fil in filenames :
+            tagged = False
+            for img in Image.gImageList :
                 if img.filename.endswith(fil) and tagindex not in img.tags :
                     img.tags.append(tagindex)
+                    tagged = True
+                    break
+            # Did we find an image matching fil?
+            # If not, add it as a non-displayed image.
+            if not tagged :
+                newim = Image(fil, displayed=False)
+                newim.tags.append(tagindex)
+                Image.gImageList.append(newim)
 
     def addTag(self, tag, img) :
         '''Add a tag to the given image.

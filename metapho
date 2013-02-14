@@ -102,14 +102,22 @@ class MetaPhoWindow(object):
         loaded = False
         while self.imgno < len(MetaPho.Image.gImageList)-1 and not loaded :
             self.imgno += 1
-            loaded = self.viewer.loadImage(MetaPho.Image.gImageList[self.imgno])
-            if not loaded :
-                del(MetaPho.Image.gImageList[self.imgno])
-                # The loop is about to increment imgno, but we actually want
-                # it to stay the same since deleting the nonexistent image
-                # slid the next image into the current position;
-                # so decrement imgno now.
-                self.imgno -= 1
+            img = MetaPho.Image.gImageList[self.imgno]
+            if img.displayed :
+                loaded = self.viewer.loadImage(img)
+                if not loaded :
+                    print "nextImage: couldn't show", img.filename
+                    img.displayed = False
+                    # Should arguably delete it from the list
+                    # so we don't continue to save tags for a
+                    # file we can't load. But what if it's just
+                    # temporarily unreadable and the user can fix it?
+                    #del(MetaPho.Image.gImageList[self.imgno])
+                    # The loop is about to increment imgno, but we actually want
+                    # it to stay the same since deleting the nonexistent image
+                    # slid the next image into the current position;
+                    # so decrement imgno now.
+                    #self.imgno -= 1
 
         if loaded :
             self.tagger.setImage(MetaPho.Image.gImageList[self.imgno])
@@ -121,9 +129,14 @@ class MetaPhoWindow(object):
         loaded = False
         while self.imgno >= 1 and not loaded :
             self.imgno -= 1
-            loaded = self.viewer.loadImage(MetaPho.Image.gImageList[self.imgno])
-            if not loaded :
-                del(MetaPho.Image.gImageList[self.imgno])
+            img = MetaPho.Image.gImageList[self.imgno]
+            if img.displayed :
+                loaded = self.viewer.loadImage(img)
+                if not loaded :
+                    print "prevImage: couldn't show", img.filename
+                    img.displayed = False
+                    # See comment in nextImage
+                    #del(MetaPho.Image.gImageList[self.imgno])
 
         if loaded :
             self.tagger.setImage(MetaPho.Image.gImageList[self.imgno])
