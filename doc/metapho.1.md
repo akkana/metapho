@@ -14,7 +14,7 @@ metapho *file* ...
 DESCRIPTION
 -----------
 
-`metapho`lets you tag large numbers of images as efficiently as possible.
+`metapho` lets you tag large numbers of images as efficiently as possible.
 Although it uses a graphical user interface, it's intended
 to be controllable entirely through the keyboard.
 
@@ -38,58 +38,58 @@ KEY BINDINGS
 
 Metapho obeys the following keys:
 
-`[space]'
+`[space]`
 Go to next image.
 
-`[backspace]'
+`[backspace]`
 Go to previous image
 
-`r', `t', `[right-arrow]'
+`r`, `t`, `[right-arrow]`
 Rotate right (clockwise)
 
-`R', `T', `l', `L', `[left-arrow]'
+`R`, `T`, `l`, `L`, `[left-arrow]`
 Rotate left (counter-clockwise)
 
-`[up-arrow]', `[down-arrow]'
+`[up-arrow]`, `[down-arrow]`
 Rotate 180 degrees.
 
-`Home'
+`Home`
 Go back to the first image.
 
-`End'
+`End`
 Go to the last image.
 
-`<Ctrl>q'
+`<Ctrl>q`
 Quit the application, writing any changes to the Tags file.
 
-`<Ctrl>d'
+`<Ctrl>d`
 Delete this image file from disk.
 This will bring up a confirmation dialog; clicking OK or
 typing another d or <Ctrl>d deletes the file.
 
-`a' through `z' or `A' through `Z'
+`a` through `z` or `A` through `Z`
 Toggle the appropriate tag for this image.
 
-`Return'
+`Return`
 If in navigation mode: activate the first blank tag and let you type in it.
 If in entry mode: leave entry mode and return to navigation mode.
 
-`<Ctrl>Space'
+`<Ctrl>Space`
 Stop typing in a tag field and move to the next image;
 or, if not currently in a tag field, activate the next tag and
 shift focus there.
 
-`Escape'
+`Escape`
 Ensure focus is not in a text field, so any characters typed
 will be navigational.
 
-`<Ctrl>U'
+`<Ctrl>U`
 Forget all tags for the current image.
 By default, when moving from one image to a new image that has no tags yet,
 metapho will copy the tags from the previous image.
 Use <Ctrl>U to turn these off.
 
-`/'
+`/`
 Search for tags matching whatever you type.
 Use Return or ESC to get out of search mode.
 
@@ -101,11 +101,11 @@ Akkana Peck, with a lot of design help from John Sturdy.
 COPYRIGHT
 ---------
 
-Copyright \(co 2013 Akkana Peck
+Copyright &copy; 2013 Akkana Peck
 Metapho is free software, licensed under the GNU Public License version 2.
 
 SEE ALSO
 --------
 
-The most recent version of `metapho', and more information about it, is at:
+The most recent version of `metapho`, and more information about it, is at:
 https://github.com/akkana/metapho
