@@ -26,6 +26,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.cur_img = None
         self.highlightBG = gtk.gdk.color_parse("#FFFFFF")
         self.greyBG = gtk.gdk.color_parse("#DDDDDD")
+        self.matchBG = gtk.gdk.color_parse("#DDFFEE")
         self.ignore_events = False
 
         # Set up a bunch of entries, also setting the table size:
@@ -144,6 +145,33 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 self.parentwin.set_focus(self.entries[tagno])
         else :
             self.entries[tagno].modify_base(gtk.STATE_NORMAL, self.greyBG)
+
+    def showMatches(self, pat) :
+        '''Colorize any tags that match the given pattern.
+           If pat == None, un-colorize everything.
+        '''
+        if pat :
+            self.title.set_text("search: " + pat)
+        else :
+            self.title.set_text(os.path.basename(self.cur_img.filename))
+        pat = pat.lower()
+        for i, ent in enumerate(self.entries) :
+            if pat and (ent.get_text().lower().find(pat) >= 0) :
+                ent.modify_base(gtk.STATE_NORMAL, self.matchBG)
+            elif self.buttons[i].get_active() :
+                ent.modify_base(gtk.STATE_NORMAL, self.highlightBG)
+            else :
+                ent.modify_base(gtk.STATE_NORMAL, self.greyBG)
+
+    def focusFirstMatch(self, pat) :
+        '''Focus the first text field matching the pattern.'''
+        self.title.set_text(os.path.basename(self.cur_img.filename))
+        pat = pat.lower()
+        for i, ent in enumerate(self.entries) :
+            if pat and (ent.get_text().lower().find(pat) >= 0) :
+                self.buttons[i].set_active(True)
+                ent.modify_base(gtk.STATE_NORMAL, self.matchBG)
+                return
 
     def setImage(self, img) :
         self.cur_img = img

@@ -26,6 +26,8 @@ class MetaPhoWindow(object):
         self.imgwidth = 640
         self.imgheight = 600
 
+        self.isearch = False
+
         self.win = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.win.set_border_width(10)
 
@@ -186,8 +188,11 @@ class MetaPhoWindow(object):
             return True
         return False
 
-    # Called whenever any key is pressed:
     def key_press_event(self, widget, event) :
+        '''Handle a key press event anywhere in the window'''
+        if self.isearch :
+            return self.isearch_key_press(widget, event)
+
         entry_focused = (type(self.win.get_focus()) is gtk.Entry)
 
         # ctrl-space shifts focus to the next tag entry,
@@ -286,8 +291,40 @@ class MetaPhoWindow(object):
                                   MetaPho.Image.gImageList[self.imgno])
             return True
 
+        if event.string == '/' :
+            self.search_string = ''
+            self.tagger.title.set_text("search: ")
+            self.isearch = True
+            return True
+
         # A key we didn't understand
         #print "Read key:", event.string, "keyval", event.keyval
+        return False
+
+    def isearch_key_press(self, widget, event) :
+        '''Handle key presses when we're in isearch mode,
+           typing in a search pattern.
+        '''
+
+        # Return shifts out of isearch mode
+        # but also accepts (shifts focus to) the first match.
+        if event.keyval == gtk.keysyms.Return :
+            self.tagger.focusFirstMatch(self.search_string)
+            self.isearch = False
+            self.tagger.title.set_text(os.path.basename(MetaPho.Image.gImageList[self.imgno].filename))
+            return True
+
+        # ESC shifts out of isearch mode.
+        if event.keyval == gtk.keysyms.Escape :
+            self.isearch = False
+            self.tagger.showMatches('')
+            return True
+
+        if event.string :
+            self.search_string += event.string
+            self.tagger.showMatches(self.search_string)
+            return True
+
         return False
 
     def main(self):
@@ -296,4 +333,10 @@ class MetaPhoWindow(object):
 if __name__ == '__main__':
     metapho = MetaPhoWindow(sys.argv[1:])
     metapho.firstImage()
-    metapho.main()
+    try :
+        metapho.main()
+    except KeyboardInterrupt :
+        # Deliberately don't call self.quit() -- we may be using Ctrl-C
+        # as a way to quit without updating anything.
+        print
+        sys.exit(1)
