@@ -1,0 +1,96 @@
+METAPHO(l)                                                          METAPHO(l)
+
+
+
+NNAAMMEE
+       mmeettaapphhoo - tag images with words or phrases
+
+SSYYNNTTAAXX
+       mmeettaapphhoo [_f_i_l_e_n_a_m_e[_f_i_l_e_n_a_m_e_._._.]]
+
+DDEESSCCRRIIPPTTIIOONN
+       _m_e_t_a_p_h_o  lets  you tag large numbers of images as efficiently as possi‐
+       ble.  Although it uses a graphical user interface, it's intended to  be
+       controllable entirely through the keyboard.
+
+       It  offers  two  modes,  somewhat  similar  to the vi editor.  Normally
+       you're in "navigational" mode, where you can rapidly move between  pho‐
+       tos  and  view  and  toggle  tags.  Clicking in a text entry, or typing
+       Return or <Ctrl>Space, will let you add new tags. Hit ESC,  Return,  or
+       <Ctrl>Space to leave entry mode and return to navigational mode.
+
+       Tags  will  be written to a file named Tags.  Metapho tries to be smart
+       about where to write the Tags file, using the highest common  directory
+       of  the images passed to it on the command line. It will also read tags
+       in from any Tags files that already exist in any of the image  directo‐
+       ries,  and will save those tags (unless changed by the user) along with
+       any new tags added.
+
+KKEEYY BBIINNDDIINNGGSS
+       Metapho obeys the following keys:
+
+       [[ssppaaccee]]
+              Go to next image.
+
+       [[bbaacckkssppaaccee]]
+              Go to previous image
+
+       rr, tt, [[rriigghhtt--aarrrrooww]]
+              Rotate right (clockwise)
+
+       RR, TT, ll, LL, [[lleefftt--aarrrrooww]]
+              Rotate left (counter-clockwise)
+
+       [[uupp--aarrrrooww]], [[ddoowwnn--aarrrrooww]]
+              Rotate 180 degrees.
+
+       HHoommee   Go back to the first image.
+
+       EEnndd    Go to the last image.
+
+       <<CCttrrll>>qq
+              Quit the application, writing any changes to the Tags file.
+
+       <<CCttrrll>>dd
+              Delete this image file from disk.  This will bring up a  confir‐
+              mation  dialog;  clicking  OK  or  typing  another  d or <Ctrl>d
+              deletes the file.
+
+       aa through zz or AA through ZZ
+              Toggle the appropriate tag for this image.
+
+       RReettuurrnn If in navigation mode: activate the first blank tag and let  you
+              type  in  it.   If in entry mode: leave entry mode and return to
+              navigation mode.
+
+       <<CCttrrll>>SSppaaccee
+              Stop typing in a tag field and move to the next  image;  or,  if
+              not  currently  in  a tag field, activate the next tag and shift
+              focus there.
+
+       EEssccaappee Ensure focus is not in a text field,  so  any  characters  typed
+              will be navigational.
+
+       <<CCttrrll>>UU
+              Forget  all tags for the current image.  By default, when moving
+              from one image to a new image that has no tags yet, metapho will
+              copy  the  tags  from  the  previous image.  Use <Ctrl>U to turn
+              these off.
+
+       //      Search for tags matching whatever you type.  Use Return  or  ESC
+              to get out of search mode.
+
+AAUUTTHHOORR
+       Akkana Peck, with a lot of design help from John Sturdy.
+
+CCOOPPYYRRIIGGHHTT
+       Copyright © 2013 Akkana Peck
+       Pho is free software, licensed under the GNU Public License.
+
+SSEEEE AALLSSOO
+       The  most  recent version of _p_h_o, and more information about it, is at:
+       https://github.com/akkana/metapho
+
+
+
+METAPHO                           Feb 17 2013                       METAPHO(l)
