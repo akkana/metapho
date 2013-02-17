@@ -1,0 +1,92 @@
+.TH METAPHO l "Feb 17 2013" "METAPHO"
+.SH NAME
+\fBmetapho\fP \- tag images with words or phrases
+.SH SYNTAX
+.B metapho
+.RI [ filename [ filename... ]]
+.SH DESCRIPTION
+.I metapho
+lets you tag large numbers of images as efficiently as possible.
+Although it uses a graphical user interface, it's intended
+to be controllable entirely through the keyboard.
+.PP
+It offers two modes, somewhat similar to the vi editor.
+Normally you're in "navigational" mode, where you can rapidly
+move between photos and view and toggle tags.
+Clicking in a text entry, or typing Return or <Ctrl>Space,
+will let you add new tags. Hit ESC, Return, or <Ctrl>Space to
+leave entry mode and return to navigational mode.
+.PP
+Tags will be written to a file named Tags.
+Metapho tries to be smart about where to write the Tags file,
+using the highest common directory of the images passed to it
+on the command line. It will also read tags in from any Tags
+files that already exist in any of the image directories,
+and will save those tags (unless changed by the user) along
+with any new tags added.
+.SH KEY BINDINGS
+Metapho obeys the following keys:
+.TP
+\fB[space]\fR
+Go to next image.
+.TP
+\fB[backspace]\fR
+Go to previous image
+.TP
+\fBr\fR, \fBt\fR, \fB[right-arrow]\fR
+Rotate right (clockwise)
+.TP
+\fBR\fR, \fBT\fR, \fBl\fR, \fBL\fR, \fB[left-arrow]\fR
+Rotate left (counter-clockwise)
+.TP
+\fB[up-arrow]\fR, \fB[down-arrow]\fR
+Rotate 180 degrees.
+.TP
+\fBHome\fR
+Go back to the first image.
+.TP
+\fBEnd\fR
+Go to the last image.
+.TP
+\fB<Ctrl>q\fR
+Quit the application, writing any changes to the Tags file.
+.TP
+\fB<Ctrl>d\fR
+Delete this image file from disk.
+This will bring up a confirmation dialog; clicking OK or
+typing another d or <Ctrl>d deletes the file.
+.TP
+\fBa\fR through \fBz\fR or \fBA\fR through \fBZ\fR
+Toggle the appropriate tag for this image.
+.TP
+\fBReturn\fR
+If in navigation mode: activate the first blank tag and let you type in it.
+If in entry mode: leave entry mode and return to navigation mode.
+.TP
+\fB<Ctrl>Space\fR
+Stop typing in a tag field and move to the next image;
+or, if not currently in a tag field, activate the next tag and
+shift focus there.
+.TP
+\fBEscape\fR
+Ensure focus is not in a text field, so any characters typed
+will be navigational.
+.TP
+\fB<Ctrl>U\fR
+Forget all tags for the current image.
+By default, when moving from one image to a new image that has no tags yet,
+metapho will copy the tags from the previous image.
+Use <Ctrl>U to turn these off.
+.TP
+\fB/\fR
+Search for tags matching whatever you type.
+Use Return or ESC to get out of search mode.
+.SH AUTHOR
+Akkana Peck, with a lot of design help from John Sturdy.
+.SH COPYRIGHT
+Copyright \(co 2013 Akkana Peck
+.br
+Pho is free software, licensed under the GNU Public License.
+.SH SEE ALSO
+The most recent version of \fIpho\fR, and more information about it, is at:
+https://github.com/akkana/metapho
