@@ -22,11 +22,6 @@ class MetaPhoWindow(object):
             MetaPho.Image.gImageList.append(MetaPho.Image(filename))
         self.imgno = 0
 
-        # Window size.
-        # Eventually, calculate these somehow or read from prefs
-        #self.width = 1024
-        #self.height = 768
-
         # The size of the image viewing area:
         self.imgwidth = 640
         self.imgheight = 600
@@ -51,8 +46,6 @@ class MetaPhoWindow(object):
 
         self.tagger = MetaPho.gtkpho.TagViewer(self.win)
         main_hbox.pack_start(self.tagger, expand=True)
-
-        #self.win.set_default_size(self.width, self.height)
 
         self.win.add(main_hbox)
 
@@ -100,6 +93,16 @@ class MetaPhoWindow(object):
            Tell the viewer to load and show the image.
         '''
         loaded = False
+
+        # Save the tags of the current image, so we can copy them
+        # into the next image if it doesn't have any yet.
+        oldtags = None
+        try :
+            if MetaPho.Image.gImageList[self.imgno].tags :
+                oldtags = MetaPho.Image.gImageList[self.imgno].tags
+        except :
+            pass
+
         while self.imgno < len(MetaPho.Image.gImageList)-1 and not loaded :
             self.imgno += 1
             img = MetaPho.Image.gImageList[self.imgno]
@@ -120,6 +123,11 @@ class MetaPhoWindow(object):
                     #self.imgno -= 1
 
         if loaded :
+            # If we have an image, and it has no tags set yet,
+            # clone the tags from the previous image:
+            if oldtags and not MetaPho.Image.gImageList[self.imgno].tags :
+                MetaPho.Image.gImageList[self.imgno].tags = oldtags[:]
+
             self.tagger.setImage(MetaPho.Image.gImageList[self.imgno])
 
         else :           # couldn't load anything in the list
@@ -182,18 +190,24 @@ class MetaPhoWindow(object):
     def key_press_event(self, widget, event) :
         entry_focused = (type(self.win.get_focus()) is gtk.Entry)
 
-        # ESC or ctrl-space shifts focus to the next tag entry,
+        # ctrl-space shifts focus to the next tag entry,
         # or out of the entries if we're already typing in one.
         # Ctrl-space also goes to the next image.
-        if event.keyval == gtk.keysyms.Escape or \
-                (event.keyval == gtk.keysyms.space and \
+        if (event.keyval == gtk.keysyms.space and \
                  event.state & gtk.gdk.CONTROL_MASK) :
             if entry_focused :
-                self.win.set_focus(None)
+                self.tagger.focus_none()
             else :
                 self.tagger.focus_next_entry()
+
             if (event.keyval == gtk.keysyms.space) :
                 self.nextImage()
+            return True
+
+        # ESC shifts focus out of the current entry (if any)
+        # and makes sure nothing is focused.
+        if event.keyval == gtk.keysyms.Escape :
+            self.tagger.focus_none()
             return True
 
         # Return shifts focus to the next tag entry (never out of the entries).
@@ -219,6 +233,13 @@ class MetaPhoWindow(object):
                 MetaPho.Image.gImageList[self.imgno].delete()
                 self.imgno -= 1
                 self.nextImage()
+            return True
+
+        # Ctrl-U: clear tags, then leave focus in the first empty tag field.
+        if event.keyval == gtk.keysyms.u and \
+                event.state & gtk.gdk.CONTROL_MASK :
+            self.tagger.clearTags(MetaPho.Image.gImageList[self.imgno])
+            self.tagger.focus_next_entry()
             return True
 
         # Eventually we may want to require ctrl-q to quit,

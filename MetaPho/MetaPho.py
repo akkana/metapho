@@ -266,6 +266,9 @@ tag Denmark: p103050.jpg, p103051.jpg
         except :
             pass
 
+    def clearTags(self, img) :
+        img.tags = []
+
     def toggleTag(self, tagno, img) :
         '''Toggle tag number tagno for the given img.'''
         self.changed = True

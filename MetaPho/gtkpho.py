@@ -64,6 +64,26 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
             newtag = self.addTag(newstr, self.cur_img)
             self.highlightTag(newtag, True)
 
+    def clearTags(self, img) :
+        MetaPho.Tagger.clearTags(self, img)
+
+        # also update the UI
+        for i in xrange(len((self.entries))) :
+            self.highlightTag(i, False)
+
+        # leave nothing focused
+        self.focus_none()
+
+    def focus_none(self) :
+        # if focus was in a text entry, un-highlight that entry
+        focused = self.parentwin.get_focus()
+        if (type(focused) is gtk.Entry) :
+            entryno = self.entries.index(focused)
+            self.highlightTag(entryno, False)
+
+        # Make sure we're leaving nothing focused:
+        self.parentwin.set_focus(None)
+
     def focus_out(self, entry, event, tagno) :
         entry_text = entry.get_text()
         # Ignore blank entries
