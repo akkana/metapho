@@ -21,7 +21,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.parentwin = parentwin
 
         self.title = gtk.Label("Tags")
-        self.attach_defaults(self.title, 0, 2, 0, 1 );
+        self.attach(self.title, 0, 2, 0, 1 );
         self.title.show()
         self.cur_img = None
         self.highlightBG = gtk.gdk.color_parse("#FFFFFF")
@@ -44,7 +44,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                     left = 2
 
                 button = gtk.ToggleButton(buttonchar)
-                self.attach_defaults(button, left, left+1, i+1, i+2 );
+                self.attach(button, left, left+1, i+1, i+2 );
                 self.buttons.append(button)
                 button.connect("toggled", self.toggled, i)
 
@@ -53,7 +53,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 #entry.connect("changed", self.entry_changed, i)
                 #entry.connect("focus-in-event", self.focus_in, i)
                 entry.connect("focus-out-event", self.focus_out, i)
-                self.attach_defaults(entry, left+1, left+2, i+1, i+2 );
+                self.attach(entry, left+1, left+2, i+1, i+2 );
                 self.entries.append(entry)
 
         self.show()

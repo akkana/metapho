@@ -134,6 +134,15 @@ class MetaPhoWindow(object):
 
         else :           # couldn't load anything in the list
             print "No more images"
+            dialog = gtk.MessageDialog(self.win, 
+                                       gtk.DIALOG_DESTROY_WITH_PARENT,
+                                       gtk.MESSAGE_QUESTION, 
+                                       gtk.BUTTONS_OK_CANCEL,
+                                       "No more images: quit?")
+            response = dialog.run()
+            dialog.destroy()
+            if response == gtk.RESPONSE_OK :
+                self.quit()
 
     def prevImage(self) :
         loaded = False
