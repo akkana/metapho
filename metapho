@@ -139,6 +139,7 @@ class MetaPhoWindow(object):
                                        gtk.MESSAGE_QUESTION, 
                                        gtk.BUTTONS_OK_CANCEL,
                                        "No more images: quit?")
+            dialog.set_default_response(gtk.RESPONSE_OK)
             response = dialog.run()
             dialog.destroy()
             if response == gtk.RESPONSE_OK :
