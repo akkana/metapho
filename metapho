@@ -254,7 +254,9 @@ class MetaPhoWindow(object):
         if event.keyval == gtk.keysyms.u and \
                 event.state & gtk.gdk.CONTROL_MASK :
             self.tagger.clearTags(MetaPho.Image.gImageList[self.imgno])
-            self.tagger.focus_next_entry()
+            # Turns out auto-focusing the next entry is annoying,
+            # so don't do it:
+            # self.tagger.focus_next_entry()
             return True
 
         # Eventually we may want to require ctrl-q to quit,
