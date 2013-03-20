@@ -75,14 +75,30 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         # leave nothing focused
         self.focus_none()
 
+    def unhighlight_empty_entries(self) :
+        '''Check whether any entries are empty.
+           If so, make sure they're unhighlighted.
+        '''
+        for i, ent in enumerate(self.entries) :
+            if self.buttons[i].get_active() and not ent.get_text() :
+                self.highlightTag(i, False)
+
     def focus_none(self) :
-        # if focus was in a text entry, un-highlight that entry
+        '''Un-focus any currently focused text entry,
+           leaving nothing focused.
+           If there was a focused entry and it was empty,
+           de-select the corresponding toggle button.
+        '''
         focused = self.parentwin.get_focus()
-        if (type(focused) is gtk.Entry) :
-            entryno = self.entries.index(focused)
-            self.highlightTag(entryno, False)
+
+        # if focus was in a text entry, un-highlight that entry.
+        # if (type(focused) is gtk.Entry) :
+        #     print "It's an entry"
+        #     entryno = self.entries.index(focused)
+        #     self.highlightTag(entryno, False)
 
         # Make sure we're leaving nothing focused:
+        self.unhighlight_empty_entries()
         self.parentwin.set_focus(None)
 
     def focus_out(self, entry, event, tagno) :
@@ -107,6 +123,12 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         else :
             # It's already on, so toggle it off.
             self.removeTag(tagno, self.cur_img)
+
+        # Often when the user clicks on a button it's because
+        # focus was in a text field. We definitely don't want it
+        # to stay there.
+        self.focus_none()
+
         return True
 
     def check_entry_tag(focused_widget) :
@@ -132,6 +154,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
 
     def highlightTag(self, tagno, val) :
         '''Turn tag number tagno on (if val=True) or off (val=False).'''
+
         if self.buttons[tagno].get_active() != val :
             self.ignore_events = True
             self.buttons[tagno].set_active(val)
@@ -145,6 +168,8 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 self.parentwin.set_focus(self.entries[tagno])
         else :
             self.entries[tagno].modify_base(gtk.STATE_NORMAL, self.greyBG)
+            if self.parentwin.get_focus() == self.entries[tagno] :
+                self.focus_none()
 
     def showMatches(self, pat) :
         '''Colorize any tags that match the given pattern.

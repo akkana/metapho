@@ -64,7 +64,7 @@ class MetaPhoWindow(object):
         # text that hasn't been updated yet in the tags list.
         # Call the tagger to warn about that.
         if type(self.win.get_focus()) is gtk.Entry :
-            tagger.check_entry_tag(self.win.get_focus())
+            self.tagger.check_entry_tag(self.win.get_focus())
 
         print "==========="
         print self.tagger
@@ -205,18 +205,15 @@ class MetaPhoWindow(object):
 
         entry_focused = (type(self.win.get_focus()) is gtk.Entry)
 
-        # ctrl-space shifts focus to the next tag entry,
+        # ctrl-space goes to the next image, even if we're typing
+        # in an entry. Nothing should be focused afterward.
         # or out of the entries if we're already typing in one.
         # Ctrl-space also goes to the next image.
         if (event.keyval == gtk.keysyms.space and \
                  event.state & gtk.gdk.CONTROL_MASK) :
             if entry_focused :
                 self.tagger.focus_none()
-            else :
-                self.tagger.focus_next_entry()
-
-            if (event.keyval == gtk.keysyms.space) :
-                self.nextImage()
+            self.nextImage()
             return True
 
         # ESC shifts focus out of the current entry (if any)
