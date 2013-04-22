@@ -24,7 +24,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.attach(self.title, 0, 2, 0, 1 );
         self.title.show()
         self.cur_img = None
-        self.highlightBG = gtk.gdk.color_parse("#FFFFFF")
+        self.highlight_bg = gtk.gdk.color_parse("#FFFFFF")
         self.greyBG = gtk.gdk.color_parse("#DDDDDD")
         self.matchBG = gtk.gdk.color_parse("#DDFFEE")
         self.ignore_events = False
@@ -59,18 +59,18 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.show()
 
     def change_tag(self, tagno, newstr) :
-        if tagno < len(self.tagList) :
-            self.tagList[tagno] = newstr
+        if tagno < len(self.tag_list) :
+            self.tag_list[tagno] = newstr
         else :
-            newtag = self.addTag(newstr, self.cur_img)
-            self.highlightTag(newtag, True)
+            newtag = self.add_tag(newstr, self.cur_img)
+            self.highlight_tag(newtag, True)
 
-    def clearTags(self, img) :
-        MetaPho.Tagger.clearTags(self, img)
+    def clear_tags(self, img) :
+        MetaPho.Tagger.clear_tags(self, img)
 
         # also update the UI
         for i in xrange(len((self.entries))) :
-            self.highlightTag(i, False)
+            self.highlight_tag(i, False)
 
         # leave nothing focused
         self.focus_none()
@@ -81,7 +81,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         '''
         for i, ent in enumerate(self.entries) :
             if self.buttons[i].get_active() and not ent.get_text() :
-                self.highlightTag(i, False)
+                self.highlight_tag(i, False)
 
     def focus_none(self) :
         '''Un-focus any currently focused text entry,
@@ -95,7 +95,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         # if (type(focused) is gtk.Entry) :
         #     print "It's an entry"
         #     entryno = self.entries.index(focused)
-        #     self.highlightTag(entryno, False)
+        #     self.highlight_tag(entryno, False)
 
         # Make sure we're leaving nothing focused:
         self.unhighlight_empty_entries()
@@ -119,10 +119,10 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         # get_active() is the state *after* the button has been pressed.
         if button.get_active() :
             # Was off, now on, so add the tag.
-            self.addTag(tagno, self.cur_img)
+            self.add_tag(tagno, self.cur_img)
         else :
             # It's already on, so toggle it off.
-            self.removeTag(tagno, self.cur_img)
+            self.remove_tag(tagno, self.cur_img)
 
         # Often when the user clicks on a button it's because
         # focus was in a text field. We definitely don't want it
@@ -140,19 +140,19 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
             if focused_widget == ent :
                 self.focus_out(ent, None, i)
 
-    def displayTags(self) :
-        '''Call this after readTags() has been read for all directories.'''
+    def display_tags(self) :
+        '''Call this after read_tags() has been read for all directories.'''
 
         for i in range(len(self.entries)) :
-            if i < len(self.tagList) :
-                # print "Tag", i, ":", self.tagList[i]
-                self.entries[i].set_text(self.tagList[i])
+            if i < len(self.tag_list) :
+                # print "Tag", i, ":", self.tag_list[i]
+                self.entries[i].set_text(self.tag_list[i])
 
-        if len(self.tagList) > len(self.entries) :
+        if len(self.tag_list) > len(self.entries) :
             print "Too many tags -- can't show all", \
-                len(self.tagList)
+                len(self.tag_list)
 
-    def highlightTag(self, tagno, val) :
+    def highlight_tag(self, tagno, val) :
         '''Turn tag number tagno on (if val=True) or off (val=False).'''
 
         if self.buttons[tagno].get_active() != val :
@@ -161,7 +161,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
             self.ignore_events = False
 
         if val :
-            self.entries[tagno].modify_base(gtk.STATE_NORMAL, self.highlightBG)
+            self.entries[tagno].modify_base(gtk.STATE_NORMAL, self.highlight_bg)
             # If a tag is highlighted and the associated entry is empty,
             # put focus there so the user can type something.
             if not self.entries[tagno].get_text().strip() :
@@ -171,7 +171,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
             if self.parentwin.get_focus() == self.entries[tagno] :
                 self.focus_none()
 
-    def showMatches(self, pat) :
+    def show_matches(self, pat) :
         '''Colorize any tags that match the given pattern.
            If pat == None, un-colorize everything.
         '''
@@ -184,11 +184,11 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
             if pat and (ent.get_text().lower().find(pat) >= 0) :
                 ent.modify_base(gtk.STATE_NORMAL, self.matchBG)
             elif self.buttons[i].get_active() :
-                ent.modify_base(gtk.STATE_NORMAL, self.highlightBG)
+                ent.modify_base(gtk.STATE_NORMAL, self.highlight_bg)
             else :
                 ent.modify_base(gtk.STATE_NORMAL, self.greyBG)
 
-    def focusFirstMatch(self, pat) :
+    def focus_first_match(self, pat) :
         '''Focus the first text field matching the pattern.'''
         self.title.set_text(os.path.basename(self.cur_img.filename))
         pat = pat.lower()
@@ -198,22 +198,22 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 ent.modify_base(gtk.STATE_NORMAL, self.matchBG)
                 return
 
-    def setImage(self, img) :
+    def set_image(self, img) :
         self.cur_img = img
 
         self.title.set_text(os.path.basename(img.filename))
 
         # Clear all currently highlighted tags
         for i in xrange(len(self.entries)) :
-            self.highlightTag(i, False)
+            self.highlight_tag(i, False)
 
         # Highlight just the ones associated with this image
         for i, tagstr in enumerate(img.tags) :
-            self.highlightTag(img.tags[i], True)
+            self.highlight_tag(img.tags[i], True)
 
         return
 
-    def addTag(self, tag, img) :
+    def add_tag(self, tag, img) :
         '''Add a tag to the given image.
            img is a MetaPho.Image.
            tag may be a string, which can be a new string or an existing one,
@@ -222,38 +222,38 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
            or None if error.
         '''
         # Call the base class to make sure the tag is there:
-        tagindex = MetaPho.Tagger.addTag(self, tag, img)
+        tagindex = MetaPho.Tagger.add_tag(self, tag, img)
 
         # Now display it, if possible
         if tagindex < len(self.entries) :
-            self.highlightTag(tagindex, True)
+            self.highlight_tag(tagindex, True)
 
         return tagindex
 
-    def removeTag(self, tag, img) :
+    def remove_tag(self, tag, img) :
         if not type(tag) is int :
             tagstr = tag
-            tag = self.tagList.index(tagstr)
+            tag = self.tag_list.index(tagstr)
             if tagstr < 0 :
                 print "No such tag", tagstr
                 return
 
-        MetaPho.Tagger.removeTag(self, tag, img)
+        MetaPho.Tagger.remove_tag(self, tag, img)
 
-        self.highlightTag(tag, False)
+        self.highlight_tag(tag, False)
 
-    def toggleTag(self, tagno, img) :
+    def toggle_tag(self, tagno, img) :
         '''Toggle tag number tagno for the given img.'''
-        MetaPho.Tagger.toggleTag(self, tagno, img)
+        MetaPho.Tagger.toggle_tag(self, tagno, img)
         if tagno < len(self.entries) :
-            self.highlightTag(tagno, not self.buttons[tagno].get_active())
+            self.highlight_tag(tagno, not self.buttons[tagno].get_active())
 
     def focus_next_entry(self) :
         '''Set focus to the next available entry.
            If we're already typing in a new tag entry that hasn't been
            saved yet, save it first before switching to the new one.
         '''
-        newindex = len(self.tagList)
+        newindex = len(self.tag_list)
         curtext = self.entries[newindex].get_text()
 
         if curtext.strip() != '' :
@@ -262,7 +262,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
             newindex += 1
 
         self.parentwin.set_focus(self.entries[newindex])
-        self.highlightTag(newindex, True)
+        self.highlight_tag(newindex, True)
 
 class ImageViewer(gtk.DrawingArea) :
     '''A PyGTK image viewer widget for MetaPho.
@@ -284,12 +284,12 @@ class ImageViewer(gtk.DrawingArea) :
             self.gc = widget.window.new_gc()
             x, y, self.imgwidth, self.imgheight = self.get_allocation()
 
-            # Have we had loadImage called, but we weren't ready for it?
+            # Have we had load_image called, but we weren't ready for it?
             # Now, theoretically, we are ... so call it again.
             if self.cur_img and not self.pixbuf :
-                self.loadImage(self.cur_img)
+                self.load_image(self.cur_img)
 
-        self.showImage()
+        self.show_image()
 
     # Mapping from EXIF orientation tag to degrees rotated.
     # http://sylvana.net/jpegcrop/exif_orientation.html
@@ -298,7 +298,7 @@ class ImageViewer(gtk.DrawingArea) :
     # We're not implementing that right now, because nobody
     # uses it in practice.
 
-    def loadImage(self, img) :
+    def load_image(self, img) :
         '''Load the image passed in, and show it.
            img is a MetaPho.Image object.
            Return True for success, False for error.
@@ -371,7 +371,7 @@ class ImageViewer(gtk.DrawingArea) :
 
             self.pixbuf = newpb
 
-            self.showImage()
+            self.show_image()
             loaded = True
 
         except glib.GError :
@@ -384,7 +384,7 @@ class ImageViewer(gtk.DrawingArea) :
 
         return loaded
 
-    def showImage(self) :
+    def show_image(self) :
         if not self.gc :
             return
 
@@ -403,5 +403,5 @@ class ImageViewer(gtk.DrawingArea) :
         self.cur_img.rot = (self.cur_img.rot + rot + 360) % 360
 
         # XXX we don't always need to reload: could make this more efficient.
-        self.loadImage(self.cur_img)
+        self.load_image(self.cur_img)
 

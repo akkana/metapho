@@ -15,7 +15,7 @@ class Image :
     '''An image, with additional info such as rotation and tags.
     '''
 
-    gImageList = []
+    g_image_list = []
 
     def __init__(self, filename, displayed=True) :
         '''Initialize an image filename.
@@ -53,7 +53,7 @@ class Image :
         '''
         print "Deleting", self.filename
         os.unlink(self.filename)
-        Image.gImageList.remove(self)
+        Image.g_image_list.remove(self)
 
 import os
 import shlex
@@ -68,12 +68,12 @@ class Tagger(object) :
         # The category list is a list of lists:
         # [ [ "First category", 3, 5, 11 ] ]
         # means category 0 has the name "First category" and includes
-        # tags 3, 5 and 11 from the tagList.
+        # tags 3, 5 and 11 from the tag_list.
         self.categories = {}
 
         # The tag list is just a list of all tags we know about.
         # A tag may be in several categories.
-        self.tagList = []
+        self.tag_list = []
 
         # Files from which we've read tags
         self.tagfiles = []
@@ -95,19 +95,19 @@ class Tagger(object) :
         # outstr += "Common dir: " + self.commondir + "\n"
 
         outstr = ''
-        for tagno, tagstr in enumerate(self.tagList) :
+        for tagno, tagstr in enumerate(self.tag_list) :
             # No empty tags
             if tagstr.strip() == '' :
                 continue
             outstr += "tag %s :" % tagstr
-            for img in Image.gImageList :
+            for img in Image.g_image_list :
                 if tagno in img.tags :
                     outstr += ' ' + img.filename
             outstr += '\n'
 
         return outstr
 
-    def writeTagFile(self) :
+    def write_tag_file(self) :
         '''Save the current set of tags to a Tags file chosen from
            the top-level directory used in the images we've seen.
            If there was a previous Tags file there, it will be saved
@@ -125,10 +125,10 @@ class Tagger(object) :
         outfile.write(str(self))
         outfile.close()
 
-    def readTags(self, dirname) :
+    def read_tags(self, dirname) :
         '''Read in tags from files named in the given directory,
            and tag images in the imagelist appropriately.
-           Tags will be appended to the tagList.
+           Tags will be appended to the tag_list.
         '''
         # Keep track of the dir common to all directories we use:
         if self.commondir == None :
@@ -186,7 +186,7 @@ tag Denmark: p103050.jpg, p103051.jpg
 
             if line.startswith('tag ') :
                 tagname = line[4:colon].strip()
-                self.processTag(tagname, objects)
+                self.process_tag(tagname, objects)
 
             elif line.startswith('tagtype ') :
                 typename = line[8:colon].strip()
@@ -197,20 +197,20 @@ tag Denmark: p103050.jpg, p103051.jpg
             else :
                 # Assume it's a tag: file file file line
                 tagname = line[:colon].strip()
-                self.processTag(tagname, objects)
+                self.process_tag(tagname, objects)
 
         fp.close()
 
-    def processTag(self, tagname, filenames) :
+    def process_tag(self, tagname, filenames) :
         '''After reading a tag from a tags file, add it to the global
            tags list if it isn't there already, and add the given filenames
            to it.
         '''
         try :
-            tagindex = self.tagList.index(tagname)
+            tagindex = self.tag_list.index(tagname)
         except :
-            tagindex = len(self.tagList)
-            self.tagList.append(tagname)
+            tagindex = len(self.tag_list)
+            self.tag_list.append(tagname)
 
         # Search for images matching the names in filenames
         # XXX pathname issue here: filenames in tag files generally don't
@@ -218,7 +218,7 @@ tag Denmark: p103050.jpg, p103051.jpg
         # there could be collisions.
         for fil in filenames :
             tagged = False
-            for img in Image.gImageList :
+            for img in Image.g_image_list :
                 if img.filename.endswith(fil) and tagindex not in img.tags :
                     img.tags.append(tagindex)
                     tagged = True
@@ -228,9 +228,9 @@ tag Denmark: p103050.jpg, p103051.jpg
             if not tagged :
                 newim = Image(fil, displayed=False)
                 newim.tags.append(tagindex)
-                Image.gImageList.append(newim)
+                Image.g_image_list.append(newim)
 
-    def addTag(self, tag, img) :
+    def add_tag(self, tag, img) :
         '''Add a tag to the given image.
            img is a MetaPho.Image.
            tag may be a string, which can be a new string or an existing one,
@@ -246,14 +246,14 @@ tag Denmark: p103050.jpg, p103051.jpg
             return tag
 
         # Else it's a string. Make a new tag.
-        if tag in self.tagList :
-            return self.tagList.index(tag)
-        self.tagList.append(tag)
-        newindex = len(self.tagList) - 1
+        if tag in self.tag_list :
+            return self.tag_list.index(tag)
+        self.tag_list.append(tag)
+        newindex = len(self.tag_list) - 1
         img.tags.append(newindex)
         return newindex
 
-    def removeTag(self, tag, img) :
+    def remove_tag(self, tag, img) :
         self.changed = True
 
         if type(tag) is int :
@@ -262,14 +262,14 @@ tag Denmark: p103050.jpg, p103051.jpg
 
         # Else it's a string. Remove it if it's there.
         try :
-            self.tagList.remove(tag)
+            self.tag_list.remove(tag)
         except :
             pass
 
-    def clearTags(self, img) :
+    def clear_tags(self, img) :
         img.tags = []
 
-    def toggleTag(self, tagno, img) :
+    def toggle_tag(self, tagno, img) :
         '''Toggle tag number tagno for the given img.'''
         self.changed = True
 
@@ -278,12 +278,12 @@ tag Denmark: p103050.jpg, p103051.jpg
             return
 
         # It's not there yet. See if it exists in the global tag list.
-        # if tagno > len(self.tagList) :
+        # if tagno > len(self.tag_list) :
         #     print "Warning: adding a not yet existent tag", tagno
 
         img.tags.append(tagno)
 
-    def matchTag(self, pattern) :
+    def match_tag(self, pattern) :
         '''Return a list of tags matching the pattern.'''
         return None
 
