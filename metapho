@@ -69,7 +69,10 @@ class MetaPhoWindow(object):
         print "==========="
         print self.tagger
         self.tagger.write_tag_file()
-        gtk.main_quit()
+
+        # Can't call main_quit here: RuntimeError: called outside of a mainloop
+        # Apparently this is what you're supposed to do instead:
+        self.win.connect('event-after', gtk.main_quit)
 
     def read_all_tags(self) :
         '''Read tags in all directories used by images in argv.
