@@ -7,6 +7,7 @@
 # - do NOT contain a file named Keywords or Tags
 # - DO contain at least one file ending in .jpg or .JPG
 # - do NOT contain "web" or "HTML" in the name
+# - do not end with a repeated pattern, e.g. images/eclipse/eclipse
 
 import os
 # os.walk is handy, but it doesn't allow any type of sorting.
@@ -51,8 +52,21 @@ for root, dirs, files in pathwalk('.', topdown=True) :
     #print "Checking", root
 
     # Don't check directories with a path component "html" or "web"
+    # They're probably a collection of lower-res images intended
+    # to be copied to a website.
     d = root.lower()
     if d.find("/web") > 0 or d.find("/html") > 0 :
+        print " ( Skipping", root, ")"
+        del dirs[0:]
+        continue
+
+    # Don't check directories of the same name as their parent directory.
+    # They're probably a collection of lower-res images intended
+    # to be copied to a website.
+    components = os.path.split(root)
+    ultimate = components[-1]
+    penultimate = os.path.split(components[-2])[-1]
+    if ultimate == penultimate :
         print " ( Skipping", root, ")"
         del dirs[0:]
         continue
