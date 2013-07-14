@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+
+# This is a script to help me find image directories that still need
+# keywording. In other words, it will:
+#
+# Find directories under the current one that:
+# - do NOT contain a file named Keywords or Tags
+# - DO contain at least one file ending in .jpg or .JPG
+# - do NOT contain "web" or "HTML" in the name
+
+import os
+# os.walk is handy, but it doesn't allow any type of sorting.
+# So here's a rewritten os.walk that sorts alphabetically.
+def pathwalk(top, topdown=True, onerror=None, followlinks=False, sortfn=None) :
+    # We may not have read permission for top, in which case we can't
+    # get a list of the files the directory contains.  os.path.walk
+    # always suppressed the exception then, rather than blow up for a
+    # minor reason when (say) a thousand readable directories are still
+    # left to visit.  That logic is copied here.
+    try:
+        # Note that listdir and error are globals in this module due
+        # to earlier import-*.
+        names = os.listdir(top)
+        if sortfn :
+            names.sort(sortfn)
+        else :
+            names.sort()
+    except os.error, err:
+        if onerror is not None:
+            onerror(err)
+        return
+
+    dirs, nondirs = [], []
+    for name in names:
+        if os.path.isdir(os.path.join(top, name)):
+            dirs.append(name)
+        else:
+            nondirs.append(name)
+
+    if topdown:
+        yield top, dirs, nondirs
+    for name in dirs:
+        path = os.path.join(top, name)
+        if followlinks or not os.path.islink(path):
+            for x in pathwalk(path, topdown, onerror, followlinks):
+                yield x
+    if not topdown:
+        yield top, dirs, nondirs
+
+for root, dirs, files in pathwalk('.', topdown=True) :
+    #print "Checking", root
+
+    # Don't check directories with a path component "html" or "web"
+    d = root.lower()
+    if d.find("/web") > 0 or d.find("/html") > 0 :
+        print " ( Skipping", root, ")"
+        del dirs[0:]
+        continue
+
+    hasjpeg = False
+    haskeywords = False
+    for f in files :
+        l = f.lower()
+
+        # Don't check directories containing an index.* or showpix.* file
+        if l[0:6] == "index." or l[0:8] == "showpix." :
+            print " (Skipping", root, ")"
+            del dirs[0:]
+            hasjpeg = False
+            break
+
+        if (not hasjpeg) and l.find(".jpg") > 0 :
+            # This directory does have at least one jpg.
+            # Does it also have Keywords?
+            hasjpeg = True
+
+        if f == "Keywords" or f == "Tags" :
+            haskeywords = True
+
+    # Done looking through files: if it's not HTML, has at least
+    # one jpeg and no keywords file, print it.
+    if hasjpeg and not haskeywords :
+        if root[0:2] == "./" :
+            print root[2:]
+        else :
+            print root
+
+
+
