@@ -34,12 +34,6 @@ class MetaPhoWindow(object):
         self.win.connect("delete_event", self.quit)
         self.win.connect("destroy", self.quit)
 
-        # Showing the first image is a problem. We need to call
-        # first_image() at some point, but we can't load any images
-        # until after the viewer has been exposed at least once.
-        # So even though blah blah XXX
-        # self.win.connect_after("expose", self.realize_handler)
-
         main_hbox = gtk.HBox(spacing=8)
 
         self.viewer = MetaPho.gtkpho.ImageViewer()
@@ -287,14 +281,10 @@ class MetaPhoWindow(object):
             self.viewer.rotate(180)
             return True
 
-        # Alpha: it's a tag category
+        # Alpha: it's a tag
         if event.string.isalpha() :
-            if event.string.islower() :
-                tagno = ord(event.string) - ord('a')
-            else :
-                tagno = ord(event.string) - ord('A')
-            self.tagger.toggle_tag(tagno,
-                                  MetaPho.Image.g_image_list[self.imgno])
+            self.tagger.toggle_tag_by_letter(event.string,
+                                      MetaPho.Image.g_image_list[self.imgno])
             return True
 
         # Digits: it's a tag category

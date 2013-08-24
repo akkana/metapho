@@ -16,7 +16,8 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
     '''
     def __init__(self, parentwin) :
         MetaPho.Tagger.__init__(self)
-        gtk.Table.__init__(self, 2, 20, False)
+        self.num_rows = 26
+        gtk.Table.__init__(self, 2, self.num_rows, False)
 
         self.parentwin = parentwin
 
@@ -33,9 +34,8 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.buttons = []
         self.entries = []
         self.button_names = []
-        num_y_buttons = 20
         for j in range(0, 2) :
-            for i in range(0, num_y_buttons) :
+            for i in range(0, self.num_rows) :
                 if j <= 0 :
                     buttonchar = chr(i + ord('a'))
                     left = 0
@@ -46,13 +46,14 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 button = gtk.ToggleButton(buttonchar)
                 self.attach(button, left, left+1, i+1, i+2 );
                 self.buttons.append(button)
-                button.connect("toggled", self.toggled, i)
+                button.connect("toggled", self.toggled, len(self.entries))
 
                 entry = gtk.Entry()
                 entry.set_width_chars(25)
                 #entry.connect("changed", self.entry_changed, i)
                 #entry.connect("focus-in-event", self.focus_in, i)
-                entry.connect("focus-out-event", self.focus_out, i)
+                entry.connect("focus-out-event", self.focus_out,
+                              len(self.entries))
                 self.attach(entry, left+1, left+2, i+1, i+2 );
                 self.entries.append(entry)
 
@@ -248,17 +249,28 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         if tagno < len(self.entries) :
             self.highlight_tag(tagno, not self.buttons[tagno].get_active())
 
+    def toggle_tag_by_letter(self, tagchar, img) :
+        '''Toggle the tag corresponding to the letter typed by the user'''
+        if tagchar.islower() :
+            tagno = ord(tagchar) - ord('a')
+        else :
+            tagno = ord(tagchar) - ord('A') + self.num_rows
+        self.toggle_tag(tagno, img)
+
     def focus_next_entry(self) :
         '''Set focus to the next available entry.
            If we're already typing in a new tag entry that hasn't been
            saved yet, save it first before switching to the new one.
         '''
         newindex = len(self.tag_list)
-        curtext = self.entries[newindex].get_text()
 
+        # No need to save this entry's new contents explicitly;
+        # when we call highlight_tag it'll get a focus out which
+        # will automatically save. But we do need to increment newindex
+        # if the user typed anything here.
+
+        curtext = self.entries[newindex].get_text()
         if curtext.strip() != '' :
-            # user just typed something, so save it as if we got a focus out
-            self.change_tag(newindex, curtext)
             newindex += 1
 
         self.parentwin.set_focus(self.entries[newindex])
