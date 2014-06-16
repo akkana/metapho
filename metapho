@@ -253,12 +253,12 @@ class MetaPhoWindow(object):
             # self.tagger.focus_next_entry()
             return True
 
-        # Eventually we may want to require ctrl-q to quit,
-        # freeing q for tags/categories.
+        # Ctrl-q quits.
         if event.keyval == gtk.keysyms.q and \
                 event.state & gtk.gdk.CONTROL_MASK :
             self.quit()
             return True
+
         if event.string == " " :
             self.next_image()
             return True 
@@ -287,10 +287,17 @@ class MetaPhoWindow(object):
                                       MetaPho.Image.g_image_list[self.imgno])
             return True
 
-        # Digits: it's a tag category
+        # Digits: go to a specific tag category
         if event.string.isdigit() :
-            self.tagger.toggle_tag(int(event.string),
-                                  MetaPho.Image.g_image_list[self.imgno])
+            self.tagger.show_category_by_number(int(event.string))
+            return True
+
+        # + or -: go to next or previous tag
+        if event.string == '+' :
+            self.tagger.next_category(1)
+            return True
+        if event.string == '-' :
+            self.tagger.next_category(-1)
             return True
 
         if event.string == '/' :

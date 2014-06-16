@@ -201,7 +201,22 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 (catname, len(self.categories[catname]))
 
     def change_category(self, combobox) :
+        '''The callback when the combobox is changed by the user'''
         self.display_tags_for_category(combobox.get_active_text())
+
+    def next_category(self, howmany) :
+        '''Advance to the next category (if howmany==1) or some other category.
+        '''
+        keys = self.categories.keys()
+        catno = keys.index(self.current_category)
+        catno = (catno + howmany) % len(keys)
+        print "Advancing by", howmany, "to", keys[catno]
+        self.show_category_by_number(catno)
+
+    def show_category_by_number(self, catno) :
+        '''Show a specific category by number'''
+        self.categorysel.set_active(catno)
+        self.display_tags_for_category(self.categories.keys()[catno])
 
     def highlight_tag(self, tagno, val) :
         '''Turn tag number tagno on (if val=True) or off (val=False).'''
@@ -255,14 +270,6 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.title.set_text(os.path.basename(img.filename))
 
         self.display_tags_for_category(self.current_category)
-
-        # # Clear all currently highlighted tags
-        # for i in xrange(len(self.entries)) :
-        #     self.highlight_tag(i, False)
-
-        # # Highlight just the ones associated with this image
-        # for i, tagstr in enumerate(img.tags) :
-        #     self.highlight_tag(img.tags[i], True)
 
         return
 
