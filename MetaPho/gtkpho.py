@@ -26,24 +26,9 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
 
         hbox = gtk.HBox()
         hbox.pack_start(gtk.Label("Tag category:"), expand=False)
-        # pygtk docs say gtk.combo_box_new_text() is deprecated and
-        # gtk.ComboBoxText() is preferred, the docs for gtk.ComboBoxText()
-        # say it's in PyGTK 2.24, but I have 2.24.0-3+b1 and there's
-        # no such function. Thanks, Gnome people.
-        # self.categorysel = gtk.ComboBoxText()
 
-        # And this gives an error:
-        # TypeError: Cannot create a consistent method resolution
-        # self.categorysel = gtk.combo_box_text_new_with_entry()
-        # https://bugzilla.gnome.org/show_bug.cgi?id=650369 says it's
-        # been a bug in the python bindings since 2011 and apparently
-        # it's not going to be fixed. It suggests this workaround but
-        # it doesn't work since gtk.ComboBoxText doesn't exist.
-        # self.categorysel = gtk.ComboBoxText.new()
-
-        # This method is deprecated bug at least it works, though it
-        # doesn't give us a field we can type in like we need to.
-        self.categorysel = gtk.combo_box_new_text()
+        # Set up a combobox with a text entry, so the user can change cats.
+        self.categorysel = gtk.combo_box_entry_new_text()
 
         hbox.pack_start(self.categorysel, expand=True)
         self.attach(hbox, 0, 4, 1, 2 );
@@ -166,19 +151,30 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 self.focus_out(ent, None, i)
 
     def display_tags(self) :
-        '''Call this after read_tags() has been read for all directories.'''
+        '''Called after read_tags() has been read for all directories.'''
 
         # Add our categories to the combo.
         for catname in self.categories.keys():
             self.categorysel.append_text(catname)
-        self.categorysel.set_active(0)
-        self.categorysel.connect("changed", self.change_category)
+
+        # And add an extra category that the user can change to something else:
+        self.categorysel.append_text("** add new category **")
 
         # Set the first category as current, and display its tags.
         self.current_category = self.categories.keys()[0]
         self.display_tags_for_category(self.current_category)
 
+        self.categorysel.set_active(0)
+        self.categorysel.connect("changed", self.change_category)
+
     def display_tags_for_category(self, catname) :
+        # Is this a new category, not in the list, e.g. "** add new **" ?
+        if catname not in self.categories.keys() :
+            for i in range(len(self.entries)) :
+                self.entries[i].set_text("")
+                self.highlight_tag(i, False)
+            return
+
         if self.cur_img :
             cur_img_tags = [ self.tag_list[i] for i in self.cur_img.tags ]
         else :
@@ -190,8 +186,6 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 self.entries[i].set_text(curtag)
                 self.highlight_tag(i, curtag in cur_img_tags)
 
-        #for i, tagstr in enumerate(img.tags) :
-        #    self.highlight_tag(img.tags[i], True)
             else :
                 self.entries[i].set_text("")
                 self.highlight_tag(i, False)
@@ -201,8 +195,36 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 (catname, len(self.categories[catname]))
 
     def change_category(self, combobox) :
-        '''The callback when the combobox is changed by the user'''
-        self.display_tags_for_category(combobox.get_active_text())
+        '''The callback when the combobox is changed by the user.
+        '''
+        self.update_edited_category()
+
+        # The pygtk docs say this only tracks combobox changes,
+        # not changes to the underlying text entry, but it lies:
+        # typing in the entry unfortunately calls this function too.
+        # Unfortunately, ComboBoxEntry has no way of distinguishing
+        # changes due to choosing a different entry versus editing
+        # the current one. So we have to keep track of which one
+        # was active, and see if it changed.
+        keys = self.categories.keys()
+        try :
+            oldcatno = self.categories.keys().index(self.current_category)
+        except ValueError :
+            oldcatno = -1
+        if combobox.get_active() == oldcatno or combobox.get_active() < 0 :
+            # We haven't changed categories, just edited the current one.
+            # self.current_category = combobox.get_active_text()
+            return self.update_edited_category
+
+        if combobox.get_active() < len(keys) :
+            self.display_tags_for_category(keys[combobox.get_active()])
+        else :
+            for i in range(len(self.entries)) :
+                self.entries[i].set_text("")
+                self.highlight_tag(i, False)
+            self.current_category = None
+
+        return True
 
     def next_category(self, howmany) :
         '''Advance to the next category (if howmany==1) or some other category.
@@ -219,6 +241,29 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         '''
         self.display_tags_for_category(self.categories.keys()[catno])
         self.categorysel.set_active(catno)
+
+    def update_edited_category(self) :
+        '''The user may have edited the current category name,
+           or changed *** add new *** to an actual
+           category name. If so, we need to update our changes.
+           We can't base this on the active combobox entry, since
+           it may be called when the user switches to another entry.
+        '''
+        print "update edited category"
+        # self.current_category = combobox.get_active_text()
+        print "New text is:", self.categorysel.get_active_text()
+
+        try :
+            oldcatno = self.categories.keys().index(self.current_category)
+            print "Old name was", self.current_category
+            if self.current_category == self.categorysel.get_active_text() :
+                return
+            self.rename_category(self.current_category,
+                                 self.categorysel.get_active_text())
+            print "categories now look like:", self.categories
+        except ValueError :
+            oldcatno = -1
+            print "Didn't have an old name"
 
     def highlight_tag(self, tagno, val) :
         '''Turn tag number tagno on (if val=True) or off (val=False).'''
@@ -323,7 +368,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
            If we're already typing in a new tag entry that hasn't been
            saved yet, save it first before switching to the new one.
         '''
-        newindex = len(self.tag_list)
+        newindex = len(self.categories[self.current_category])
 
         # No need to save this entry's new contents explicitly;
         # when we call highlight_tag it'll get a focus out which

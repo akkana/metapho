@@ -110,6 +110,11 @@ class Tagger(object) :
 
         return outstr
 
+    def rename_category(self, old, new) :
+        for i in range(len(self.categories)):
+            k,v = self.categories.popitem(False)
+            self.categories[new if old == k else k] = v
+
     def write_tag_file(self) :
         '''Save the current set of tags to a Tags file chosen from
            the top-level directory used in the images we've seen.
