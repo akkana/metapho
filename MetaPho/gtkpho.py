@@ -214,9 +214,11 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.show_category_by_number(catno)
 
     def show_category_by_number(self, catno) :
-        '''Show a specific category by number'''
-        self.categorysel.set_active(catno)
+        '''Show a specific category by number.
+           Raises IndexError if catno is out of range.
+        '''
         self.display_tags_for_category(self.categories.keys()[catno])
+        self.categorysel.set_active(catno)
 
     def highlight_tag(self, tagno, val) :
         '''Turn tag number tagno on (if val=True) or off (val=False).'''

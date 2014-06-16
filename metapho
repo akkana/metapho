@@ -288,8 +288,12 @@ class MetaPhoWindow(object):
             return True
 
         # Digits: go to a specific tag category
+        # (ignore digits too large to have a category).
         if event.string.isdigit() :
-            self.tagger.show_category_by_number(int(event.string))
+            try :
+                self.tagger.show_category_by_number(int(event.string))
+            except IndexError :
+                pass
             return True
 
         # + or -: go to next or previous tag
