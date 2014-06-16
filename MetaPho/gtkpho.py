@@ -17,13 +17,37 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
     def __init__(self, parentwin) :
         MetaPho.Tagger.__init__(self)
         self.num_rows = 26
-        gtk.Table.__init__(self, 2, self.num_rows, False)
+        gtk.Table.__init__(self, 4, self.num_rows, False)
 
         self.parentwin = parentwin
 
         self.title = gtk.Label("Tags")
-        self.attach(self.title, 0, 2, 0, 1 );
-        self.title.show()
+        self.attach(self.title, 0, 4, 0, 1 );
+
+        hbox = gtk.HBox()
+        hbox.pack_start(gtk.Label("Tag category:"), expand=False)
+        # pygtk docs say gtk.combo_box_new_text() is deprecated and
+        # gtk.ComboBoxText() is preferred, the docs for gtk.ComboBoxText()
+        # say it's in PyGTK 2.24, but I have 2.24.0-3+b1 and there's
+        # no such function. Thanks, Gnome people.
+        # self.categorysel = gtk.ComboBoxText()
+
+        # And this gives an error:
+        # TypeError: Cannot create a consistent method resolution
+        # self.categorysel = gtk.combo_box_text_new_with_entry()
+        # https://bugzilla.gnome.org/show_bug.cgi?id=650369 says it's
+        # been a bug in the python bindings since 2011 and apparently
+        # it's not going to be fixed. It suggests this workaround but
+        # it doesn't work since gtk.ComboBoxText doesn't exist.
+        # self.categorysel = gtk.ComboBoxText.new()
+
+        # This method is deprecated bug at least it works, though it
+        # doesn't give us a field we can type in like we need to.
+        self.categorysel = gtk.combo_box_new_text()
+
+        hbox.pack_start(self.categorysel, expand=True)
+        self.attach(hbox, 0, 4, 1, 2 );
+
         self.cur_img = None
         self.highlight_bg = gtk.gdk.color_parse("#FFFFFF")
         self.greyBG = gtk.gdk.color_parse("#DDDDDD")
@@ -44,7 +68,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                     left = 2
 
                 button = gtk.ToggleButton(buttonchar)
-                self.attach(button, left, left+1, i+1, i+2 );
+                self.attach(button, left, left+1, i+2, i+3 );
                 self.buttons.append(button)
                 button.connect("toggled", self.toggled, len(self.entries))
 
@@ -54,7 +78,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 #entry.connect("focus-in-event", self.focus_in, i)
                 entry.connect("focus-out-event", self.focus_out,
                               len(self.entries))
-                self.attach(entry, left+1, left+2, i+1, i+2 );
+                self.attach(entry, left+1, left+2, i+2, i+3 );
                 self.entries.append(entry)
 
         self.show()
@@ -144,14 +168,40 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
     def display_tags(self) :
         '''Call this after read_tags() has been read for all directories.'''
 
-        for i in range(len(self.entries)) :
-            if i < len(self.tag_list) :
-                # print "Tag", i, ":", self.tag_list[i]
-                self.entries[i].set_text(self.tag_list[i])
+        # Add our categories to the combo.
+        for catname in self.categories.keys():
+            self.categorysel.append_text(catname)
+        self.categorysel.set_active(0)
+        self.categorysel.connect("changed", self.change_category)
 
-        if len(self.tag_list) > len(self.entries) :
-            print "Too many tags -- can't show all", \
-                len(self.tag_list)
+        # Set the first category as current, and display its tags.
+        self.current_category = self.categories.keys()[0]
+        self.display_tags_for_category(self.current_category)
+
+    def display_tags_for_category(self, catname) :
+        if self.cur_img :
+            cur_img_tags = [ self.tag_list[i] for i in self.cur_img.tags ]
+        else :
+            cur_img_tags = []
+        self.current_category = catname
+        for i in range(len(self.entries)) :
+            if i < len(self.categories[catname]) :
+                curtag = self.tag_list[self.categories[catname][i]]
+                self.entries[i].set_text(curtag)
+                self.highlight_tag(i, curtag in cur_img_tags)
+
+        #for i, tagstr in enumerate(img.tags) :
+        #    self.highlight_tag(img.tags[i], True)
+            else :
+                self.entries[i].set_text("")
+                self.highlight_tag(i, False)
+
+        if len(self.categories[catname]) > len(self.entries) :
+            print "Too many tags in category %s -- can't show all %d" % \
+                (catname, len(self.categories[catname]))
+
+    def change_category(self, combobox) :
+        self.display_tags_for_category(combobox.get_active_text())
 
     def highlight_tag(self, tagno, val) :
         '''Turn tag number tagno on (if val=True) or off (val=False).'''
@@ -204,13 +254,15 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
 
         self.title.set_text(os.path.basename(img.filename))
 
-        # Clear all currently highlighted tags
-        for i in xrange(len(self.entries)) :
-            self.highlight_tag(i, False)
+        self.display_tags_for_category(self.current_category)
 
-        # Highlight just the ones associated with this image
-        for i, tagstr in enumerate(img.tags) :
-            self.highlight_tag(img.tags[i], True)
+        # # Clear all currently highlighted tags
+        # for i in xrange(len(self.entries)) :
+        #     self.highlight_tag(i, False)
+
+        # # Highlight just the ones associated with this image
+        # for i, tagstr in enumerate(img.tags) :
+        #     self.highlight_tag(img.tags[i], True)
 
         return
 

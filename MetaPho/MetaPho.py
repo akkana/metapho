@@ -10,6 +10,7 @@
 # the classes into separate files. Sigh!
 
 import os
+import collections    # for OrderedDict
 
 class Image :
     '''An image, with additional info such as rotation and tags.
@@ -55,7 +56,6 @@ class Image :
         os.unlink(self.filename)
         Image.g_image_list.remove(self)
 
-import os
 import shlex
 
 class Tagger(object) :
@@ -69,7 +69,7 @@ class Tagger(object) :
         # [ [ "First category", 3, 5, 11 ] ]
         # means category 0 has the name "First category" and includes
         # tags 3, 5 and 11 from the tag_list.
-        self.categories = {}
+        self.categories = collections.OrderedDict()
 
         # The tag list is just a list of all tags we know about.
         # A tag may be in several categories.
@@ -84,26 +84,29 @@ class Tagger(object) :
         # Don't update the Tags file if the user doesn't change anything.
         self.changed = False
 
+        # What category are we currently processing?
+        self.current_category = "Tags"
+
     def __repr__(self) :
         '''Returns a string summarizing all known images and tags,
            suitable for printing on stdout or pasting into a Tags file.
         '''
-        # outstr = "Tag files read: "
-        # outstr += ' '.join(self.tagfiles)
-        # outstr += '\n'
-
-        # outstr += "Common dir: " + self.commondir + "\n"
-
         outstr = ''
-        for tagno, tagstr in enumerate(self.tag_list) :
-            # No empty tags
-            if tagstr.strip() == '' :
-                continue
-            outstr += "tag %s :" % tagstr
-            for img in Image.g_image_list :
-                if tagno in img.tags :
-                    outstr += ' ' + img.filename
-            outstr += '\n'
+        for cat in self.categories :
+            outstr += '\ncategory ' + cat + '\n\n'
+
+            for tagno in self.categories[cat] :
+                tagstr = self.tag_list[tagno]
+
+                # No empty tags
+                if tagstr.strip() == '' :
+                    continue
+
+                outstr += "tag %s :" % tagstr
+                for img in Image.g_image_list :
+                    if tagno in img.tags :
+                        outstr += ' ' + img.filename
+                outstr += '\n'
 
         return outstr
 
@@ -144,23 +147,22 @@ class Tagger(object) :
         # or maybe go the other way, search for Tags files
         # *above* the current directory but not below.
         # For now, only take the given directory.
-        '''off-the-cuff example format:
-tagtype People: Alice, Bill, Charlie, Dennis
-tagtype Places: America, Belgium, Czech Republic, Denmark
-photo p103049.jpg: Alice, Belgium
-photo p103050.jpg: Charlie, Denmark
-photo p103051.jpg: Charlie, Bill, Denmark
-tag Alice: p103049.jpg
-tag Belgium: p103049.jpg
-tag Bill: p103051.jpg
-tag Charlie: p103050.jpg, p103051.jpg
-tag Denmark: p103050.jpg, p103051.jpg
+        '''Current format supported:
+category Animals
+tag squirrels: img_001.jpg img_030.jpg
+tag horses: img_042.jpg
+tag penguins: img 008.jpg
+category Places
+tag New Mexico: img_020.jpg img_042.jpg
+tag Bruny Island: img 008.jpg
         '''
         try :
             pathname = os.path.join(dirname, "Tags")
             fp = open(pathname)
             self.tagfiles.append(pathname)
+            print "Opened", pathname
         except IOError :
+            print "Couldn't find a file named Tags, trying Keywords"
             try :
                 pathname = os.path.join(dirname, "Keywords")
                 fp = open(pathname)
@@ -169,7 +171,17 @@ tag Denmark: p103050.jpg, p103051.jpg
                 # print "No Tags file in", dirname
                 return
 
+        self.current_category = "Tags"
         for line in fp :
+            # The one line type that doesn't need a colon is a cat name.
+            if line.startswith('category ') :
+                self.current_category = line[9:].strip()
+                if not self.current_category:
+                    print "Parse error: couldn't read category name from", line
+                    self.current_category = "Tags"
+                continue
+
+            # Any other legal line type must have a colon.
             colon = line.find(':')
             if colon < 0 :
                 continue    # If there's no colon, it's not a legal tag line
@@ -184,20 +196,25 @@ tag Denmark: p103050.jpg, p103051.jpg
                 print pathname, "Couldn't parse:", line
                 continue
 
-            if line.startswith('tag ') :
-                tagname = line[4:colon].strip()
-                self.process_tag(tagname, objects)
-
-            elif line.startswith('tagtype ') :
+            if line.startswith('tagtype ') :
                 typename = line[8:colon].strip()
 
             elif line.startswith('photo ') :
                 photoname = line[6:colon].strip()
 
             else :
-                # Assume it's a tag: file file file line
-                tagname = line[:colon].strip()
-                self.process_tag(tagname, objects)
+                # Anything else is a tag.
+                # If it starts with "tag " (as it should), strip that off.
+                if line.startswith('tag ') :
+                    tagstr = line[4:colon].strip()
+                else :
+                    tagstr = line[:colon].strip()
+
+                # It may be several comma-separated tags.
+                tagnames = map(str.strip, tagstr.split(','))
+
+                for tagname in tagnames :
+                    self.process_tag(tagname, objects)
 
         fp.close()
 
@@ -211,6 +228,13 @@ tag Denmark: p103050.jpg, p103051.jpg
         except :
             tagindex = len(self.tag_list)
             self.tag_list.append(tagname)
+
+            try :
+                self.categories[self.current_category].append(tagindex)
+            # KeyError if the key doesn't exist, AttributeError if
+            # self.categories[current_category] exists but isn't a list.
+            except KeyError :
+                self.categories[self.current_category] = [tagindex]
 
         # Search for images matching the names in filenames
         # XXX pathname issue here: filenames in tag files generally don't
