@@ -39,6 +39,8 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.matchBG = gtk.gdk.color_parse("#DDFFEE")
         self.ignore_events = False
 
+        self.editing = False
+
         # Set up a bunch of entries, also setting the table size:
         self.buttons = []
         self.entries = []
@@ -165,6 +167,8 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.display_tags_for_category(self.current_category)
 
         self.categorysel.set_active(0)
+        self.cat_iter = self.categorysel.get_active_iter()
+        print "Set the first cat_iter"
         self.categorysel.connect("changed", self.change_category)
 
     def display_tags_for_category(self, catname) :
@@ -197,8 +201,6 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
     def change_category(self, combobox) :
         '''The callback when the combobox is changed by the user.
         '''
-        self.update_edited_category()
-
         # The pygtk docs say this only tracks combobox changes,
         # not changes to the underlying text entry, but it lies:
         # typing in the entry unfortunately calls this function too.
@@ -206,15 +208,18 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         # changes due to choosing a different entry versus editing
         # the current one. So we have to keep track of which one
         # was active, and see if it changed.
+        if self.editing:
+            return True
         keys = self.categories.keys()
         try :
             oldcatno = self.categories.keys().index(self.current_category)
         except ValueError :
             oldcatno = -1
-        if combobox.get_active() == oldcatno or combobox.get_active() < 0 :
+        if combobox.get_active() < 0 or combobox.get_active() == oldcatno :
             # We haven't changed categories, just edited the current one.
             # self.current_category = combobox.get_active_text()
-            return self.update_edited_category
+            print "Haven't changed active item, must be editing"
+            return self.update_edited_category()
 
         if combobox.get_active() < len(keys) :
             self.display_tags_for_category(keys[combobox.get_active()])
@@ -223,6 +228,9 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 self.entries[i].set_text("")
                 self.highlight_tag(i, False)
             self.current_category = None
+
+        self.cat_iter = self.categorysel.get_active_iter()
+        print "Got an iterator for", self.categorysel.get_active_text()
 
         return True
 
@@ -256,11 +264,24 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         try :
             oldcatno = self.categories.keys().index(self.current_category)
             print "Old name was", self.current_category
-            if self.current_category == self.categorysel.get_active_text() :
+            newname = self.categorysel.get_active_text()
+            if self.current_category == newname :
                 return
             self.rename_category(self.current_category,
-                                 self.categorysel.get_active_text())
+                                 newname)
             print "categories now look like:", self.categories
+
+            # # Update the liststore inside the combobox.
+            # # You might think ComboBoxEntry would have a way of
+            # # taking care of this. You'd be wrong.
+            print "Trying to set item", oldcatno, "to", newname
+            self.editing = True
+            # self.categorysel.get_model[oldcatno] = newname
+            self.categorysel.set_active(oldcatno)
+            iter = self.categorysel.get_active_iter()
+            self.categorysel.get_model().set_value(iter, 0, newname)
+            self.editing = False
+
         except ValueError :
             oldcatno = -1
             print "Didn't have an old name"
