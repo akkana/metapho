@@ -27,10 +27,24 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         hbox = gtk.HBox()
         hbox.pack_start(gtk.Label("Tag category:"), expand=False)
 
+        edit_butn = gtk.Button("Edit")
+        edit_butn.connect("clicked", self.edit_categories)
+        hbox.pack_end(edit_butn, expand=False)
+
         # Set up a combobox with a text entry, so the user can change cats.
-        self.categorysel = gtk.combo_box_entry_new_text()
+        # To make it editable is immensely more complicated than just
+        # calling gtk.combo_box_entry_new_text(); thanks to Juhaz on #pygtk
+        # for an example of how to set it up.
+        # self.categorysel = gtk.combo_box_entry_new_text()
+        self.cat_list_store = gtk.ListStore(str)
+        self.categorysel = gtk.ComboBox(self.cat_list_store)
+        # self.categorysel = gtk.ComboBoxEntry(self.cat_list_store, 0)
+        cr = gtk.CellRendererText()
+        self.categorysel.pack_start(cr)
+        self.categorysel.set_attributes(cr, text=0)
 
         hbox.pack_start(self.categorysel, expand=True)
+
         self.attach(hbox, 0, 4, 1, 2 );
 
         self.cur_img = None
@@ -157,10 +171,8 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
 
         # Add our categories to the combo.
         for catname in self.categories.keys():
-            self.categorysel.append_text(catname)
-
-        # And add an extra category that the user can change to something else:
-        self.categorysel.append_text("** add new category **")
+            # self.categorysel.append_text(catname)
+            self.cat_list_store.append((catname,))
 
         # Set the first category as current, and display its tags.
         self.current_category = self.categories.keys()[0]
@@ -250,6 +262,67 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.display_tags_for_category(self.categories.keys()[catno])
         self.categorysel.set_active(catno)
 
+    def edit_categories(self, w) :
+        d = gtk.Dialog('Edit categories', self.parentwin,
+                       buttons=(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE,
+                                gtk.STOCK_OK, gtk.RESPONSE_OK))
+        d.set_default_size(300, 500)
+
+        v = gtk.VBox()
+
+        self.edit_cell = None
+        self.edit_path = None
+
+        def category_edited(cr, path, text):
+            self.cat_list_store[path][0] = text
+
+        def get_cell(cr, editable, path) :
+            self.edit_cell = editable
+            self.edit_path = path
+
+        t = gtk.TreeView(self.cat_list_store)
+        cr = gtk.CellRendererText()
+        cr.props.editable = True
+        cr.connect('edited', category_edited)
+        cr.connect('editing_started', get_cell)
+        # Don't handle editing_canceled because it will be called on OK.
+        # cr.connect('editing_canceled', clear_cell)
+
+        col = gtk.TreeViewColumn('Category', cr, text=0)
+        t.insert_column(col, -1)
+
+        sw = gtk.ScrolledWindow()
+        sw.add(t)    
+        v.add(sw)
+
+        def add_category(b):
+            self.cat_list_store.append(('New category',))        
+            t.set_cursor(self.cat_list_store[-1].path, col, True)
+
+        b = gtk.Button('Add...')
+        b.connect('clicked', add_category)
+        v.pack_start(b, False, False)
+
+        d.get_content_area().add(v)
+
+        d.show_all()
+
+        response = d.run()
+        if response == gtk.RESPONSE_OK :
+            # Update the last-edited item:
+            if self.edit_cell and self.edit_path :
+                self.cat_list_store[self.edit_path][0] = \
+                    self.edit_cell.get_text()
+
+            # How to iterate over a list store:
+            # iter = self.cat_list_store.get_iter_first()
+            # while iter:
+            #     item = self.cat_list_store.get_value(iter, 0)
+            #     print "  ***", item
+            #     iter = self.cat_list_store.iter_next(iter)
+            
+        d.destroy()
+
     def update_edited_category(self) :
         '''The user may have edited the current category name,
            or changed *** add new *** to an actual
@@ -258,33 +331,37 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
            it may be called when the user switches to another entry.
         '''
         print "update edited category"
-        # self.current_category = combobox.get_active_text()
-        print "New text is:", self.categorysel.get_active_text()
+        newname = combobox.get_active_text()
+        # print "New text is:", self.categorysel.get_active_text()
 
-        try :
-            oldcatno = self.categories.keys().index(self.current_category)
-            print "Old name was", self.current_category
-            newname = self.categorysel.get_active_text()
-            if self.current_category == newname :
-                return
-            self.rename_category(self.current_category,
-                                 newname)
-            print "categories now look like:", self.categories
+        # try :
+        #     oldcatno = self.categories.keys().index(self.current_category)
 
-            # # Update the liststore inside the combobox.
-            # # You might think ComboBoxEntry would have a way of
-            # # taking care of this. You'd be wrong.
-            print "Trying to set item", oldcatno, "to", newname
-            self.editing = True
-            # self.categorysel.get_model[oldcatno] = newname
-            self.categorysel.set_active(oldcatno)
-            iter = self.categorysel.get_active_iter()
-            self.categorysel.get_model().set_value(iter, 0, newname)
-            self.editing = False
 
-        except ValueError :
-            oldcatno = -1
-            print "Didn't have an old name"
+
+
+        #     print "Old name was", self.current_category
+        #     newname = self.categorysel.get_active_text()
+        #     if self.current_category == newname :
+        #         return
+        #     self.rename_category(self.current_category,
+        #                          newname)
+        #     print "categories now look like:", self.categories
+
+        #     # Update the liststore inside the combobox.
+        #     # You might think ComboBoxEntry would have a way of
+        #     # taking care of this. You'd be wrong.
+        #     print "Trying to set item", oldcatno, "to", newname
+        #     self.editing = True
+        #     # self.categorysel.get_model[oldcatno] = newname
+        #     self.categorysel.set_active(oldcatno)
+        #     iter = self.categorysel.get_active_iter()
+        #     self.categorysel.get_model().set_value(iter, 0, newname)
+        #     self.editing = False
+
+        # except ValueError :
+        #     oldcatno = -1
+        #     print "Didn't have an old name"
 
     def highlight_tag(self, tagno, val) :
         '''Turn tag number tagno on (if val=True) or off (val=False).'''
