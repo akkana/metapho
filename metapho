@@ -11,6 +11,8 @@ import gtk
 
 import sys, os
 
+import traceback
+
 class MetaPhoWindow(object):
     '''The main controller window for MetaPho.
        This holds any child widgets, like the image viewer and tags window,
@@ -352,5 +354,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt :
         # Deliberately don't call self.quit() -- we may be using Ctrl-C
         # as a way to quit without updating anything.
-        print
+        print '\n'
+        traceback.print_stack()
         sys.exit(1)

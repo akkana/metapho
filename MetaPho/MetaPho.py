@@ -84,7 +84,7 @@ class Tagger(object) :
         # Don't update the Tags file if the user doesn't change anything.
         self.changed = False
 
-        # What category are we currently processing?
+        # What category are we currently processing? Default is Tags.
         self.current_category = "Tags"
 
     def __repr__(self) :
@@ -161,6 +161,8 @@ category Places
 tag New Mexico: img_020.jpg img_042.jpg
 tag Bruny Island: img 008.jpg
         '''
+        self.current_category = "Tags"
+
         try :
             pathname = os.path.join(dirname, "Tags")
             fp = open(pathname)
@@ -173,6 +175,8 @@ tag Bruny Island: img 008.jpg
                 fp = open(pathname)
                 self.tagfiles.append(pathname)
             except IOError :
+                # Start us off with an empty tag list.
+                self.categories[self.current_category] = []
                 # print "No Tags file in", dirname
                 return
 
@@ -180,10 +184,13 @@ tag Bruny Island: img 008.jpg
         for line in fp :
             # The one line type that doesn't need a colon is a cat name.
             if line.startswith('category ') :
-                self.current_category = line[9:].strip()
-                if not self.current_category:
+                newcat = line[9:].strip()
+                if newcat :
+                    self.current_category = newcat
+                    if self.current_category not in self.categories :
+                        self.categories[self.current_category] = []
+                else :
                     print "Parse error: couldn't read category name from", line
-                    self.current_category = "Tags"
                 continue
 
             # Any other legal line type must have a colon.
@@ -276,10 +283,15 @@ tag Bruny Island: img 008.jpg
 
         # Else it's a string. Make a new tag.
         if tag in self.tag_list :
-            return self.tag_list.index(tag)
+            tagno = self.tag_list.index(tag)
+            if tagno not in self.categories[self.current_category] :
+                self.categories[self.current_category].append(tagno)
+            return
+
         self.tag_list.append(tag)
         newindex = len(self.tag_list) - 1
         img.tags.append(newindex)
+        self.categories[self.current_category].append(newindex)
         return newindex
 
     def remove_tag(self, tag, img) :
