@@ -89,6 +89,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.show()
 
     def change_tag(self, tagno, newstr) :
+        '''Update a tag: called on focus_out from one of the text entries'''
         if tagno < len(self.categories[self.current_category]) :
             self.tag_list[self.categories[self.current_category][tagno]] = newstr
         else :
@@ -311,14 +312,11 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
             while iter:
                 item = self.cat_list_store.get_value(iter, 0)
                 if i < len(oldkeys) :
-                    # print "* Existing tag", i, ":", oldkeys[i], "->", item
                     newcats[item] = self.categories[oldkeys[i]]
                 else :
-                    # print "* New tag", i, "=", item
                     newcats[item] = []
                 if i == old_cur_pos :
                     self.current_category = item
-                # print "  ***", item
                 iter = self.cat_list_store.iter_next(iter)
                 i += 1
 
