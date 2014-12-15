@@ -416,7 +416,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
     def toggle_tag(self, tagno, img) :
         '''Toggle tag number tagno for the given img.'''
         MetaPho.Tagger.toggle_tag(self, tagno, img)
-        if tagno < len(self.entries) :
+        if tagno < len(self.categories[self.current_category]) :
             self.highlight_tag(tagno, not self.buttons[tagno].get_active())
 
     def toggle_tag_by_letter(self, tagchar, img) :

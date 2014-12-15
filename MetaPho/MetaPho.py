@@ -98,15 +98,20 @@ class Tagger(object) :
             for tagno in self.categories[cat] :
                 tagstr = self.tag_list[tagno]
 
-                # No empty tags
+                # No empty tag strings
                 if tagstr.strip() == '' :
                     continue
 
-                outstr += "tag %s :" % tagstr
+                imgstr = ''
                 for img in Image.g_image_list :
                     if tagno in img.tags :
-                        outstr += ' ' + img.filename
-                outstr += '\n'
+                        if ' ' in img.filename :
+                            fname = '"' + img.filename + '"'
+                        else :
+                            fname = img.filename
+                        imgstr += ' ' + fname
+                if imgstr :
+                    outstr += "tag %s :" % tagstr + imgstr + '\n'
 
         return outstr
 
