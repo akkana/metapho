@@ -99,7 +99,7 @@ class MetaPhoWindow(object):
         # into the next image if it doesn't have any yet.
         oldtags = None
         try :
-            if MetaPho.Image.g_image_list[self.imgno].tags :
+            if MetaPho.Image.g_image_list[self.imgno].tags and self.imgno >= 0:
                 oldtags = MetaPho.Image.g_image_list[self.imgno].tags
         except :
             pass
