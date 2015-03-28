@@ -102,6 +102,8 @@ class MetaPhoWindow(object):
             if MetaPho.Image.g_image_list[self.imgno].tags and self.imgno >= 0:
                 oldtags = MetaPho.Image.g_image_list[self.imgno].tags
         except :
+            print "Couldn't load image #", self.imgno
+            print "Tags:", MetaPho.Image.g_image_list[self.imgno].tags
             pass
 
         while self.imgno < len(MetaPho.Image.g_image_list)-1 and not loaded :
@@ -360,5 +362,6 @@ if __name__ == '__main__':
         # Deliberately don't call self.quit() -- we may be using Ctrl-C
         # as a way to quit without updating anything.
         print '\n'
-        traceback.print_stack()
+        # This doesn't do anything useful:
+        # traceback.print_stack()
         sys.exit(1)

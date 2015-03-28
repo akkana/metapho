@@ -200,7 +200,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 self.highlight_tag(i, False)
             return
 
-        if self.cur_img :
+        if self.cur_img and self.cur_img.tags :
             cur_img_tags = [ self.tag_list[i] for i in self.cur_img.tags ]
         else :
             cur_img_tags = []
@@ -332,6 +332,8 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
     def highlight_tag(self, tagno, val) :
         '''Turn tag number tagno on (if val=True) or off (val=False).'''
 
+        if len(self.buttons) < tagno :
+            print "Argh! Tried to highlight tag", tagno
         if self.buttons[tagno].get_active() != val :
             self.ignore_events = True
             self.buttons[tagno].set_active(val)
