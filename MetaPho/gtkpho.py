@@ -201,7 +201,13 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
             return
 
         if self.cur_img and self.cur_img.tags :
-            cur_img_tags = [ self.tag_list[i] for i in self.cur_img.tags ]
+            cur_img_tags = []
+            for i in self.cur_img.tags :
+                try :
+                    cur_img_tags.append(self.tag_list[i])
+                except IndexError :
+                    print i, "is out of range, we only have", \
+                        len(self.tag_list), "tags"
         else :
             cur_img_tags = []
         self.current_category = catname
@@ -427,6 +433,9 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
             tagno = ord(tagchar) - ord('a')
         else :
             tagno = ord(tagchar) - ord('A') + self.num_rows
+        if tagno > len(self.cur_img.tags) :
+            print "We don't have a tag", tagchar, "yet"
+            return
         self.toggle_tag(tagno, img)
 
     def focus_next_entry(self) :
