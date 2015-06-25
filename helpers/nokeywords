@@ -55,7 +55,7 @@ for root, dirs, files in pathwalk('.', topdown=True) :
     # They're probably a collection of lower-res images intended
     # to be copied to a website.
     d = root.lower()
-    if d.find("/web") > 0 or d.find("/html") > 0 :
+    if d.find("/web") > 0 or d.find("/html") > 0 or d.find("/pano") > 0 :
         print " ( Skipping", root, ")"
         del dirs[0:]
         continue
