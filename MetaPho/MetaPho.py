@@ -291,7 +291,8 @@ tag Bruny Island: img 008.jpg
             tagno = self.tag_list.index(tag)
             if tagno not in self.categories[self.current_category] :
                 self.categories[self.current_category].append(tagno)
-            return
+            img.tags.append(tagno)
+            return tagno
 
         self.tag_list.append(tag)
         newindex = len(self.tag_list) - 1

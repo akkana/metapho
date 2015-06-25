@@ -400,7 +400,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
            Return the index (in the global tags list) of the tag just added,
            or None if error.
         '''
-        # Call the base class to make sure the tag is there:
+        # Call the base class to make sure the tag exists:
         tagindex = MetaPho.Tagger.add_tag(self, tag, img)
 
         # Now display it, if possible
@@ -433,7 +433,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
             tagno = ord(tagchar) - ord('a')
         else :
             tagno = ord(tagchar) - ord('A') + self.num_rows
-        if tagno > len(self.cur_img.tags) :
+        if tagno >= len(self.tag_list) :
             print "We don't have a tag", tagchar, "yet"
             return
         self.toggle_tag(tagno, img)
