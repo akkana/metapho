@@ -48,90 +48,106 @@ def pathwalk(top, topdown=True, onerror=None, followlinks=False, sortfn=None):
     if not topdown:
         yield top, dirs, nondirs
 
-for root, dirs, files in pathwalk('.', topdown=True):
-    #print "Checking", root
+def find_nokeywords(topdir):
+    '''
+       @return: (list of dirs with no tag file,
+                 dictionary of dir: list of files not in tag file)
+    '''
+    dirs_nokw = []
+    omitted_files = {}
 
-    # Don't check directories with a path component "html" or "web"
-    # They're probably a collection of lower-res images intended
-    # to be copied to a website.
-    d = root.lower()
-    if d.find("/web") > 0 or d.find("/html") > 0 or d.find("/pano") > 0:
-        print " ( Skipping", root, ")"
-        del dirs[0:]
-        continue
+    for root, dirs, files in pathwalk(topdir, topdown=True):
+        #print "Checking", root
 
-    # Don't check directories of the same name as their parent directory.
-    # They're probably a collection of lower-res images intended
-    # to be copied to a website.
-    components = os.path.split(root)
-    ultimate = components[-1]
-    penultimate = os.path.split(components[-2])[-1]
-    if ultimate == penultimate:
-        print " ( Skipping", root, ")"
-        del dirs[0:]
-        continue
-
-    jpegfiles = set()
-
-    hasjpeg = False
-    haskeywords = False
-    for f in files:
-        l = f.lower()
-
-        # Don't check directories containing an index.* or showpix.* file
-        if l[0:6] == "index." or l[0:8] == "showpix.":
-            print " (Skipping", root, ")"
+        # Don't check directories with a path component "html" or "web"
+        # They're probably a collection of lower-res images intended
+        # to be copied to a website.
+        d = root.lower()
+        if d.find("/web") > 0 or d.find("/html") > 0 or d.find("/pano") > 0:
+            print " ( Skipping", root, ")"
             del dirs[0:]
-            hasjpeg = False
-            break
+            continue
 
-        if l.endswith(".jpg"):
-            if (not hasjpeg):
-                hasjpeg = True
-            jpegfiles.add(f)
+        # Don't check directories of the same name as their parent directory.
+        # They're probably a collection of lower-res images intended
+        # to be copied to a website.
+        components = os.path.split(root)
+        ultimate = components[-1]
+        penultimate = os.path.split(components[-2])[-1]
+        if ultimate == penultimate:
+            print " ( Skipping", root, ")"
+            del dirs[0:]
+            continue
 
-            # Now I'm using Tags files for gpx track logs as well.
-            # Keep the hasjpeg variable name but include gpx.
-        elif l.endswith(".gpx"):
-            if (not hasjpeg):
-                hasjpeg = True
-            jpegfiles.add(f)
+        jpegfiles = set()
 
-        if f == "Keywords" or f == "Tags":
-            haskeywords = f
+        hasjpeg = False
+        haskeywords = False
+        for f in files:
+            l = f.lower()
 
-    # Done looking through files: if it's not HTML, has at least
-    # one jpeg and no keywords file, print it.
-    if not hasjpeg:
-        continue
+            # Don't check directories containing an index.* or showpix.* file
+            if l[0:6] == "index." or l[0:8] == "showpix.":
+                print " (Skipping", root, ")"
+                del dirs[0:]
+                hasjpeg = False
+                break
 
-    if not haskeywords:
-        if root[0:2] == "./":
-            print root[2:]
-        else:
-            print root
-        continue
+            if l.endswith(".jpg"):
+                if (not hasjpeg):
+                    hasjpeg = True
+                jpegfiles.add(f)
 
-    # There is a keywords file.
-    # Are there any files in the directory that are not mentioned in it?
-    kwfiles = set()
-    tagfile = os.path.join(root, haskeywords)
-    with open(tagfile) as kp:
-        for line in kp:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith("category"):
-                continue
-            if ':' not in line:
-                continue
-            # Probably a tag line
-            for taggedfile in line[line.find(":")+1:].strip().split():
-                kwfiles.add(taggedfile)
+                # Now I'm using Tags files for gpx track logs as well.
+                # Keep the hasjpeg variable name but include gpx.
+            elif l.endswith(".gpx"):
+                if (not hasjpeg):
+                    hasjpeg = True
+                jpegfiles.add(f)
 
-    # Now kwfiles is a list of all the files referenced in the Tags file.
-    print "Files not in", tagfile, ":",
-    print ' '.join(jpegfiles - kwfiles)
+            if f == "Keywords" or f == "Tags":
+                haskeywords = f
 
+        # Done looking through files: if it's not HTML, has at least
+        # one jpeg and no keywords file, print it.
+        if not hasjpeg:
+            continue
 
+        if not haskeywords:
+            if root[0:2] == "./":
+                dirs_nokw.append(root[2:])
+            else:
+                dirs_nokw.append(root)
+            continue
 
+        # There is a keywords file.
+        # Are there any files in the directory that are not mentioned in it?
+        kwfiles = set()
+        tagfile = os.path.normpath(os.path.join(root, haskeywords))
+        with open(tagfile) as kp:
+            for line in kp:
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith("category"):
+                    continue
+                if ':' not in line:
+                    continue
+                # Probably a tag line
+                for taggedfile in line[line.find(":")+1:].strip().split():
+                    kwfiles.add(taggedfile)
+
+        # Now kwfiles is a list of all the files referenced in the Tags file.
+        omitted_files[tagfile] = list(jpegfiles - kwfiles)
+
+    return dirs_nokw, omitted_files
+
+dirs_nokw, omitted_files = find_nokeywords('.')
+if dirs_nokw:
+    print "\nDirectories with no tag file:"
+    print '\n'.join(dirs_nokw)
+
+if omitted_files:
+    print "\nFiles that don't appear in their directory's tag file:"
+    for key in omitted_files:
+        print "%s: %s" % (key, ' '.join(omitted_files[key]))
