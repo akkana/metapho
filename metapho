@@ -350,7 +350,21 @@ class MetaPhoWindow(object):
     def main(self):
         gtk.main()
 
-if __name__ == '__main__':
+def main():
+    def Usage():
+        print "Usage: %s file [file file ...]" \
+            % os.path.basename(sys.argv[0])
+
+    if len(sys.argv) <= 1:
+        Usage()
+        sys.exit(1)
+    if sys.argv[1] == "-h" or sys.argv[1] == "--help":
+        Usage()
+        sys.exit(0)
+    if sys.argv[1] == "-v" or sys.argv[1] == "--version":
+        print  MetaPho.__version__
+        sys.exit(0)
+
     metapho = MetaPhoWindow(sys.argv[1:])
     metapho.first_image()
     try:
@@ -362,3 +376,6 @@ if __name__ == '__main__':
         # This doesn't do anything useful:
         # traceback.print_stack()
         sys.exit(1)
+
+if __name__ == '__main__':
+    main()
