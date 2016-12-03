@@ -79,7 +79,7 @@ def find_nokeywords(topdir):
             del dirs[0:]
             continue
 
-        jpegfiles = set()
+        imgfiles = set()
 
         hasjpeg = False
         haskeywords = False
@@ -96,14 +96,14 @@ def find_nokeywords(topdir):
             if l.endswith(".jpg"):
                 if (not hasjpeg):
                     hasjpeg = True
-                jpegfiles.add(f)
+                imgfiles.add(f)
 
                 # Now I'm using Tags files for gpx track logs as well.
                 # Keep the hasjpeg variable name but include gpx.
             elif l.endswith(".gpx"):
                 if (not hasjpeg):
                     hasjpeg = True
-                jpegfiles.add(f)
+                imgfiles.add(f)
 
             if f == "Keywords" or f == "Tags":
                 haskeywords = f
@@ -138,7 +138,9 @@ def find_nokeywords(topdir):
                     kwfiles.add(taggedfile)
 
         # Now kwfiles is a list of all the files referenced in the Tags file.
-        omitted_files[tagfile] = list(jpegfiles - kwfiles)
+        omit = imgfiles - kwfiles
+        if omit:
+            omitted_files[tagfile] = list(omit)
 
     return dirs_nokw, omitted_files
 
