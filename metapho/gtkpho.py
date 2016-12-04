@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-# GTK UI classes for MetaPho: an image tagger and viewer.
+# GTK UI classes for metapho: an image tagger and viewer.
 
 # Copyright 2013 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
-from . import MetaPho
+from . import metapho
 
 import gtk
 import gc
@@ -12,11 +12,11 @@ import glib, gobject
 import os
 import collections
 
-class TagViewer(MetaPho.Tagger, gtk.Table) :
+class TagViewer(metapho.Tagger, gtk.Table) :
     '''A PyGTK widget for showing tags.
     '''
     def __init__(self, parentwin) :
-        MetaPho.Tagger.__init__(self)
+        metapho.Tagger.__init__(self)
         self.num_rows = 26
         gtk.Table.__init__(self, 4, self.num_rows, False)
 
@@ -97,7 +97,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
             self.highlight_tag(newtag, True)
 
     def clear_tags(self, img) :
-        MetaPho.Tagger.clear_tags(self, img)
+        metapho.Tagger.clear_tags(self, img)
 
         # also update the UI
         for i in xrange(len((self.entries))) :
@@ -394,14 +394,14 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
 
     def add_tag(self, tag, img) :
         '''Add a tag to the given image.
-           img is a MetaPho.Image.
+           img is a metapho.Image.
            tag may be a string, which can be a new string or an existing one,
            or an integer index into the tag list.
            Return the index (in the global tags list) of the tag just added,
            or None if error.
         '''
         # Call the base class to make sure the tag exists:
-        tagindex = MetaPho.Tagger.add_tag(self, tag, img)
+        tagindex = metapho.Tagger.add_tag(self, tag, img)
 
         # Now display it, if possible
         if tagindex < len(self.entries) :
@@ -417,13 +417,13 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
                 print "No such tag", tagstr
                 return
 
-        MetaPho.Tagger.remove_tag(self, tag, img)
+        metapho.Tagger.remove_tag(self, tag, img)
 
         self.highlight_tag(tag, False)
 
     def toggle_tag(self, tagno, img) :
         '''Toggle tag number tagno for the given img.'''
-        MetaPho.Tagger.toggle_tag(self, tagno, img)
+        metapho.Tagger.toggle_tag(self, tagno, img)
         if tagno < len(self.categories[self.current_category]) :
             self.highlight_tag(tagno, not self.buttons[tagno].get_active())
 
@@ -458,7 +458,7 @@ class TagViewer(MetaPho.Tagger, gtk.Table) :
         self.highlight_tag(newindex, True)
 
 class ImageViewer(gtk.DrawingArea) :
-    '''A PyGTK image viewer widget for MetaPho.
+    '''A PyGTK image viewer widget for metapho.
     '''
 
     def __init__(self) :
@@ -493,7 +493,7 @@ class ImageViewer(gtk.DrawingArea) :
 
     def load_image(self, img) :
         '''Load the image passed in, and show it.
-           img is a MetaPho.Image object.
+           img is a metapho.Image object.
            Return True for success, False for error.
         '''
 
