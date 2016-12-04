@@ -8,15 +8,13 @@ from setuptools import setup
 setup(name='metapho',
       packages=['metapho'],
       version='0.5',
-      description='''Image viewer and tagger
-Here's another line of description.
-''',
+      description='Image viewer and tagger',
       scripts=['helpers/notags'],
       author='Akkana Peck',
       author_email='akkana@shallowsky.com',
       url='https://github.com/akkana/metapho',
       download_url='https://github.com/akkana/metapho/tarball/0.6',
-      install_requires=["pygtk"],
+      # install_requires=["pygtk"],
       license="GPLv2+",
       keywords=['image', 'viewer', 'tagger'],
       classifiers = [
