@@ -3,7 +3,8 @@ metapho
 
 A keyboard-driven app for tagging and organizing large numbers of photos efficiently.
 
-This arose out of my [Pho](http://shallowsky.com/software/pho/)
+This arose out of my [Pho]
+.. _Pho: http://shallowsky.com/software/pho/
 image viewer ([Pho on GitHub](https://github.com/akkana/pho)).
 It started to get unwieldy adding ever more tagging features to what
 was intended as just a fast, light image viewer.
