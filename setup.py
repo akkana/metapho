@@ -2,16 +2,22 @@
 
 # http://docs.python.org/distutils/setupscript.html
 
-from distutils.core import setup
+# from distutils.core import setup
+from setuptools import setup
 
-setup(name='MetaPho',
-      packages=['MetaPho'],
+setup(name='metapho',
+      packages=['metapho'],
       version='0.5',
-      description='Image viewer and tagger',
+      description='''Image viewer and tagger
+Here's another line of description.
+''',
+      scripts=['helpers/notags'],
       author='Akkana Peck',
       author_email='akkana@shallowsky.com',
       url='https://github.com/akkana/metapho',
-      download_url='https://github.com/akkana/metapho/tarball/0.5',
+      download_url='https://github.com/akkana/metapho/tarball/0.6',
+      install_requires=["pygtk"],
+      license="GPLv2+",
       keywords=['image', 'viewer', 'tagger'],
       classifiers = [
           'Programming Language :: Python :: 2',
@@ -22,9 +28,13 @@ setup(name='MetaPho',
           'Topic :: Multimedia :: Graphics :: Viewers',
           'Topic :: Utilities'
         ],
+      # data_files=[ ('/usr/bin', ['helpers/notags']) ],
       entry_points={
+          # This probably should be gui_scripts according to some
+          # pages I've found, but none of the official documentation
+          # mentions gui_scripts at all.
           'console_scripts': [
-              'metapho=MetaPho.metapho:main'
+              'metapho=metapho.main:main'
           ]
       }
      )

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-# MetaPho: an image tagger and viewer.
+# metapho: an image tagger and viewer.
 
-# Copyright 2013 by Akkana Peck: share and enjoy under the GPL v2 or later.
+# Copyright 2013,2016 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
 '''MetaPho: an image tagger and viewer.'''
 
@@ -11,5 +11,5 @@ __author__ = "Akkana Peck <akkana@shallowsky.com>"
 __license__ = "GPL v2"
 __all__ = [ 'Image', 'Tagger', 'Organizer' ]
 
-from .MetaPho import *
+from .metapho import *
 

@@ -2,11 +2,11 @@
 
 # Base classes for MetaPho: an image tagger and viewer.
 
-# Copyright 2013 by Akkana Peck: share and enjoy under the GPL v2 or later.
+# Copyright 2013,2016 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
 # Image and Tagger classes have to be defined here in order for
-# other files to be able to use them as MetaPho.Image rather than
-# MetaPho.Image.Image. I haven't found any way that lets me split
+# other files to be able to use them as metapho.Image rather than
+# metapho.Image.Image. I haven't found any way that lets me split
 # the classes into separate files. Sigh!
 
 import os
@@ -63,7 +63,7 @@ class Tagger(object) :
     '''
 
     def __init__(self) :
-        '''tagger: an object to manage MetaPho image tags'''
+        '''tagger: an object to manage metapho image tags'''
 
         # The category list is a list of lists:
         # [ [ "First category", 3, 5, 11 ] ]
@@ -273,7 +273,7 @@ tag Bruny Island: img 008.jpg
 
     def add_tag(self, tag, img) :
         '''Add a tag to the given image.
-           img is a MetaPho.Image.
+           img is a metapho.Image.
            tag may be a string, which can be a new string or an existing one,
            or an integer index into the tag list.
            Return the index (in the global tags list) of the tag just added,
