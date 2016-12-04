@@ -4,7 +4,7 @@ METAPHO l "Feb 17 2013" "User Manuals"
 NAME
 ----
 
-Bmetapho - tag images with words or phrases
+metapho - view images and tag them with words or phrases
 
 SYNOPSIS
 --------
@@ -101,7 +101,7 @@ Akkana Peck, with a lot of design help from John Sturdy.
 COPYRIGHT
 ---------
 
-Copyright &copy; 2013 Akkana Peck
+Copyright &copy; 2013,2016 Akkana Peck
 Metapho is free software, licensed under the GNU Public License version 2.
 
 SEE ALSO

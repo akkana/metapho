@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 
-# Base classes for MetaPho: an image tagger and viewer.
-
 # Copyright 2013,2016 by Akkana Peck: share and enjoy under the GPL v2 or later.
+
+'''
+These are the base class for metapho images and taggers.
+Programs with better UI can inherit from these classes.
+
+'''
 
 # Image and Tagger classes have to be defined here in order for
 # other files to be able to use them as metapho.Image rather than

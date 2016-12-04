@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
-# metapho: an image tagger and viewer.
+'''
+metapho: an image tagger and viewer.
+
+This is the runnable script, which calls up a GTK-based user interface
+for viewing images and tagging them.
+'''
 
 # Copyright 2013,2016 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
@@ -354,6 +359,8 @@ def main():
     def Usage():
         print "Usage: %s file [file file ...]" \
             % os.path.basename(sys.argv[0])
+
+    print "Hello, and welcome to metapho."
 
     if len(sys.argv) <= 1:
         Usage()

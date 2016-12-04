@@ -1,0 +1,61 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>metapho (1)</title>
+<style type="text/css">
+th { text-align: right; padding-right: 1em; }
+</style>
+</head>
+
+<body>
+
+<h1>metapho</h1>
+
+<h2 id="name">NAME</h2>
+<p>metapho - view images and tag them with words or phrases</p>
+
+<h2 id="synopsis">SYNOPSIS</h2>
+<p>metapho <em>file</em> ...</p>
+
+<h2 id="description">DESCRIPTION</h2>
+<p><code>metapho</code> lets you tag large numbers of images as efficiently as possible. Although it uses a graphical user interface, it's intended to be controllable entirely through the keyboard.</p>
+<p>It offers two modes, somewhat similar to the vi editor. Normally you're in &quot;navigational&quot; mode, where you can rapidly move between photos and view and toggle tags. Clicking in a text entry, or typing Return or <Ctrl>Space, will let you add new tags. Hit ESC, Return, or <Ctrl>Space to leave entry mode and return to navigational mode.</p>
+<p>Tags will be written to a file named Tags. Metapho tries to be smart about where to write the Tags file, using the highest common directory of the images passed to it on the command line. It will also read tags in from any Tags files that already exist in any of the image directories, and will save those tags (unless changed by the user) along with any new tags added.</p>
+<p>
+You can make your own user interfaces using the metapho Python package.
+Documentation is here:
+<a href="metapho-module.html">metapho API module documentation</a>.
+
+<h2 id="key-bindings">KEY BINDINGS</h2>
+<p>Metapho obeys the following keys:</p>
+<table>
+<tr><th>[space] <td>Go to next image.</p>
+<tr><th>[backspace] <td>Go to previous image</p>
+<tr><th>r, t, [right-arrow] <td>Rotate right (clockwise)</p>
+<tr><th>R, T, l, L, [left-arrow] <td>Rotate left (counter-clockwise)</p>
+<tr><th>[up-arrow], [down-arrow] <td>Rotate 180 degrees.</p>
+<tr><th>Home <td>Go back to the first image.</p>
+<tr><th>End <td>Go to the last image.</p>
+<tr><th>&lt;Ctrl&gt;q <td>Quit the application, writing any changes to the Tags file.</p>
+<tr><th>&lt;Ctrl&gt;d <td>Delete this image file from disk. This will bring up a confirmation dialog; clicking OK or typing another d or <Ctrl>d deletes the file.</p>
+<tr><th>a through z or A through Z <td>Toggle the appropriate tag for this image.</p>
+<tr><th>Return <td>If in navigation mode: activate the first blank tag and let you type in it. If in entry mode: leave entry mode and return to navigation mode.</p>
+<tr><th>&lt;Ctrl&gt;Space <td>Stop typing in a tag field and move to the next image; or, if not currently in a tag field, activate the next tag and shift focus there.</p>
+<tr><th>Escape <td>Ensure focus is not in a text field, so any characters typed will be navigational.</p>
+<tr><th>&lt;Ctrl&gt;U <td>Forget all tags for the current image. By default, when moving from one image to a new image that has no tags yet, metapho will copy the tags from the previous image. Use &lt;Ctrl&gt;U to turn these off.</p>
+<tr><th>/ <td>Search for tags matching whatever you type. Use Return or ESC to get out of search mode.</p>
+</table>
+
+<h2 id="author">AUTHOR</h2>
+<p>Akkana Peck, with a lot of design help from John Sturdy.</p>
+
+<h2 id="copyright">COPYRIGHT</h2>
+<p>Copyright © 2013,2016 Akkana Peck. Metapho is free software, licensed under the GNU Public License version 2.</p>
+
+<h2 id="see-also">SEE ALSO</h2>
+<p>The most recent version of <code>metapho</code>, and more
+information about it, is at: <a href="https://github.com/akkana/metapho">https://github.com/akkana/metapho</a>.
+</p>
+
+</body>
+</html>

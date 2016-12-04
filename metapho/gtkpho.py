@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-# GTK UI classes for metapho: an image tagger and viewer.
+'''
+GTK UI classes for metapho: an image tagger and viewer.
+'''
 
 # Copyright 2013 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
