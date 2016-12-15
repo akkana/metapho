@@ -59,15 +59,10 @@ setup(name='metapho',
           'Topic :: Multimedia :: Graphics :: Viewers',
           'Topic :: Utilities'
         ],
-      # data_files=[ ('/usr/bin', ['helpers/notags']) ],
       entry_points={
           # This probably should be gui_scripts according to some
           # pages I've found, but none of the official documentation
           # mentions gui_scripts at all.
-          #
-          # XXXXXX But now that metapho.gtkpho is a separate directory,
-          # it doesn't work at all, dies with:
-          # ImportError: No module named gtkpho.main
           'console_scripts': [
               'metapho=metapho.gtkpho.main:main'
           ]
