@@ -18,9 +18,8 @@ def get_version_re():
         version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
                                   version_file, re.M)
         if version_match:
-            print "Returning version '%s'" % version_match.group(1)
             return version_match.group(1)
-        print "No version!"
+        print "No version information!"
         return None
 
 # Some people recommend this, but it returns '-0.6-' rather than '0.6'
@@ -66,6 +65,9 @@ setup(name='metapho',
           'console_scripts': [
               'metapho=metapho.gtkpho.main:main'
           ]
+      },
+
+      cmdclass={
+          'clean': CleanCommand,
       }
      )
-
