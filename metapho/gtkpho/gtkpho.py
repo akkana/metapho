@@ -6,7 +6,7 @@ GTK UI classes for metapho: an image tagger and viewer.
 
 # Copyright 2013 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
-from . import metapho
+import metapho
 
 import gtk
 import gc

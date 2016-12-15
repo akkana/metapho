@@ -3,11 +3,44 @@
 # http://docs.python.org/distutils/setupscript.html
 
 # from distutils.core import setup
-from setuptools import setup
+from setuptools import setup, Command
+import re
+import os
+
+def read(fname):
+    '''Utility function to read the README file, for the long_description.'''
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
+def get_version_re():
+    '''Read the pytopo module versions from pytopo/__init__.py'''
+    with open("metapho/__init__.py") as fp:
+        version_file = fp.read()
+        version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                                  version_file, re.M)
+        if version_match:
+            print "Returning version '%s'" % version_match.group(1)
+            return version_match.group(1)
+        print "No version!"
+        return None
+
+# Some people recommend this, but it returns '-0.6-' rather than '0.6'
+# import pkg_resources  # part of setuptools
+# version = pkg_resources.require("metapho")[0].version
+# print "Version is '%s'" % version
+
+class CleanCommand(Command):
+    """Custom clean command to tidy up the project root."""
+    user_options = []
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+    def run(self):
+        os.system('rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./docs/sphinxdoc/_build')
 
 setup(name='metapho',
-      packages=['metapho'],
-      version='0.5',
+      packages=['metapho', 'metapho.gtkpho'],
+      version=get_version_re(),
       description='Image viewer and tagger',
       scripts=['helpers/notags'],
       author='Akkana Peck',
@@ -31,8 +64,12 @@ setup(name='metapho',
           # This probably should be gui_scripts according to some
           # pages I've found, but none of the official documentation
           # mentions gui_scripts at all.
+          #
+          # XXXXXX But now that metapho.gtkpho is a separate directory,
+          # it doesn't work at all, dies with:
+          # ImportError: No module named gtkpho.main
           'console_scripts': [
-              'metapho=metapho.main:main'
+              'metapho=metapho.gtkpho.main:main'
           ]
       }
      )

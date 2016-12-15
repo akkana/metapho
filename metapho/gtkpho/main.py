@@ -9,8 +9,8 @@ for viewing images and tagging them.
 
 # Copyright 2013,2016 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
-from . import metapho
-from . import gtkpho
+import metapho
+import metapho.gtkpho as gtkpho
 
 import gtk
 
