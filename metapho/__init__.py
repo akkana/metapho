@@ -8,7 +8,7 @@
 
 __version__ = "0.5.1"
 __author__ = "Akkana Peck <akkana@shallowsky.com>"
-__license__ = "GPL v2"
+__license__ = "GPL v2+"
 __all__ = [ 'Image', 'Tagger', 'Organizer' ]
 
 from metapho import *

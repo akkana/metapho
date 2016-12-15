@@ -20,4 +20,9 @@ everything you need without moving your hands to the mouse, though
 there are some mouse operations for those who find them easier.
 
 It depends on python-gtk, but not on gnome or any other desktop services.
+Linux users can get PyGTK through their distro, or by compiling from source;
+Windows users can install it from pip. I don't have a good answer for
+Mac users; possibly the easiest solution is to install GIMP (follow
+the install links from https://gimp.org) then munge paths so that
+other programs can find the PyGTK that comes with GIMP.
 
