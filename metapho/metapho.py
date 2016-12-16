@@ -176,7 +176,6 @@ tag Bruny Island: img 008.jpg
             pathname = os.path.join(dirname, "Tags")
             fp = open(pathname)
             self.tagfiles.append(pathname)
-            print "Opened", pathname
         except IOError :
             print "Couldn't find a file named Tags, trying Keywords"
             try :

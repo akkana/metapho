@@ -355,8 +355,6 @@ def main():
         print "Usage: %s file [file file ...]" \
             % os.path.basename(sys.argv[0])
 
-    print "Hello, and welcome to metapho."
-
     if len(sys.argv) <= 1:
         Usage()
         sys.exit(1)
