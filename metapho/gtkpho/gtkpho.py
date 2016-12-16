@@ -25,33 +25,37 @@ class TagViewer(metapho.Tagger, gtk.Table) :
         self.parentwin = parentwin
 
         self.title = gtk.Label("Tags")
-        self.attach(self.title, 0, 4, 0, 1 );
+        self.attach(self.title, 0, 4, 0, 1 )
 
-        hbox = gtk.HBox()
-        hbox.pack_start(gtk.Label("Tag category:"), expand=False)
+        self.catviewer = CategoryViewer(3, self.change_cat_cb)
+        self.attach(self.catviewer, 0, 4, 1, 2)
+        self.catviewer.show()
 
-        edit_btn = gtk.Button("Edit")
-        edit_btn.connect("clicked", self.edit_categories)
-        hbox.pack_end(edit_btn, expand=False)
-        edit_btn.unset_flags(gtk.CAN_FOCUS)
+        # hbox = gtk.HBox()
+        # hbox.pack_start(gtk.Label("Tag category:"), expand=False)
 
-        # Set up a combobox with a text entry, so the user can change cats.
-        # To make it editable is immensely more complicated than just
-        # calling gtk.combo_box_entry_new_text(); thanks to Juhaz on #pygtk
-        # for an example of how to set it up.
-        # self.categorysel = gtk.combo_box_entry_new_text()
-        self.cat_list_store = gtk.ListStore(str)
-        self.categorysel = gtk.ComboBox(self.cat_list_store)
-        # self.categorysel = gtk.ComboBoxEntry(self.cat_list_store, 0)
-        cr = gtk.CellRendererText()
-        self.categorysel.pack_start(cr)
-        self.categorysel.set_attributes(cr, text=0)
-        # Try to keep focus out of the combobox -- but it's not possible.
-        self.categorysel.unset_flags(gtk.CAN_FOCUS)
+        # edit_btn = gtk.Button("Edit")
+        # edit_btn.connect("clicked", self.edit_categories)
+        # hbox.pack_end(edit_btn, expand=False)
+        # edit_btn.unset_flags(gtk.CAN_FOCUS)
 
-        hbox.pack_start(self.categorysel, expand=True)
+        # # Set up a combobox with a text entry, so the user can change cats.
+        # # To make it editable is immensely more complicated than just
+        # # calling gtk.combo_box_entry_new_text(); thanks to Juhaz on #pygtk
+        # # for an example of how to set it up.
+        # # self.categorysel = gtk.combo_box_entry_new_text()
+        # self.cat_list_store = gtk.ListStore(str)
+        # self.categorysel = gtk.ComboBox(self.cat_list_store)
+        # # self.categorysel = gtk.ComboBoxEntry(self.cat_list_store, 0)
+        # cr = gtk.CellRendererText()
+        # self.categorysel.pack_start(cr)
+        # self.categorysel.set_attributes(cr, text=0)
+        # # Try to keep focus out of the combobox -- but it's not possible.
+        # self.categorysel.unset_flags(gtk.CAN_FOCUS)
 
-        self.attach(hbox, 0, 4, 1, 2 );
+        # hbox.pack_start(self.categorysel, expand=True)
+
+        # self.attach(hbox, 0, 4, 1, 2 )
 
         self.cur_img = None
         self.highlight_bg = gtk.gdk.color_parse("#FFFFFF")
@@ -75,7 +79,7 @@ class TagViewer(metapho.Tagger, gtk.Table) :
                     left = 2
 
                 button = gtk.ToggleButton(buttonchar)
-                self.attach(button, left, left+1, i+2, i+3 );
+                self.attach(button, left, left+1, i+2, i+3 )
                 self.buttons.append(button)
                 button.connect("toggled", self.toggled, len(self.entries))
 
@@ -85,10 +89,13 @@ class TagViewer(metapho.Tagger, gtk.Table) :
                 #entry.connect("focus-in-event", self.focus_in, i)
                 entry.connect("focus-out-event", self.focus_out,
                               len(self.entries))
-                self.attach(entry, left+1, left+2, i+2, i+3 );
+                self.attach(entry, left+1, left+2, i+2, i+3 )
                 self.entries.append(entry)
 
         self.show()
+
+    def change_cat_cb(self, cat):
+        print "Clicked on", cat
 
     def change_tag(self, tagno, newstr) :
         '''Update a tag: called on focus_out from one of the text entries'''
@@ -179,10 +186,11 @@ class TagViewer(metapho.Tagger, gtk.Table) :
         # Add our categories to the combo.
         if self.categories :
             for catname in self.categories.keys() :
-                # self.categorysel.append_text(catname)
-                self.cat_list_store.append((catname,))
+                # self.cat_list_store.append((catname,))
+                self.catviewer.add_category(catname)
         else :
-            self.cat_list_store.append((self.current_category,))
+            # self.cat_list_store.append((self.current_category,))
+            self.catviewer.add(self.current_category)
 
         # Set the first category as current, and display its tags.
         if self.categories :
@@ -190,10 +198,13 @@ class TagViewer(metapho.Tagger, gtk.Table) :
         # else the current category should still be at the default.
         self.display_tags_for_category(self.current_category)
 
-        self.categorysel.set_active(0)
-        self.categorysel.connect("changed", self.change_category)
+        self.catviewer.set_active(0)
+
+        # self.categorysel.connect("changed", self.change_category)
+        # XXX hook up categorysel buttons
 
     def display_tags_for_category(self, catname) :
+        print "display_tags_for_category(%s)" % catname
         # Is this a new category, not in the list?
         if catname not in self.categories.keys() :
             print catname, "was not in the category list"
@@ -244,7 +255,7 @@ class TagViewer(metapho.Tagger, gtk.Table) :
            Raises IndexError if catno is out of range.
         '''
         self.display_tags_for_category(self.categories.keys()[catno])
-        self.categorysel.set_active(catno)
+        self.catviewer.set_active(catno)
 
     def edit_categories(self, w) :
         d = gtk.Dialog('Edit categories', self.parentwin,
@@ -276,7 +287,7 @@ class TagViewer(metapho.Tagger, gtk.Table) :
         t.insert_column(col, -1)
 
         sw = gtk.ScrolledWindow()
-        sw.add(t)    
+        sw.add(t)
         v.add(sw)
 
         def save_current() :
@@ -286,7 +297,7 @@ class TagViewer(metapho.Tagger, gtk.Table) :
 
         def add_category(b):
             save_current()
-            self.cat_list_store.append(('New category',))        
+            self.cat_list_store.append(('New category',))
             t.set_cursor(self.cat_list_store[-1].path, col, True)
 
         b = gtk.Button('Add...')
@@ -332,7 +343,7 @@ class TagViewer(metapho.Tagger, gtk.Table) :
             if self.current_category > i :
                 self.current_category = 0
             self.show_category_by_number(self.current_category)
-            
+
         d.destroy()
 
         self.focus_none()
@@ -391,6 +402,9 @@ class TagViewer(metapho.Tagger, gtk.Table) :
         self.title.set_text(os.path.basename(img.filename))
 
         self.display_tags_for_category(self.current_category)
+
+        # Update the category viewer
+        # self.catviewer.set_image(img, self.current_category)
 
         return
 
@@ -458,6 +472,125 @@ class TagViewer(metapho.Tagger, gtk.Table) :
 
         self.parentwin.set_focus(self.entries[newindex])
         self.highlight_tag(newindex, True)
+
+class CategoryViewer(gtk.Table):
+    '''Display the categories known so far, and some indication of
+       in which categories the current image has tags.
+       The last button should always be a "New Category" button.
+       When category buttons are pressed, they'll call the callback
+       you pass in, which has signature: change_cat_cb(self, cat)
+
+    '''
+    add_cat_string = "Add Category"
+    def __init__(self, ncols, callback=None):
+        self.categories = []
+        self.buttons = []
+        self.ncols = ncols
+        self.callback = callback
+
+        # GTK has no sensible way of ignoring generated events
+        # vs. events the user caused by clicking on something.
+        # So maintain a variable we can use when we're updating the buttons,
+        # so each update doesn't cause a cascade of recursive updates.
+        # I so love GTK.
+        self.updating = False
+
+        super(CategoryViewer, self).__init__(1, 1, True)
+
+        self.add_cat_btn = gtk.ToggleButton(CategoryViewer.add_cat_string)
+        self.attach(self.add_cat_btn, 0, 1, 0, 1)
+        self.add_cat_btn.show()
+
+        # Color to highlight and unhighlight buttons.
+        # We can't get these until we've created a button.
+        widgcopy = self.add_cat_btn.get_style().copy()
+        self.oldcolors = widgcopy.bg
+        self.highlightcolor = gtk.gdk.Color(0, 65535, 0)
+
+    def add_category(self, newcat):
+        if newcat in self.categories:
+            print newcat, "is already a category"
+            return
+        curcat = len(self.categories)
+        oldrow, oldcol = divmod(curcat, self.ncols)
+        newrow, newcol = divmod(curcat+1, self.ncols)
+
+        # Move the add_cat_btn to the next spot:
+        self.remove(self.add_cat_btn)
+        self.attach(self.add_cat_btn, newcol, newcol + 1, newrow, newrow + 1)
+
+        # Make a new button where the add_cat_btn was:
+        btn =  gtk.ToggleButton(newcat)
+        self.attach(btn, oldcol, oldcol + 1, oldrow, oldrow + 1)
+        btn.show()
+        btn.connect("toggled", self.button_cb, curcat)
+
+        self.buttons.append(btn)
+        self.categories.append(newcat)
+
+    def button_cb(self, w, which):
+        if self.updating:
+            return
+        # print "Clicked on", which
+        self.set_active(which)
+        if self.callback:
+            self.callback(self.categories[which])
+
+    def getwhich(self, which):
+        if isinstance(which, int):
+            return which, self.categories[which]
+
+        # else presumably it's a string.
+        try:
+            i = self.categories.index(which)
+        except ValueError:
+            print "No such category", savecat
+            return None, which
+        return i, which
+
+    def set_active(self, which):
+        '''Make a given category active, by name or index.'''
+        which, catname = self.getwhich(which)
+
+        # Now which should be int.
+        self.updating = True
+        for i, btn in enumerate(self.buttons):
+            btn.set_active(i == which)
+            self.set_highlight(btn, i == which)
+        self.updating = False
+
+    def set_highlight(self, which, highlight):
+        '''Highlight or unhighlight a button, by reference, index or name'''
+        if isinstance(which, int):
+            btn = self.buttons[which]
+        elif isinstance(which, str):
+            which, catname = self.getwhich(which)
+        else:
+            btn = which
+
+        if highlight:
+            btn.modify_bg(gtk.STATE_NORMAL, self.highlightcolor)
+            btn.modify_bg(gtk.STATE_ACTIVE, self.highlightcolor)
+            btn.modify_bg(gtk.STATE_PRELIGHT, self.highlightcolor)
+            btn.modify_bg(gtk.STATE_SELECTED, self.highlightcolor)
+        else:
+            btn.modify_bg(gtk.STATE_NORMAL, self.oldcolors[gtk.STATE_NORMAL])
+            btn.modify_bg(gtk.STATE_ACTIVE, self.oldcolors[gtk.STATE_ACTIVE])
+            btn.modify_bg(gtk.STATE_PRELIGHT,
+                          self.oldcolors[gtk.STATE_PRELIGHT])
+            btn.modify_bg(gtk.STATE_SELECTED,
+                          self.oldcolors[gtk.STATE_SELECTED])
+
+if __name__ == '__main__':
+    w = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    catviewer = CategoryViewer(3)
+    w.add(catviewer)
+    catviewer.show()
+    for c in ["Animals", "Plants", "Natural Features",
+              "Architecture", "Atmospheric"]:
+        catviewer.add_category(c)
+    w.show()
+    gtk.main()
 
 class ImageViewer(gtk.DrawingArea) :
     '''A PyGTK image viewer widget for metapho.
@@ -599,4 +732,3 @@ class ImageViewer(gtk.DrawingArea) :
 
         # XXX we don't always need to reload: could make this more efficient.
         self.load_image(self.cur_img)
-
