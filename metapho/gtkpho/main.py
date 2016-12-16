@@ -259,11 +259,6 @@ class MetaPhoWindow(object):
             # self.tagger.focus_next_entry()
             return True
 
-        # Ctrl-Z is for when you accidentally hit a key that opens a
-        # new tag, but the current tag is blank and you don't want
-        # focus in that text field.
-        # XXX
-
         # Ctrl-q quits.
         if event.keyval == gtk.keysyms.q and \
                 event.state & gtk.gdk.CONTROL_MASK:
@@ -272,7 +267,7 @@ class MetaPhoWindow(object):
 
         if event.string == " ":
             self.next_image()
-            return True 
+            return True
         if event.keyval == gtk.keysyms.BackSpace:
             self.prev_image()
             return True

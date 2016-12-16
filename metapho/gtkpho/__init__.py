@@ -8,8 +8,4 @@
 
 from gtkpho import *
 
-# XXXXXX At this point, when we use the console_scripts to run metapho,
-# it dies with: ImportError: No module named gtkpho.main
-# This doesn't help, and in fact is an error:
-#from main import *
 
