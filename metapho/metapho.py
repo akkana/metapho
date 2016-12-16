@@ -16,13 +16,13 @@ Programs with better UI can inherit from these classes.
 import os
 import collections    # for OrderedDict
 
-class Image :
+class Image:
     '''An image, with additional info such as rotation and tags.
     '''
 
     g_image_list = []
 
-    def __init__(self, filename, displayed=True) :
+    def __init__(self, filename, displayed=True):
         '''Initialize an image filename.
            Pass displayed=False if this image isn't to be shown
            in the current session, only used for remembering
@@ -38,20 +38,20 @@ class Image :
         # Note: use 270 for counter-clockwise rotation, not -90.
         self.rot = None
 
-    def __repr__(self) :
+    def __repr__(self):
         str = "Image %s" % self.filename
 
-        if self.rot :
+        if self.rot:
             str += " (rotation %s)" % self.rot
 
-        if self.tags :
+        if self.tags:
             str += " Tags: " + self.tags.__repr__()
 
         str += '\n'
 
         return str
 
-    def delete(self) :
+    def delete(self):
         '''Delete the image file FROM DISK, and the image object
            from the imageList. DOES NOT ASK FOR CONFIRMATION --
            do that (if desired) from the calling program.
@@ -62,11 +62,11 @@ class Image :
 
 import shlex
 
-class Tagger(object) :
+class Tagger(object):
     '''Manages tags for images.
     '''
 
-    def __init__(self) :
+    def __init__(self):
         '''tagger: an object to manage metapho image tags'''
 
         # The category list is a list of lists:
@@ -91,66 +91,66 @@ class Tagger(object) :
         # What category are we currently processing? Default is Tags.
         self.current_category = "Tags"
 
-    def __repr__(self) :
+    def __repr__(self):
         '''Returns a string summarizing all known images and tags,
            suitable for printing on stdout or pasting into a Tags file.
         '''
         outstr = ''
-        for cat in self.categories :
+        for cat in self.categories:
             outstr += '\ncategory ' + cat + '\n\n'
 
-            for tagno in self.categories[cat] :
+            for tagno in self.categories[cat]:
                 tagstr = self.tag_list[tagno]
 
                 # No empty tag strings
-                if tagstr.strip() == '' :
+                if tagstr.strip() == '':
                     continue
 
                 imgstr = ''
-                for img in Image.g_image_list :
-                    if tagno in img.tags :
-                        if ' ' in img.filename :
+                for img in Image.g_image_list:
+                    if tagno in img.tags:
+                        if ' ' in img.filename:
                             fname = '"' + img.filename + '"'
-                        else :
+                        else:
                             fname = img.filename
                         imgstr += ' ' + fname
-                if imgstr :
+                if imgstr:
                     outstr += "tag %s :" % tagstr + imgstr + '\n'
 
         return outstr
 
-    def rename_category(self, old, new) :
+    def rename_category(self, old, new):
         for i in range(len(self.categories)):
             k,v = self.categories.popitem(False)
             self.categories[new if old == k else k] = v
 
-    def write_tag_file(self) :
+    def write_tag_file(self):
         '''Save the current set of tags to a Tags file chosen from
            the top-level directory used in the images we've seen.
            If there was a previous Tags file there, it will be saved
            as Tags.bak.
         '''
-        if not self.changed :
+        if not self.changed:
             print "No tags changed; not rewriting Tags file"
             return
 
         outpath = os.path.join(self.commondir, "Tags")
         print "Saving to", outpath
-        if os.path.exists(outpath) :
+        if os.path.exists(outpath):
             os.rename(outpath, outpath + ".bak")
         outfile = open(outpath, "w")
         outfile.write(str(self))
         outfile.close()
 
-    def read_tags(self, dirname) :
+    def read_tags(self, dirname):
         '''Read in tags from files named in the given directory,
            and tag images in the imagelist appropriately.
            Tags will be appended to the tag_list.
         '''
         # Keep track of the dir common to all directories we use:
-        if self.commondir == None :
+        if self.commondir == None:
             self.commondir = dirname
-        else :
+        else:
             self.commondir = os.path.commonprefix([self.commondir, dirname])
                 # commonpre has a bug, see
                 # http://rosettacode.org/wiki/Find_common_directory_path#Python
@@ -172,109 +172,109 @@ tag Bruny Island: img 008.jpg
         '''
         self.current_category = "Tags"
 
-        try :
+        try:
             pathname = os.path.join(dirname, "Tags")
             fp = open(pathname)
             self.tagfiles.append(pathname)
-        except IOError :
+        except IOError:
             print "Couldn't find a file named Tags, trying Keywords"
-            try :
+            try:
                 pathname = os.path.join(dirname, "Keywords")
                 fp = open(pathname)
                 self.tagfiles.append(pathname)
-            except IOError :
+            except IOError:
                 # Start us off with an empty tag list.
                 self.categories[self.current_category] = []
                 # print "No Tags file in", dirname
                 return
 
         self.current_category = "Tags"
-        for line in fp :
+        for line in fp:
             # The one line type that doesn't need a colon is a cat name.
-            if line.startswith('category ') :
+            if line.startswith('category '):
                 newcat = line[9:].strip()
-                if newcat :
+                if newcat:
                     self.current_category = newcat
-                    if self.current_category not in self.categories :
+                    if self.current_category not in self.categories:
                         self.categories[self.current_category] = []
-                else :
+                else:
                     print "Parse error: couldn't read category name from", line
                 continue
 
             # Any other legal line type must have a colon.
             colon = line.find(':')
-            if colon < 0 :
+            if colon < 0:
                 continue    # If there's no colon, it's not a legal tag line
 
             # Now we know we have tagname, typename or photoname.
             # Get the list of objects after the colon.
             # Use shlex to handle quoted and backslashed
             # filenames with embedded spaces.
-            try :
+            try:
                 objects = shlex.split(line[colon+1:].strip())
             except ValueError:
                 print pathname, "Couldn't parse:", line
                 continue
 
-            if line.startswith('tagtype ') :
+            if line.startswith('tagtype '):
                 typename = line[8:colon].strip()
 
-            elif line.startswith('photo ') :
+            elif line.startswith('photo '):
                 photoname = line[6:colon].strip()
 
-            else :
+            else:
                 # Anything else is a tag.
                 # If it starts with "tag " (as it should), strip that off.
-                if line.startswith('tag ') :
+                if line.startswith('tag '):
                     tagstr = line[4:colon].strip()
-                else :
+                else:
                     tagstr = line[:colon].strip()
 
                 # It may be several comma-separated tags.
                 tagnames = map(str.strip, tagstr.split(','))
 
-                for tagname in tagnames :
+                for tagname in tagnames:
                     self.process_tag(tagname, objects)
 
         fp.close()
 
-    def process_tag(self, tagname, filenames) :
+    def process_tag(self, tagname, filenames):
         '''After reading a tag from a tags file, add it to the global
            tags list if it isn't there already, and add the given filenames
            to it.
         '''
-        try :
+        try:
             tagindex = self.tag_list.index(tagname)
-        except :
+        except:
             tagindex = len(self.tag_list)
             self.tag_list.append(tagname)
 
-            try :
+            try:
                 self.categories[self.current_category].append(tagindex)
             # KeyError if the key doesn't exist, AttributeError if
             # self.categories[current_category] exists but isn't a list.
-            except KeyError :
+            except KeyError:
                 self.categories[self.current_category] = [tagindex]
 
         # Search for images matching the names in filenames
         # XXX pathname issue here: filenames in tag files generally don't
         # have absolute pathnames, so we're only matching basenames and
         # there could be collisions.
-        for fil in filenames :
+        for fil in filenames:
             tagged = False
-            for img in Image.g_image_list :
-                if img.filename.endswith(fil) and tagindex not in img.tags :
+            for img in Image.g_image_list:
+                if img.filename.endswith(fil) and tagindex not in img.tags:
                     img.tags.append(tagindex)
                     tagged = True
                     break
             # Did we find an image matching fil?
             # If not, add it as a non-displayed image.
-            if not tagged :
+            if not tagged:
                 newim = Image(fil, displayed=False)
                 newim.tags.append(tagindex)
                 Image.g_image_list.append(newim)
 
-    def add_tag(self, tag, img) :
+    def add_tag(self, tag, img):
         '''Add a tag to the given image.
            img is a metapho.Image.
            tag may be a string, which can be a new string or an existing one,
@@ -284,15 +284,15 @@ tag Bruny Island: img 008.jpg
         '''
         self.changed = True
 
-        if type(tag) is int :
-            if tag not in img.tags :
+        if type(tag) is int:
+            if tag not in img.tags:
                 img.tags.append(tag)
             return tag
 
         # Else it's a string. Make a new tag.
-        if tag in self.tag_list :
+        if tag in self.tag_list:
             tagno = self.tag_list.index(tag)
-            if tagno not in self.categories[self.current_category] :
+            if tagno not in self.categories[self.current_category]:
                 self.categories[self.current_category].append(tagno)
             img.tags.append(tagno)
             return tagno
@@ -303,37 +303,37 @@ tag Bruny Island: img 008.jpg
         self.categories[self.current_category].append(newindex)
         return newindex
 
-    def remove_tag(self, tag, img) :
+    def remove_tag(self, tag, img):
         self.changed = True
 
-        if type(tag) is int :
-            if tag in img.tags :
+        if type(tag) is int:
+            if tag in img.tags:
                 img.tags.remove(tag)
 
         # Else it's a string. Remove it if it's there.
-        try :
+        try:
             self.tag_list.remove(tag)
-        except :
+        except:
             pass
 
-    def clear_tags(self, img) :
+    def clear_tags(self, img):
         img.tags = []
 
-    def toggle_tag(self, tagno, img) :
+    def toggle_tag(self, tagno, img):
         '''Toggle tag number tagno for the given img.'''
         self.changed = True
 
-        if tagno in img.tags :
+        if tagno in img.tags:
             img.tags.remove(tagno)
             return
 
         # It's not there yet. See if it exists in the global tag list.
-        # if tagno > len(self.tag_list) :
+        # if tagno > len(self.tag_list):
         #     print "Warning: adding a not yet existent tag", tagno
 
         img.tags.append(tagno)
 
-    def match_tag(self, pattern) :
+    def match_tag(self, pattern):
         '''Return a list of tags matching the pattern.'''
         return None
 
