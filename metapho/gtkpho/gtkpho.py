@@ -13,6 +13,7 @@ import gc
 import glib, gobject
 import os
 import collections
+import traceback
 
 class TagViewer(metapho.Tagger, gtk.Table):
     '''A PyGTK widget for showing tags.
@@ -68,8 +69,10 @@ class TagViewer(metapho.Tagger, gtk.Table):
                 entry.set_width_chars(25)
                 #entry.connect("changed", self.entry_changed, i)
                 #entry.connect("focus-in-event", self.focus_in, i)
+
                 entry.connect("focus-out-event", self.focus_out,
                               len(self.entries))
+
                 self.attach(entry, left+1, left+2, i+2, i+3 )
                 self.entries.append(entry)
 
@@ -78,20 +81,23 @@ class TagViewer(metapho.Tagger, gtk.Table):
     def change_tag(self, tagno, newstr):
         '''Update a tag: called on focus_out from one of the text entries'''
         if tagno < len(self.categories[self.current_category]):
-            self.tag_list[self.categories[self.current_category][tagno]] = newstr
+            self.tag_list[self.categories[self.current_category][tagno]] \
+                = newstr
         else:
-            newtag = self.add_tag(newstr, self.cur_img)
-            self.highlight_tag(newtag, True)
+            self.add_tag(newstr, self.cur_img)
 
     def clear_tags(self, img):
+        '''Clear all tags from the current image.
+        '''
         metapho.Tagger.clear_tags(self, img)
+
+        # leave nothing focused
+        self.focus_none()
 
         # also update the UI
         for i in xrange(len((self.entries))):
             self.highlight_tag(i, False)
-
-        # leave nothing focused
-        self.focus_none()
+        self.catviewer.unhighlight_all()
 
     def unhighlight_empty_entries(self):
         '''Check whether any entries are empty.
@@ -105,26 +111,54 @@ class TagViewer(metapho.Tagger, gtk.Table):
         '''Un-focus any currently focused text entry,
            leaving nothing focused.
            If there was a focused entry and it was empty,
-           de-select the corresponding toggle button.
+           de-highlight the corresponding toggle button.
         '''
-        focused = self.parentwin.get_focus()
-
-        # if focus was in a text entry, un-highlight that entry.
-        # if (type(focused) is gtk.Entry):
-        #     print "It's an entry"
-        #     entryno = self.entries.index(focused)
-        #     self.highlight_tag(entryno, False)
-
         # Make sure we're leaving nothing focused:
-        self.unhighlight_empty_entries()
         self.parentwin.set_focus(None)
+        self.unhighlight_empty_entries()
 
-    def focus_out(self, entry, event, tagno):
+    def sync_entry(self, entry, entryno):
         entry_text = entry.get_text()
         # Ignore blank entries
         if entry_text.strip() == '':
             return
-        self.change_tag(tagno, entry_text)
+        self.change_tag(entryno, entry_text)
+
+    def sync(self):
+        '''Update tags to reflect the contents of the current entry.
+           Called on things like next_image and quit.
+        '''
+        entry = self.parentwin.get_focus()
+        # Everybody says to use isinstance, but to do that you need
+        # another variable to check against None because None
+        # has no isinstance().
+        if type(entry) is not gtk.Entry:
+            return
+
+        # Get the focused entry's number
+        entryno = None
+        for i, e in enumerate(self.entries):
+            if entry == e:
+                entryno = i
+                break
+        self.sync_entry(entry, entryno)
+        self.focus_none()
+
+    def focus_out(self, entry, event, entryno):
+        '''Called when a text entry loses focus.'''
+        # We need to update the tags when a text entry is defocused,
+        # but we don't want to do that every time the whole window
+        # loses focus. Detect that case:
+        winfocused = self.parentwin.get_focus()
+        if winfocused == entry:
+            # print "The window was unfocused, not the entry within the window"
+            return
+
+        for i, e in enumerate(self.entries):
+            if entry == e:
+                break
+
+        self.sync_entry(entry, entryno)
         return True
 
     def toggled(self, button, tagno):
@@ -174,12 +208,10 @@ class TagViewer(metapho.Tagger, gtk.Table):
         # else the current category should still be at the default.
 
         self.display_tags_for_category(self.current_category)
-        self.catviewer.set_active(0)
 
     def display_tags_for_category(self, catname):
         # Is this a new category, not in the list?
         if catname not in self.categories.keys():
-            print catname, "was not in the category list"
             for i in range(len(self.entries)):
                 self.entries[i].set_text("")
                 self.highlight_tag(i, False)
@@ -210,9 +242,18 @@ class TagViewer(metapho.Tagger, gtk.Table):
             print "Too many tags in category %s -- can't show all %d" % \
                 (catname, len(self.categories[catname]))
 
+    def highlight_categories(self):
+        '''Highlight the button for any category that includes tags
+           set in this image.
+        '''
+        self.catviewer.unhighlight_all()
+        for tag in self.cur_img.tags:
+            for cat in self.categories:
+                if tag in self.categories[cat]:
+                    self.catviewer.set_highlight(cat, True)
+
     def change_category(self, cat):
-        '''The callback when the combobox is changed by the user'''
-        print "Clicked on", cat
+        '''The callback when the category is changed by the user'''
         self.display_tags_for_category(cat)
 
     def next_category(self, howmany):
@@ -277,6 +318,9 @@ class TagViewer(metapho.Tagger, gtk.Table):
     def highlight_tag(self, tagno, val):
         '''Turn tag number tagno on (if val=True) or off (val=False).'''
 
+        # if val:
+        #     print "\n======== highlight_tag", tagno
+        #     traceback.print_stack()
         if len(self.buttons) < tagno:
             print "Argh! Tried to highlight tag", tagno
         if self.buttons[tagno].get_active() != val:
@@ -322,15 +366,30 @@ class TagViewer(metapho.Tagger, gtk.Table):
                 ent.modify_base(gtk.STATE_NORMAL, self.match_bg)
                 return
 
+    def img_has_tags_in(self, img, cat):
+        for tag in img.tags:
+            if tag in self.categories[cat]:
+                return True
+
     def set_image(self, img):
         self.cur_img = img
 
         self.title.set_text(os.path.basename(img.filename))
 
-        self.display_tags_for_category(self.current_category)
+        # Decide what category to show.
+        # If the image has tags set in the current category,
+        # or the image has no tags set in any category,
+        # leave the current category unchanged.
+        # Otherwise, switch to the first category where this image has tags.
+        if img.tags and not self.img_has_tags_in(img, self.current_category):
+            for cat in self.categories:
+                if self.img_has_tags_in(img, cat):
+                    self.current_category = cat
+                    break
 
-        # Update the category viewer
-        # self.catviewer.set_image(img, self.current_category)
+        self.catviewer.set_active(self.current_category)
+        self.highlight_categories()
+        self.display_tags_for_category(self.current_category)
 
         return
 
@@ -346,8 +405,15 @@ class TagViewer(metapho.Tagger, gtk.Table):
         tagindex = metapho.Tagger.add_tag(self, tag, img)
 
         # Now display it, if possible
-        if tagindex < len(self.entries):
-            self.highlight_tag(tagindex, True)
+        # print "highlighting from add_tag(%s)" % tag
+
+        # tagindex is the index (in the global tags list) of the tag
+        # just added, which has nothing (necessarily) to do with the
+        # index of the entry in our window, so highlighting based on
+        # that is just wrong.
+        # (It might accidentally work in cases with no categories.)
+        # if tagindex < len(self.entries):
+        #     self.highlight_tag(tagindex, True)
 
         return tagindex
 
@@ -376,7 +442,6 @@ class TagViewer(metapho.Tagger, gtk.Table):
         else:
             tagno = ord(tagchar) - ord('A') + self.num_rows
         if tagno >= len(self.tag_list):
-            print "We don't have a tag", tagchar, "yet"
             return
         self.toggle_tag(tagno, img)
 
@@ -434,15 +499,20 @@ class CategoryViewer(gtk.Table):
         # Color to highlight and unhighlight buttons.
         # We can't get these until we've created a button.
         widgcopy = self.add_cat_btn.get_style().copy()
-        self.oldcolors = widgcopy.bg
-        if highlight_color:
-            self.highlightcolor = highlight_color
-        else:
-            self.highlightcolor = gtk.gdk.Color(0, 65535, 0)
+        oldcolors = widgcopy.bg
+        # def printcolor(c):
+        #     print c.red * 256/65535, c.green * 256/65535, c.blue * 256/65535
+
+        def highlightier(c):
+            '''Make the color a little greener than before'''
+            return gtk.gdk.Color(c.red, (2 * c.green + 65535) / 3, c.blue)
+        self.normalcolor = oldcolors[gtk.STATE_NORMAL]
+        self.activecolor = oldcolors[gtk.STATE_ACTIVE]
+        self.normalhighlight = highlightier(self.normalcolor)
+        self.activehighlight = highlightier(self.activecolor)
 
     def add_category(self, newcat):
         if newcat in self.categories:
-            print newcat, "is already a category"
             return
         curcat = len(self.categories)
         oldrow, oldcol = divmod(curcat, self.ncols)
@@ -453,7 +523,7 @@ class CategoryViewer(gtk.Table):
         self.attach(self.add_cat_btn, newcol, newcol + 1, newrow, newrow + 1)
 
         # Make a new button where the add_cat_btn was:
-        btn =  gtk.ToggleButton(newcat)
+        btn =  gtk.ToggleButton(str("%d: %s" % (curcat, newcat)))
         self.attach(btn, oldcol, oldcol + 1, oldrow, oldrow + 1)
         btn.show()
         btn.connect("toggled", self.button_cb, curcat)
@@ -489,7 +559,6 @@ class CategoryViewer(gtk.Table):
         self.updating = True
         for i, btn in enumerate(self.buttons):
             btn.set_active(i == which)
-            self.set_highlight(btn, i == which)
         self.updating = False
 
     def set_highlight(self, which, highlight):
@@ -498,21 +567,24 @@ class CategoryViewer(gtk.Table):
             btn = self.buttons[which]
         elif isinstance(which, str):
             which, catname = self.getwhich(which)
+            btn = self.buttons[which]
         else:
             btn = which
 
         if highlight:
-            btn.modify_bg(gtk.STATE_NORMAL, self.highlightcolor)
-            btn.modify_bg(gtk.STATE_ACTIVE, self.highlightcolor)
-            btn.modify_bg(gtk.STATE_PRELIGHT, self.highlightcolor)
-            btn.modify_bg(gtk.STATE_SELECTED, self.highlightcolor)
+            btn.modify_bg(gtk.STATE_NORMAL, self.normalhighlight)
+            btn.modify_bg(gtk.STATE_ACTIVE, self.activehighlight)
+            btn.modify_bg(gtk.STATE_PRELIGHT, self.activehighlight)
+            btn.modify_bg(gtk.STATE_SELECTED, self.activehighlight)
         else:
-            btn.modify_bg(gtk.STATE_NORMAL, self.oldcolors[gtk.STATE_NORMAL])
-            btn.modify_bg(gtk.STATE_ACTIVE, self.oldcolors[gtk.STATE_ACTIVE])
-            btn.modify_bg(gtk.STATE_PRELIGHT,
-                          self.oldcolors[gtk.STATE_PRELIGHT])
-            btn.modify_bg(gtk.STATE_SELECTED,
-                          self.oldcolors[gtk.STATE_SELECTED])
+            btn.modify_bg(gtk.STATE_NORMAL, self.normalcolor)
+            btn.modify_bg(gtk.STATE_ACTIVE, self.activecolor)
+            btn.modify_bg(gtk.STATE_PRELIGHT, self.activecolor)
+            btn.modify_bg(gtk.STATE_SELECTED, self.activecolor)
+
+    def unhighlight_all(self):
+        for btn in self.buttons:
+            self.set_highlight(btn, False)
 
 if __name__ == '__main__':
     w = gtk.Window(gtk.WINDOW_TOPLEVEL)

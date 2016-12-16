@@ -99,6 +99,7 @@ class MetaPhoWindow(object):
 
         # Save the tags of the current image, so we can copy them
         # into the next image if it doesn't have any yet.
+        self.tagger.sync()
         oldtags = None
         try:
             if self.imgno >= 0 and metapho.Image.g_image_list[self.imgno].tags:
@@ -206,7 +207,7 @@ class MetaPhoWindow(object):
         if self.isearch:
             return self.isearch_key_press(widget, event)
 
-        entry_focused = (type(self.win.get_focus()) is gtk.Entry)
+        entry_focused = type(self.win.get_focus()) is gtk.Entry
 
         # ctrl-space goes to the next image, even if we're typing
         # in an entry. Nothing should be focused afterward.
@@ -214,8 +215,6 @@ class MetaPhoWindow(object):
         # Ctrl-space also goes to the next image.
         if (event.keyval == gtk.keysyms.space and \
             event.state & gtk.gdk.CONTROL_MASK):
-            if entry_focused:
-                self.tagger.focus_none()
             self.next_image()
             return True
 
