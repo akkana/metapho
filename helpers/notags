@@ -68,6 +68,11 @@ def find_nokeywords(topdir):
             del dirs[0:]
             continue
 
+        # XXX Need to check for a parent directory with a Tags file
+        # that references images in subdirectories. But in that case
+        # we also should watch out for subdirectory images that don't
+        # appear in the parent's Tags.
+
         # Don't check directories of the same name as their parent directory.
         # They're probably a collection of lower-res images intended
         # to be copied to a website.
@@ -140,7 +145,7 @@ def find_nokeywords(topdir):
         # Now kwfiles is a list of all the files referenced in the Tags file.
         omit = imgfiles - kwfiles
         if omit:
-            omitted_files[tagfile] = list(omit)
+            omitted_files[os.path.normpath(root)] = list(omit)
 
     return dirs_nokw, omitted_files
 
