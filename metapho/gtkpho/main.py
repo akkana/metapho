@@ -86,8 +86,10 @@ class MetaPhoWindow(object):
                 self.tagger.read_tags(dirname)
 
         nonexistent = metapho.Image.find_nonexistent_files()
-        print "Warning: these files don't exist:"
-        for f in nonexistent: print "   ", f
+        if nonexistent:
+            print "Warning: these files don't exist:"
+            for f in nonexistent:
+                print "   ", f
 
         self.tagger.display_tags()
 
@@ -166,6 +168,7 @@ class MetaPhoWindow(object):
             img = metapho.Image.g_image_list[self.imgno]
             if img.displayed:
                 loaded = self.viewer.load_image(img)
+                self.viewer.show_image()
                 if not loaded:
                     print "prev_image: couldn't show", img.filename
                     img.displayed = False
@@ -183,9 +186,9 @@ class MetaPhoWindow(object):
            Accept some keystrokes beyond the usual ones,
            e.g. d or ctrl-d confirms the delete.
         '''
-        dialog = gtk.MessageDialog(self.win, 
+        dialog = gtk.MessageDialog(self.win,
                                    gtk.DIALOG_DESTROY_WITH_PARENT,
-                                   gtk.MESSAGE_QUESTION, 
+                                   gtk.MESSAGE_QUESTION,
                                    #gtk.BUTTONS_YES_NO,
                                    gtk.BUTTONS_CANCEL,
                                    "Delete %s ?" % \
