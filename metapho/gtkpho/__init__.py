@@ -7,5 +7,6 @@
 '''metapho.gtkpho: GTK-based display functions for metapho.'''
 
 from gtkpho import *
+from ImageViewer import *
 
 

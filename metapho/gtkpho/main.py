@@ -7,7 +7,7 @@ This is the runnable script, which calls up a GTK-based user interface
 for viewing images and tagging them.
 '''
 
-# Copyright 2013,2016 by Akkana Peck: share and enjoy under the GPL v2 or later.
+# Copyright 2013-2017 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
 import metapho
 import metapho.gtkpho as gtkpho
@@ -16,7 +16,7 @@ import gtk
 
 import sys, os
 
-import traceback
+# import traceback
 
 class MetaPhoWindow(object):
     '''The main controller window for metapho.
@@ -114,7 +114,9 @@ class MetaPhoWindow(object):
             img = metapho.Image.g_image_list[self.imgno]
             if img.displayed:
                 loaded = self.viewer.load_image(img)
-                if not loaded:
+                if loaded:
+                    self.viewer.show_image()
+                else:
                     print "next_image: couldn't show", img.filename
                     img.displayed = False
                     # Should arguably delete it from the list

@@ -47,7 +47,7 @@ class Image:
         if self.tags:
             str += " Tags: " + self.tags.__repr__()
 
-        str += '\n'
+        # str += '\n'
 
         return str
 
