@@ -35,6 +35,8 @@ class MetaPhoWindow(object):
 
         self.isearch = False
 
+        self.zoomview = None
+
         self.win = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.win.set_border_width(10)
 
@@ -264,6 +266,17 @@ class MetaPhoWindow(object):
         if event.keyval == gtk.keysyms.q and \
                 event.state & gtk.gdk.CONTROL_MASK:
             self.quit()
+            return True
+
+        # Ctrl-z brings up a zoom window
+        if event.keyval == gtk.keysyms.z and \
+                event.state & gtk.gdk.CONTROL_MASK:
+            filename = metapho.Image.g_image_list[self.imgno].filename
+            if not self.zoomview:
+                self.zoomview = gtkpho.ImageViewerWindow(filename)
+            else:
+                self.zoomview.add_image(filename)
+                self.zoomview.show()
             return True
 
         if event.string == " ":

@@ -190,13 +190,26 @@ class ImageViewerWindow(gtk.Window):
        This can be used as a simple image viewer from the command line,
        or as a separate window in another app, e.g. the metapho zoom window.
     '''
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
+        '''Positional args are a list of image filenames.
+           Keyword args:
+               quit: function to call when the user presses 'q'.
+                     To use as a standalone app, pass quit=gtk.main_quit.
+                     By default, q will merely hide() the window.
+        '''
         super(ImageViewerWindow, self).__init__()
 
         self.imglist = list(args)
-        self.cur_img_index = 0
-        self.cur_img = args[0]
 
+        if 'quit' in kwargs:
+            self.quitfcn = kwargs['quit']
+        else:
+            self.quitfcn = self.hide
+
+        self.cur_img_index = 0
+        self.cur_img = self.imglist[0]
+
+        # Expanded to full image size, or scaled to the display size?
         self.expanded = False
 
         # We can get screenwidth with gtk.gdk.screen_width() (and height),
@@ -230,6 +243,17 @@ class ImageViewerWindow(gtk.Window):
 
         self.imgviewer.show()
         self.show()
+
+    def add_image(self, filename):
+        '''Add an image to the list, and show it.
+           Don't remove the other images, though; let the user
+           use 'p' to get back to them if desired.
+        '''
+        self.imglist.append(filename)
+        self.cur_img_index = len(self.imglist) - 1
+        self.cur_img = self.imglist[self.cur_img_index]
+        self.fit_on_screen()
+        self.show_image()
 
     def load_image(self):
         '''Load (or reload) self.cur_img from file.
@@ -268,7 +292,7 @@ class ImageViewerWindow(gtk.Window):
     def key_press_event(self, widget, event):
         # q quits.
         if event.keyval == gtk.keysyms.q:
-            gtk.main_quit()
+            self.quitfcn()
             return True
 
         # f toggles between fullscreen and full-zoom:
@@ -305,6 +329,6 @@ if __name__ == '__main__':
     if len(sys.argv) <= 1:
         print "Usage: %s img [img img ...]" % sys.argv[0]
         sys.exit(1)
-    ivw = ImageViewerWindow(*sys.argv[1:])
+    ivw = ImageViewerWindow(*sys.argv[1:], quit=gtk.main_quit)
 
     gtk.main()
