@@ -20,6 +20,7 @@ class Image:
     '''An image, with additional info such as rotation and tags.
     '''
 
+    # A list of all the filenames we know about:
     g_image_list = []
 
     def __init__(self, filename, displayed=True):
@@ -59,6 +60,18 @@ class Image:
         print "Deleting", self.filename
         os.unlink(self.filename)
         Image.g_image_list.remove(self)
+
+    @classmethod
+    def find_nonexistent_files(cls):
+        '''Returns a list of images in the imagelist that don't exist on disk.
+        '''
+        not_on_disk = set()
+        for im in Image.g_image_list:
+            if not os.path.exists(im.filename):
+                not_on_disk.add(im.filename)
+        not_on_disk = list(not_on_disk)
+        not_on_disk.sort()
+        return not_on_disk
 
 import shlex
 
@@ -147,6 +160,7 @@ class Tagger(object):
            and tag images in the imagelist appropriately.
            Tags will be appended to the tag_list.
         '''
+
         # Keep track of the dir common to all directories we use:
         if self.commondir == None:
             self.commondir = dirname
@@ -169,6 +183,8 @@ tag penguins: img 008.jpg
 category Places
 tag New Mexico: img_020.jpg img_042.jpg
 tag Bruny Island: img 008.jpg
+           Extra whitespace is fine; category lines are optional;
+           "tag " at beginning of line is optional.
         '''
         self.current_category = "Tags"
 
@@ -177,15 +193,13 @@ tag Bruny Island: img 008.jpg
             fp = open(pathname)
             self.tagfiles.append(pathname)
         except IOError:
-            print "Couldn't find a file named Tags, trying Keywords"
+            # print "Couldn't find a file named Tags, trying Keywords"
             try:
                 pathname = os.path.join(dirname, "Keywords")
                 fp = open(pathname)
                 self.tagfiles.append(pathname)
             except IOError:
-                # Start us off with an empty tag list.
-                self.categories[self.current_category] = []
-                # print "No Tags file in", dirname
+                print "No Tags or Keywords file in", dirname
                 return
 
         self.current_category = "Tags"
@@ -336,4 +350,3 @@ tag Bruny Island: img 008.jpg
     def match_tag(self, pattern):
         '''Return a list of tags matching the pattern.'''
         return None
-

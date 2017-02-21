@@ -27,6 +27,7 @@ class MetaPhoWindow(object):
     def __init__(self, file_list):
         for filename in file_list:
             metapho.Image.g_image_list.append(metapho.Image(filename))
+
         self.imgno = 0
 
         # The size of the image viewing area:
@@ -77,12 +78,17 @@ class MetaPhoWindow(object):
     def read_all_tags(self):
         '''Read tags in all directories used by images in argv.
         '''
-        dirlist = []
+        dirs = set()
         for img in metapho.Image.g_image_list:
-            dirname = os.path.dirname(img.filename)
-            if dirname not in dirlist:
-                dirlist.append(dirname)
+            dirname = os.path.dirname(img.filename) or '.'
+            if dirname not in dirs:
+                dirs.add(dirname)
                 self.tagger.read_tags(dirname)
+
+        nonexistent = metapho.Image.find_nonexistent_files()
+        print "Warning: these files don't exist:"
+        for f in nonexistent: print "   ", f
+
         self.tagger.display_tags()
 
     def first_image(self):
