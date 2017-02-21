@@ -6,7 +6,7 @@
 
 '''metapho: an image tagger and viewer.'''
 
-__version__ = "0.7b1"
+__version__ = "0.6b1"
 __author__ = "Akkana Peck <akkana@shallowsky.com>"
 __license__ = "GPL v2+"
 __all__ = [ 'Image', 'Tagger', 'Organizer' ]
