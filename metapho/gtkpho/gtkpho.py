@@ -198,7 +198,7 @@ class TagViewer(metapho.Tagger, gtk.Table):
             for catname in self.categories.keys():
                 self.catviewer.add_category(catname)
         else:
-            self.catviewer.add(self.current_category)
+            self.catviewer.add_category(self.current_category)
 
         # Set the first category as current, and display its tags.
         if self.categories:
@@ -472,6 +472,7 @@ class CategoryViewer(gtk.Table):
        where it can offer a way to create a new category.
     '''
     add_cat_string = "Add Category"
+
     def __init__(self, ncols, change_cat_cb=None, new_cat_cb=None,
                  highlight_color=None):
         self.categories = []

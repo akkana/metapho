@@ -187,6 +187,7 @@ tag Bruny Island: img 008.jpg
            "tag " at beginning of line is optional.
         '''
         self.current_category = "Tags"
+        self.categories[self.current_category] = []
 
         try:
             pathname = os.path.join(dirname, "Tags")
@@ -202,7 +203,6 @@ tag Bruny Island: img 008.jpg
                 print "No Tags or Keywords file in", dirname
                 return
 
-        self.current_category = "Tags"
         for line in fp:
             # The one line type that doesn't need a colon is a cat name.
             if line.startswith('category '):
