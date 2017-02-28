@@ -253,6 +253,7 @@ class ImageViewerWindow(gtk.Window):
         self.cur_img_index = len(self.imglist) - 1
         self.cur_img = self.imglist[self.cur_img_index]
         self.fit_on_screen()
+        self.load_image()
         self.show_image()
 
     def load_image(self):
