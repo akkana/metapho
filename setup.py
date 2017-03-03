@@ -63,7 +63,8 @@ setup(name='metapho',
           # pages I've found, but none of the official documentation
           # mentions gui_scripts at all.
           'console_scripts': [
-              'metapho=metapho.gtkpho.main:main'
+              'metapho=metapho.gtkpho.main:main',
+              'mpiv=metapho.gtkpho.ImageViewer:main'
           ]
       },
 
