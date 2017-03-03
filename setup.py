@@ -59,11 +59,12 @@ setup(name='metapho',
           'Topic :: Utilities'
         ],
       entry_points={
-          # This probably should be gui_scripts according to some
+          # metapho should be in gui_scripts according to some
           # pages I've found, but none of the official documentation
           # mentions gui_scripts at all.
           'console_scripts': [
               'metapho=metapho.gtkpho.main:main',
+              'notags=metapho.main:main',
               'mpiv=metapho.gtkpho.ImageViewer:main'
           ]
       },

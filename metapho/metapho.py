@@ -53,7 +53,9 @@ class Image:
         return str
 
     def __eq__(self, other):
-        return self.filename == other.filename and self.tags == other.tags
+        if hasattr(other, 'filename') and hasattr(other, 'tags'):
+            return self.filename == other.filename and self.tags == other.tags
+        return other == self.filename
 
     def __lt__(self, other):
         return self.filename < other.filename
@@ -124,6 +126,15 @@ class Image:
                             "has vanished from the global image list"
 
                     nefbases.remove(f)
+
+        # Now we've adjusted paths for any file that's moved.
+        # But what about files that have simply been removed?
+        # Those are still in nefbases.
+        if nefbases:
+            print "Removing missing files from Tags file:", \
+                ' '.join([nefdict[f] for f in nefbases])
+            for f in nefbases:
+                Image.g_image_list.remove(nefdict[f])
 
 import shlex
 
@@ -416,3 +427,69 @@ tag Bruny Island: img 008.jpg
         '''Return a list of tags matching the pattern.'''
         return None
 
+def main():
+    '''Read tags and report any inconsistencies:
+       images in the Tags file that don't exist on disk,
+       images on disk that aren't in ./Tags.
+    '''
+    tagger = Tagger()
+    tagger.read_tags('.')
+
+    nef = Image.find_nonexistent_files()
+    if nef:
+        print "Files in Tags file that don't exist on disk:", ' '.join(nef)
+
+    def find_untagged_files(topdir):
+        '''Return a list of untagged files and a list of directories
+           in which nothing is tagged, under topdir.
+        '''
+        untagged_files = []
+        untagged_dirs = []
+        for root, dirs, files in os.walk(topdir):
+            deletes = []
+            for d in dirs:
+                # directory names that don't need to be indexed separately
+                # since they likely contain copies of what's in the parent.
+                # Need to build up a list of these since we can't delete
+                # from dirs while iterating over it.
+                if d == "html" or d == "web" or d == os.path.basename(root):
+                    deletes.append(d)
+                for d in deletes:
+                    dirs.delete(d)
+
+            # if os.path.exists(os.path.join(root, "Tags")) or \
+            #    os.path.exists(os.path.join(root, "Keywords")):
+
+            local_numtagged = 0
+            local_untagged = []
+            for f in files:
+                # Assume all image files will have an extension
+                if '.' not in f:
+                    continue
+                if f.startswith("Tags") or f.startswith("Keywords"):
+                    continue
+                filepath = os.path.normpath(os.path.join(root, f))
+                if filepath in Image.g_image_list:
+                    local_numtagged += 1
+                else:
+                    local_untagged.append(filepath)
+            if local_numtagged:    # Something was tagged in this root
+                untagged_files += local_untagged
+            else:                  # Nothing was tagged in this root
+                untagged_dirs.append(os.path.normpath(root))
+
+        return untagged_files, untagged_dirs
+
+    utf, utd = find_untagged_files('.')
+    if utd:
+        if nef:
+            print
+        print "Directories that need a Tags file:", ' '.join(utd)
+
+    if utf:
+        if utd:
+            print
+        print "Individual files that don't have tags:", ' '.join(utf)
+
+if __name__ == '__main__':
+    main()
