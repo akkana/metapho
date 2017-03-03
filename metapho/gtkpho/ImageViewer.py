@@ -324,7 +324,7 @@ class ImageViewerWindow(gtk.Window):
 
         return False
 
-if __name__ == '__main__':
+def main():
     import sys
 
     if len(sys.argv) <= 1:
@@ -333,3 +333,6 @@ if __name__ == '__main__':
     ivw = ImageViewerWindow(*sys.argv[1:], quit=gtk.main_quit)
 
     gtk.main()
+
+if __name__ == '__main__':
+    main()

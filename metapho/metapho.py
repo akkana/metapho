@@ -40,13 +40,13 @@ class Image:
         self.rot = None
 
     def __repr__(self):
-        str = "Image %s" % self.filename
+        str = "Image '%s'" % self.filename
 
         if self.rot:
             str += " (rotation %s)" % self.rot
 
         if self.tags:
-            str += " Tags: " + self.tags.__repr__()
+            str += ": Tags: " + self.tags.__repr__()
 
         # str += '\n'
 
@@ -62,16 +62,53 @@ class Image:
         Image.g_image_list.remove(self)
 
     @classmethod
+    def image_index(cls, filename):
+        '''Find a name in the global image list. Return index, or None.'''
+        for i, img in enumerate(cls.g_image_list):
+            if img.filename == filename:
+                return i
+        return None
+
+    @classmethod
     def find_nonexistent_files(cls):
         '''Returns a list of images in the imagelist that don't exist on disk.
         '''
         not_on_disk = set()
-        for im in Image.g_image_list:
+        for im in cls.g_image_list:
             if not os.path.exists(im.filename):
                 not_on_disk.add(im.filename)
         not_on_disk = list(not_on_disk)
         not_on_disk.sort()
         return not_on_disk
+
+    @classmethod
+    def clean_up_nonexistent_files(cls, topdir):
+        '''For any file that was referenced in a tag file but doesn't
+           exist on disk, see if perhaps it's been moved to a different
+           subdirectory under topdir. If so, adjust file path appropriately.
+        '''
+        nefbases = set()
+        nefdict = {}
+        for f in cls.find_nonexistent_files():
+            fbase = os.path.basename(f)
+            nefbases.add(fbase)
+            if fbase in nefdict:
+                print "Warning: multiple files named", fbase
+            else:
+                nefdict[fbase] = f
+
+        for root, dirs, files in os.walk(topdir):
+            root = os.path.normpath(root)
+            for f in files:
+                if f in nefbases:
+                    try:
+                        i = cls.image_index(nefdict[f])
+                        cls.g_image_list[i].filename = os.path.join(root, f)
+                    except ValueError:
+                        print "Eek!", nefdict[f], \
+                            "has vanished from the global image list"
+
+                    nefbases.remove(f)
 
 import shlex
 
@@ -82,17 +119,20 @@ class Tagger(object):
     def __init__(self):
         '''tagger: an object to manage metapho image tags'''
 
+        # The actual per-image lists of tags live in the Image class.
+        # Each image has img.tags, which is a list of tag indices.
+
         # The category list is a list of lists:
         # [ [ "First category", 3, 5, 11 ] ]
         # means category 0 has the name "First category" and includes
         # tags 3, 5 and 11 from the tag_list.
         self.categories = collections.OrderedDict()
 
-        # The tag list is just a list of all tags we know about.
+        # The tag list is just a list of all tags we know about (strings).
         # A tag may be in several categories.
         self.tag_list = []
 
-        # Files from which we've read tags
+        # Files from which we've read tags (named Tags or Keywords)
         self.tagfiles = []
         # the directory common to them, where we'll try to store tags
         self.commondir = None
@@ -102,7 +142,7 @@ class Tagger(object):
         self.changed = False
 
         # What category are we currently processing? Default is Tags.
-        self.current_category = "Tags"
+        self.current_category = None
 
     def __repr__(self):
         '''Returns a string summarizing all known images and tags,
@@ -111,6 +151,7 @@ class Tagger(object):
         outstr = ''
         for cat in self.categories:
             outstr += '\ncategory ' + cat + '\n\n'
+            outstr += str(self.categories[cat]) + '\n'
 
             for tagno in self.categories[cat]:
                 tagstr = self.tag_list[tagno]
@@ -180,14 +221,17 @@ category Animals
 tag squirrels: img_001.jpg img_030.jpg
 tag horses: img_042.jpg
 tag penguins: img 008.jpg
+
 category Places
 tag New Mexico: img_020.jpg img_042.jpg
 tag Bruny Island: img 008.jpg
            Extra whitespace is fine; category lines are optional;
            "tag " at beginning of line is optional.
         '''
-        self.current_category = "Tags"
-        self.categories[self.current_category] = []
+        # The default category name is Tags.
+        if not self.current_category:
+            self.current_category = "Tags"
+            self.categories[self.current_category] = []
 
         try:
             pathname = os.path.join(dirname, "Tags")
@@ -203,6 +247,7 @@ tag Bruny Island: img 008.jpg
                 print "No Tags or Keywords file in", dirname
                 return
 
+        print "Reading tags from", pathname
         for line in fp:
             # The one line type that doesn't need a colon is a cat name.
             if line.startswith('category '):
@@ -350,3 +395,4 @@ tag Bruny Island: img 008.jpg
     def match_tag(self, pattern):
         '''Return a list of tags matching the pattern.'''
         return None
+

@@ -67,8 +67,6 @@ class MetaPhoWindow(object):
         if type(self.win.get_focus()) is gtk.Entry:
             self.tagger.check_entry_tag(self.win.get_focus())
 
-        print "==========="
-        print self.tagger
         self.tagger.write_tag_file()
 
         # Can't call main_quit here: RuntimeError: called outside of a mainloop
@@ -85,11 +83,7 @@ class MetaPhoWindow(object):
                 dirs.add(dirname)
                 self.tagger.read_tags(dirname)
 
-        nonexistent = metapho.Image.find_nonexistent_files()
-        if nonexistent:
-            print "Warning: these files don't exist:"
-            for f in nonexistent:
-                print "   ", f
+        metapho.Image.clean_up_nonexistent_files(self.tagger.commondir)
 
         self.tagger.display_tags()
 
@@ -116,7 +110,6 @@ class MetaPhoWindow(object):
                 oldtags = metapho.Image.g_image_list[self.imgno].tags
         except:
             print "Couldn't load image #", self.imgno
-            print "Tags:", metapho.Image.g_image_list[self.imgno].tags
             pass
 
         while self.imgno < len(metapho.Image.g_image_list)-1 and not loaded:
@@ -127,7 +120,6 @@ class MetaPhoWindow(object):
                 if loaded:
                     self.viewer.show_image()
                 else:
-                    print "next_image: couldn't show", img.filename
                     img.displayed = False
                     # Should arguably delete it from the list
                     # so we don't continue to save tags for a
@@ -149,7 +141,6 @@ class MetaPhoWindow(object):
             self.tagger.set_image(metapho.Image.g_image_list[self.imgno])
 
         else :           # couldn't load anything in the list
-            print "No more images"
             dialog = gtk.MessageDialog(self.win,
                                        gtk.DIALOG_DESTROY_WITH_PARENT,
                                        gtk.MESSAGE_QUESTION,
@@ -170,7 +161,6 @@ class MetaPhoWindow(object):
                 loaded = self.viewer.load_image(img)
                 self.viewer.show_image()
                 if not loaded:
-                    print "prev_image: couldn't show", img.filename
                     img.displayed = False
                     # See comment in next_image
                     #del(metapho.Image.g_image_list[self.imgno])

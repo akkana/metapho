@@ -76,10 +76,10 @@ class TagViewer(metapho.Tagger, gtk.Table):
 
         self.show()
 
-    def change_tag(self, tagno, newstr):
+    def change_tag(self, entryno, newstr):
         '''Update a tag: called on focus_out from one of the text entries'''
-        if tagno < len(self.categories[self.current_category]):
-            self.tag_list[self.categories[self.current_category][tagno]] \
+        if entryno < len(self.categories[self.current_category]):
+            self.tag_list[self.categories[self.current_category][entryno]] \
                 = newstr
         else:
             self.add_tag(newstr, self.cur_img)
@@ -159,20 +159,29 @@ class TagViewer(metapho.Tagger, gtk.Table):
         self.sync_entry(entry, entryno)
         return True
 
-    def toggled(self, button, tagno):
+    def toggled(self, button, btnno):
         # We'll get a recursion loop if we don't block events here --
         # adding and removing tags update the GUI state, which
         # changes the toggle button state, which calls toggled() again.
+
         if self.ignore_events:
             return
+
+        tagno = self.categories[self.current_category][btnno] or None
 
         # get_active() is the state *after* the button has been pressed.
         if button.get_active():
             # Was off, now on, so add the tag.
-            self.add_tag(tagno, self.cur_img)
+            # But not if the tag doesn't exist yet.
+            if tagno:
+                self.add_tag(tagno, self.cur_img)
+            self.highlight_tag(btnno, True)
         else:
             # It's already on, so toggle it off.
-            self.remove_tag(tagno, self.cur_img)
+            # But not if the tag doesn't exist yet.
+            if tagno:
+                self.remove_tag(tagno, self.cur_img)
+            self.highlight_tag(btnno, False)
 
         # Often when the user clicks on a button it's because
         # focus was in a text field. We definitely don't want it
@@ -208,6 +217,9 @@ class TagViewer(metapho.Tagger, gtk.Table):
         self.display_tags_for_category(self.current_category)
 
     def display_tags_for_category(self, catname):
+        '''Display the tag names in a new category,
+           and reset the mapping.
+        '''
         # Is this a new category, not in the list?
         if catname not in self.categories.keys():
             for i in range(len(self.entries)):
@@ -243,6 +255,7 @@ class TagViewer(metapho.Tagger, gtk.Table):
     def highlight_categories(self):
         '''Highlight the button for any category that includes tags
            set in this image.
+        XXX This is broken.
         '''
         self.catviewer.unhighlight_all()
         for tag in self.cur_img.tags:
@@ -425,23 +438,34 @@ class TagViewer(metapho.Tagger, gtk.Table):
 
         metapho.Tagger.remove_tag(self, tag, img)
 
-        self.highlight_tag(tag, False)
-
-    def toggle_tag(self, tagno, img):
+    def toggle_tag(self, btnno, img):
         '''Toggle tag number tagno for the given img.'''
-        metapho.Tagger.toggle_tag(self, tagno, img)
-        if tagno < len(self.categories[self.current_category]):
-            self.highlight_tag(tagno, not self.buttons[tagno].get_active())
+        if btnno < len(self.categories[self.current_category]):
+            tagno = self.categories[self.current_category][btnno]
+
+            if tagno >= len(self.tag_list):
+                # I think this shouldn't happen given the btnno check,
+                # so print a warning if it does.
+                print "Eek: tagno is", tagno, "len tag_list is", \
+                    len(self.tag_list)
+                return
+
+            metapho.Tagger.toggle_tag(self, tagno, img)
+
+        if btnno < len(self.buttons) and \
+           btnno <= len(self.categories[self.current_category]):
+            # Note <= comparison where previously we looked for <.
+            # We'll highlight the tag if it's an existing tag or if
+            # it's the first new tag, but not arbitrary higher new tags.
+            self.highlight_tag(btnno, not self.buttons[btnno].get_active())
 
     def toggle_tag_by_letter(self, tagchar, img):
         '''Toggle the tag corresponding to the letter typed by the user'''
         if tagchar.islower():
-            tagno = ord(tagchar) - ord('a')
+            btnno = ord(tagchar) - ord('a')
         else:
-            tagno = ord(tagchar) - ord('A') + self.num_rows
-        if tagno >= len(self.tag_list):
-            return
-        self.toggle_tag(tagno, img)
+            btnno = ord(tagchar) - ord('A') + self.num_rows
+        self.toggle_tag(btnno, img)
 
     def focus_next_entry(self):
         '''Set focus to the next available entry.
@@ -533,7 +557,6 @@ class CategoryViewer(gtk.Table):
     def button_cb(self, w, which):
         if self.updating:
             return
-        # print "Clicked on", which
         self.set_active(which)
         if self.change_cat_cb:
             self.change_cat_cb(self.categories[which])
