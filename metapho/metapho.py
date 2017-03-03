@@ -52,6 +52,21 @@ class Image:
 
         return str
 
+    def __eq__(self, other):
+        return self.filename == other.filename and self.tags == other.tags
+
+    def __lt__(self, other):
+        return self.filename < other.filename
+
+    def __gt__(self, other):
+        return self.filename > other.filename
+
+    def __le__(self, other):
+        return self.filename <= other.filename
+
+    def __ge__(self, other):
+        return self.filename >= other.filename
+
     def delete(self):
         '''Delete the image file FROM DISK, and the image object
            from the imageList. DOES NOT ASK FOR CONFIRMATION --
@@ -151,7 +166,6 @@ class Tagger(object):
         outstr = ''
         for cat in self.categories:
             outstr += '\ncategory ' + cat + '\n\n'
-            outstr += str(self.categories[cat]) + '\n'
 
             for tagno in self.categories[cat]:
                 tagstr = self.tag_list[tagno]
@@ -161,13 +175,19 @@ class Tagger(object):
                     continue
 
                 imgstr = ''
+                imglist = []
                 for img in Image.g_image_list:
                     if tagno in img.tags:
-                        if ' ' in img.filename:
-                            fname = '"' + img.filename + '"'
-                        else:
-                            fname = img.filename
-                        imgstr += ' ' + fname
+                        imglist.append(img)
+
+                # Now we have all the images in this category.
+                # Sort them alphabetically by name.
+                imglist.sort()
+                for img in imglist:
+                    if ' ' in img.filename:
+                        imgstr += ' "' + img.filename + '"'
+                    else:
+                        imgstr += ' ' + img.filename
                 if imgstr:
                     outstr += "tag %s :" % tagstr + imgstr + '\n'
 
