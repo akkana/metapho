@@ -170,6 +170,17 @@ class Tagger(object):
         # What category are we currently processing? Default is Tags.
         self.current_category = None
 
+        # All the Tags files we read to initialize.
+        # We don't necessarily use this, but callers might want to know.
+        self.all_tags_files = []
+
+        # Extensions we explicitly don't handle that might nevertheless
+        # be in the same directory as images:
+        self.skip_extensions = [ ".cr2", ".xcf",
+                                 ".mvi", ".avi", ".mov", ".thm",
+                                 ".pto", ".txt", ".wav", ".mp3"
+                               ]
+
     def __repr__(self):
         '''Returns a string summarizing all known images and tags,
            suitable for printing on stdout or pasting into a Tags file.
@@ -227,13 +238,25 @@ class Tagger(object):
         outfile.write(str(self))
         outfile.close()
 
-    def read_tags(self, dirname):
+    def read_tags(self, dirname, recursive=True):
         '''Read in tags from files named in the given directory,
            and tag images in the imagelist appropriately.
            Tags will be appended to the tag_list.
+           If recursive is True, we'll also look for
+           Tags files in subdirectories.
         '''
 
+        # Handle tag files in subdirectories first.
+        # The tag file at the top level will override anything lower,
+        # and the top-level tag file is the one we'll overwrite.
+        if recursive:
+            for root, dirs, files in os.walk(dirname):
+                for d in dirs:
+                    if not Tagger.ignore_directory(d):
+                        self.read_tags(os.path.join(root, d), recursive=False)
+
         # Keep track of the dir common to all directories we use:
+        # XXX commondir code is still experimental and untested.
         if self.commondir == None:
             self.commondir = dirname
         else:
@@ -243,11 +266,7 @@ class Tagger(object):
                 # but this causes other problems:
                 # .rpartition(os.path.sep)[0]
 
-        # Might want to be recursive and use os.walk ...
-        # or maybe go the other way, search for Tags files
-        # *above* the current directory but not below.
-        # For now, only take the given directory.
-        '''Current format supported:
+        '''Format of the Tags file:
 category Animals
 tag squirrels: img_001.jpg img_030.jpg
 tag horses: img_042.jpg
@@ -257,7 +276,11 @@ category Places
 tag New Mexico: img_020.jpg img_042.jpg
 tag Bruny Island: img 008.jpg
            Extra whitespace is fine; category lines are optional;
-           "tag " at beginning of line is optional.
+           "tag " at beginning of tag lines is optional
+           (anything that doesn't start with category, tag,
+           tagtype or photo is taken to be a specific tag.
+           What are tagtype and photo, you ask? Good question;
+           I'm sure there were big plans for them at one time.)
         '''
         # The default category name is Tags.
         if not self.current_category:
@@ -275,10 +298,13 @@ tag Bruny Island: img 008.jpg
                 fp = open(pathname)
                 self.tagfiles.append(pathname)
             except IOError:
-                print "No Tags or Keywords file in", dirname
+                # print "No Tags or Keywords file in", dirname
                 return
 
-        print "Reading tags from", pathname
+        pathname = os.path.normpath(pathname)
+        # print "Reading tags from", pathname
+        self.all_tags_files.append(pathname)
+
         for line in fp:
             # The one line type that doesn't need a colon is a cat name.
             if line.startswith('category '):
@@ -288,13 +314,17 @@ tag Bruny Island: img 008.jpg
                     if self.current_category not in self.categories:
                         self.categories[self.current_category] = []
                 else:
-                    print "Parse error: couldn't read category name from", line
+                    print("%s: Parse error: couldn't read category name, %s"
+                          % (pathname, line))
                 continue
 
             # Any other legal line type must have a colon.
             colon = line.find(':')
             if colon < 0:
                 continue    # If there's no colon, it's not a legal tag line
+            if line.find(':', colon+1) >= 0:
+                print("%s : Too many colons -- can't parse!" % (pathname, line))
+                continue
 
             # Now we know we have tagname, typename or photoname.
             # Get the list of objects after the colon.
@@ -302,6 +332,9 @@ tag Bruny Island: img 008.jpg
             # filenames with embedded spaces.
             try:
                 objects = shlex.split(line[colon+1:].strip())
+                if dirname != '.':
+                    objects = [os.path.normpath(os.path.join(dirname, o))
+                               for o in objects]
             except ValueError:
                 print pathname, "Couldn't parse:", line
                 continue
@@ -427,19 +460,7 @@ tag Bruny Island: img 008.jpg
         '''Return a list of tags matching the pattern.'''
         return None
 
-def main():
-    '''Read tags and report any inconsistencies:
-       images in the Tags file that don't exist on disk,
-       images on disk that aren't in ./Tags.
-    '''
-    tagger = Tagger()
-    tagger.read_tags('.')
-
-    nef = Image.find_nonexistent_files()
-    if nef:
-        print "Files in Tags file that don't exist on disk:", ' '.join(nef)
-
-    def find_untagged_files(topdir):
+    def find_untagged_files(self, topdir):
         '''Return a list of untagged files and a list of directories
            in which nothing is tagged, under topdir.
         '''
@@ -448,39 +469,75 @@ def main():
         for root, dirs, files in os.walk(topdir):
             deletes = []
             for d in dirs:
-                # directory names that don't need to be indexed separately
-                # since they likely contain copies of what's in the parent.
-                # Need to build up a list of these since we can't delete
-                # from dirs while iterating over it.
-                if d == "html" or d == "web" or d == os.path.basename(root):
+                # Build up a list of ignored directories
+                # since we can't delete from dirs while iterating over it.
+                if Tagger.ignore_directory(d):
                     deletes.append(d)
                 for d in deletes:
-                    dirs.delete(d)
+                    dirs.remove(d)
 
-            # if os.path.exists(os.path.join(root, "Tags")) or \
-            #    os.path.exists(os.path.join(root, "Keywords")):
-
-            local_numtagged = 0
+            some_local_tags = False
             local_untagged = []
+            nfiles = 0
             for f in files:
+                if f.startswith("Tags") or f.startswith("Keywords"):
+                    continue
+
                 # Assume all image files will have an extension
                 if '.' not in f:
                     continue
-                if f.startswith("Tags") or f.startswith("Keywords"):
+
+                # Filter out file extensions we know we don't handle:
+                base, ext = os.path.splitext(f)
+                if ext in self.skip_extensions:
                     continue
+
+                # Now we have a file that should be tagged. Is it?
+                nfiles += 1
                 filepath = os.path.normpath(os.path.join(root, f))
-                if filepath in Image.g_image_list:
-                    local_numtagged += 1
-                else:
+                if filepath not in Image.g_image_list:
                     local_untagged.append(filepath)
-            if local_numtagged:    # Something was tagged in this root
+                elif not some_local_tags:
+                    some_local_tags = True
+            if some_local_tags:    # Something was tagged in this root
                 untagged_files += local_untagged
-            else:                  # Nothing was tagged in this root
+            elif nfiles:       # There are files, but nothing was tagged
+                print root, "has no Tags file but has", nfiles, "files"
                 untagged_dirs.append(os.path.normpath(root))
 
         return untagged_files, untagged_dirs
 
-    utf, utd = find_untagged_files('.')
+    @classmethod
+    def ignore_directory(cls, d):
+        '''Detect directory names that don't need to be indexed separately
+           and aren't likely to have a Tags file;
+           for instance, those that likely contain copies of what's in
+           the parent, or small copies for a web page.
+        '''
+        if d == "html" or d == "web" or d == "bad":
+            return True
+        return False
+
+def main():
+    '''Read tags and report any inconsistencies:
+       images in the Tags file that don't exist on disk,
+       images on disk that aren't in ./Tags.
+    '''
+    tagger = Tagger()
+    tagger.read_tags('.')
+
+    print
+
+    # This might be interesting information but it's too long a list
+    # when evaluating a year's photos.
+    # print "Found Tags files in:", ' '.join(tagger.all_tags_files)
+    # print
+
+    nef = Image.find_nonexistent_files()
+    if nef:
+        print "Tagged files that don't exist on disk:", ' '.join(nef)
+
+    utf, utd = tagger.find_untagged_files('.')
     if utd:
         if nef:
             print
@@ -489,7 +546,7 @@ def main():
     if utf:
         if utd:
             print
-        print "Individual files that don't have tags:", ' '.join(utf)
+        print "Individual files that aren't tagged:", ' '.join(utf)
 
 if __name__ == '__main__':
     main()
