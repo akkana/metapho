@@ -26,8 +26,9 @@ possibly the easiest solution is to install GIMP (follow the install
 links from [GIMP.org](https://gimp.org) then fiddle with paths
 so that other programs can find the PyGTK libraries that comes with GIMP.
 
-Metapho is available on PyPi, so you can install it as
-`[pip install metapho](https://pypi.python.org/pypi/metapho/)`.
+[Metapho is available on PyPi](https://pypi.python.org/pypi/metapho/),
+so you can install it as
+`[pip install metapho]`.
 
 Read the [Metapho Documentation](http://pythonhosted.org/metapho/)
 for more information on either the app and on the API of the classes
