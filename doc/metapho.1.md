@@ -1,4 +1,4 @@
-METAPHO l "Feb 17 2013" "User Manuals"
+METAPHO l "Apr 24 2017" "User Manuals"
 ======================================
 
 NAME
@@ -92,6 +92,11 @@ Use <Ctrl>U to turn these off.
 `/`
 Search for tags matching whatever you type.
 Use Return or ESC to get out of search mode.
+
+`<Ctrl>Z`
+Bring up a zoom window where you can view the image in the largest size
+that fits on your screen, or zoom in to the image's full resolution.
+(The zoom window is a new feature in 0.6b1, still buggy.)
 
 AUTHOR
 ------
