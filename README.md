@@ -10,20 +10,25 @@ was intended as just a fast, light image viewer.
 
 Metapho is intended as a fast, lightweight, flexible way of organizing
 large numbers of photos. It uses flat files, not a proprietary database,
-so you're not locked down to this one app, and you can view your
-keywords databases at any time, or edit them in a text editor if
-you should ever want to.
+so you're not locked down to one app or a proprietary database,
+and you can view your tags databases at any time, or edit them in a
+text editor if you should ever want to.
 
-It's driven primarily from the keyboard: you should be able to do
+Metapho is driven primarily from the keyboard: you should be able to do
 everything you need without moving your hands to the mouse, though
-there are some mouse operations for those who find them easier.
+you can use the mouse if you find that easier.
 
-It depends on python-gtk, but not on gnome or any other desktop services.
-Linux users can get PyGTK through their distro, or by compiling from source;
-Windows users can install it from pip. I don't have a good answer for
-Mac users; possibly the easiest solution is to install GIMP (follow
-the install links from [GIMP.org]https://gimp.org) then munge paths
+It depends on PyGTK, but not on gnome or any other desktop services.
+Linux users can get PyGTK and its dependencies through their distro
+(e.g. apt-get install python-gtk2); Windows users can install it from pip.
+I don't have a good answer for Mac users;
+possibly the easiest solution is to install GIMP (follow the install
+links from [GIMP.org](https://gimp.org) then fiddle with paths
 so that other programs can find the PyGTK libraries that comes with GIMP.
 
 Metapho is available on PyPi, so you can install it as
-`pip install metapho`
+`[pip install metapho](https://pypi.python.org/pypi/metapho/)`.
+
+Read the [Metapho Documentation](http://pythonhosted.org/metapho/)
+for more information on either the app and on the API of the classes
+inside it.
