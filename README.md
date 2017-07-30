@@ -30,5 +30,5 @@ so that other programs can find the PyGTK libraries that comes with GIMP.
 so you can install it as `pip install metapho`.
 
 Read the [Metapho Documentation](http://pythonhosted.org/metapho/)
-for more information on either the app and on the API of the classes
+for more information on both the app and the API of the classes
 inside it.
