@@ -16,31 +16,35 @@ class ImageViewer(gtk.DrawingArea):
         self.connect("configure_event", self.configure_event)
         self.gc = None
         self.pixbuf = None
-        self.imgwidth = None
-        self.imgheight = None
+        self.winwidth = None
+        self.winheight = None
         self.cur_img = None
         self.truewidth = None
         self.trueheight = None
 
     def expose_handler(self, widget, event):
-        # print "Expose"
+        # print "ImageViewer expose", event.area
 
         if not self.gc:
             self.gc = widget.window.new_gc()
-            x, y, self.imgwidth, self.imgheight = self.get_allocation()
+            x, y, self.winwidth, self.winheight = self.get_allocation()
 
             # Have we had load_image called, but we weren't ready for it?
             # Now, theoretically, we are ... so call it again.
             if self.cur_img and not self.pixbuf:
                 self.load_image(self.cur_img)
 
-        self.show_image()
+        self.show_image(event.area)
 
     def configure_event(self, widget, event):
-        x, y, self.imgwidth, self.imgheight = self.get_allocation()
-        # print "\nNew size: %d x %d" % (self.imgwidth, self.imgheight)
+        x, y, self.winwidth, self.winheight = self.get_allocation()
+        # print "\nNew size: %d x %d" % (self.winwidth, self.winheight)
 
-        # configure generates an expose so we don't need to call show_image().
+        # configure generates an expose so we don't need to call show_image(),
+        # but we probably do need to rescale, and thus reload:
+        if self.cur_img:
+            self.load_image(self.cur_img)
+            self.scale_and_rotate()
 
     # Mapping from EXIF orientation tag to degrees rotated.
     # http://sylvana.net/jpegcrop/exif_orientation.html
@@ -54,6 +58,9 @@ class ImageViewer(gtk.DrawingArea):
            img is a metapho.Image object.
            Return True for success, False for error.
         '''
+        # print "load_image: winwidth/height:", self.winwidth, self.winheight,
+        if not self.winwidth:
+            return
 
         self.cur_img = img
 
@@ -66,9 +73,6 @@ class ImageViewer(gtk.DrawingArea):
             self.pixbuf = gtk.gdk.pixbuf_new_from_file(img.filename)
             self.truewidth = self.pixbuf.get_width()
             self.trueheight = self.pixbuf.get_height()
-
-            # self.scale_and_rotate(newpb)
-            # This will set self.pixbuf if successful
 
             # self.show_image()
             loaded = True
@@ -84,13 +88,16 @@ class ImageViewer(gtk.DrawingArea):
         return loaded
 
     def scale_and_rotate(self):
-        '''A new pixbuf has just been read in, or else we have a new size
-           that's smaller than the old size so we need to re-scale.
-           Rotate and scale to the current size, putting the newly
-           scaled pixbuf into self.pixbuf.
-           For internal use: called from load_image.
+        '''A new pixbuf has just been read in,
+           or else we have a new size so we need to re-scale.
+           Rotate and scale to the available win size,
+           putting the newly scaled pixbuf into self.pixbuf.
+           For internal use: called from show_image.
            May call load_image to reload, if need be.
         '''
+        # print "scale_and rotate: true size", self.truewidth, self.trueheight,
+        # print "win width/height:", self.winwidth, self.winheight
+
         # We can't do any of the rotation until the window appears
         # so we know our window size.
         # But we have to load the first pixbuf anyway, because
@@ -98,10 +105,11 @@ class ImageViewer(gtk.DrawingArea):
         # be loaded. Super annoying! We'll end up reloading the
         # pixbuf again after the window appears, so this will
         # slow down the initial window slightly.
-        if not self.imgwidth:
+        if not self.winwidth:
             return True
 
         # Do we need to check rotation info for this image?
+        # print "cur_rot:", self.cur_img.rot
         if self.cur_img.rot == None:
             # Get the EXIF embedded rotation info.
             orient = self.pixbuf.get_option('orientation')
@@ -116,11 +124,11 @@ class ImageViewer(gtk.DrawingArea):
         # If we're not changing aspect ratios, that's easy.
         if self.cur_img.rot in [ 0, 180]:
             if self.truewidth > self.trueheight:   # horizontal format photo
-                neww = self.imgwidth
-                newh = self.trueheight * self.imgwidth / self.truewidth
+                neww = self.winwidth
+                newh = self.trueheight * self.winwidth / self.truewidth
             else:               # vertical format
-                newh = self.imgheight
-                neww = self.truewidth * self.imgheight / self.trueheight
+                newh = self.winheight
+                neww = self.truewidth * self.winheight / self.trueheight
 
             # Now we have the required new size. Is it different from
             # our current pixbuf's size, so we should reload from file?
@@ -134,11 +142,11 @@ class ImageViewer(gtk.DrawingArea):
         # haven't rotated yet.
         else:     # We'll be changing aspect ratios
             if self.truewidth > self.trueheight:   # horizontal->vertical
-                neww = self.imgheight
-                newh = self.trueheight * self.imgheight / self.truewidth
+                neww = self.winheight
+                newh = self.trueheight * self.winheight / self.truewidth
             else:               # vertical format, -> horizontal
-                neww = self.imgwidth
-                newh = self.trueheight * self.imgwidth / self.truewidth
+                neww = self.winwidth
+                newh = self.trueheight * self.winwidth / self.truewidth
 
         # Finally, do the scale:
         if neww != self.pixbuf.get_width() or newh != self.pixbuf.get_height():
@@ -151,7 +159,7 @@ class ImageViewer(gtk.DrawingArea):
 
         # self.pixbuf = self.pixbuf.apply_embedded_orientation()
 
-    def show_image(self):
+    def show_image(self, area=None):
         '''Display the current image. If rotation or scaling is needed,
            may call load_image() and/or scale_and_rotate().
            This may be called from external classes, and is also called
@@ -163,14 +171,28 @@ class ImageViewer(gtk.DrawingArea):
         if not self.pixbuf:
             return
 
-        self.scale_and_rotate()
+        # self.scale_and_rotate()
+
+        x = (self.winwidth - self.pixbuf.get_width()) / 2
+        y = (self.winheight - self.pixbuf.get_height()) / 2
+
+        if False and area and (area.x > 0 or area.y > 0
+                     or area.width < self.winwidth
+                     or area.height < self.winheight):
+            # Only redrawing a partial area
+            srcx = area.x - x
+            srcy = area.y - y
+            # print "Only drawing a little bit,src ", srcx, srcy, "dst", area.x, area.y, "size", area.width, area.height
+            self.window.draw_pixbuf(self.gc, self.pixbuf,
+                                    srcx, srcy,
+                                    area.x, area.y,
+                                    area.width, area.height)
+            return
 
         # Clear the drawing area first
         self.window.draw_rectangle(self.gc, True, 0, 0,
-                                   self.imgwidth, self.imgheight)
+                                   self.winwidth, self.winheight)
 
-        x = (self.imgwidth - self.pixbuf.get_width()) / 2
-        y = (self.imgheight - self.pixbuf.get_height()) / 2
         self.window.draw_pixbuf(self.gc, self.pixbuf, 0, 0, x, y)
 
     def rotate(self, rot):
@@ -228,6 +250,7 @@ class ImageViewerWindow(gtk.Window):
         self.connect("delete_event", gtk.main_quit)
         self.connect("destroy", gtk.main_quit)
         self.connect("key-press-event", self.key_press_event)
+        self.connect("map-event", self.mapped)
 
         self.imgviewer = ImageViewer()
         self.add(self.imgviewer)
@@ -237,12 +260,14 @@ class ImageViewerWindow(gtk.Window):
         # below the initial size (undocumented PyGTK trick).
         self.imgviewer.set_size_request(10, 10)
 
+        self.imgviewer.show()
+        self.show()
+
+    def mapped(self, widget, event):
+        # print "Window mapped"
         self.load_image()
         self.fit_on_screen()
         self.show_image()
-
-        self.imgviewer.show()
-        self.show()
 
     def add_image(self, filename):
         '''Add an image to the list, and show it.
@@ -252,8 +277,8 @@ class ImageViewerWindow(gtk.Window):
         self.imglist.append(filename)
         self.cur_img_index = len(self.imglist) - 1
         self.cur_img = self.imglist[self.cur_img_index]
-        self.fit_on_screen()
         self.load_image()
+        self.fit_on_screen()
         self.show_image()
 
     def load_image(self):
@@ -264,6 +289,7 @@ class ImageViewerWindow(gtk.Window):
             img = metapho.Image(self.cur_img)
             loaded = self.imgviewer.load_image(img)
             if loaded:
+                self.imgviewer.scale_and_rotate()
                 return
 
             # It didn't load properly as an image.

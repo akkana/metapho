@@ -28,7 +28,7 @@ class MetaPhoWindow(object):
         for filename in file_list:
             metapho.Image.g_image_list.append(metapho.Image(filename))
 
-        self.imgno = 0
+        self.imgno = -1
 
         # The size of the image viewing area:
         self.imgwidth = 640
@@ -41,9 +41,6 @@ class MetaPhoWindow(object):
         self.win = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.win.set_border_width(10)
 
-        self.win.connect("delete_event", self.quit)
-        self.win.connect("destroy", self.quit)
-
         main_hbox = gtk.HBox(spacing=8)
 
         self.viewer = gtkpho.ImageViewer()
@@ -55,7 +52,11 @@ class MetaPhoWindow(object):
 
         self.win.add(main_hbox)
 
+        self.win.connect("delete_event", self.quit)
+        self.win.connect("destroy", self.quit)
+        self.win.connect("map-event", self.mapped)
         self.win.connect("key-press-event", self.key_press_event)
+
         self.win.show_all();
 
         self.read_all_tags()
@@ -72,6 +73,10 @@ class MetaPhoWindow(object):
         # Can't call main_quit here: RuntimeError: called outside of a mainloop
         # Apparently this is what you're supposed to do instead:
         self.win.connect('event-after', gtk.main_quit)
+
+    def mapped(self, widget, event):
+        if self.imgno < 0:
+            self.first_image()
 
     def read_all_tags(self):
         '''Read tags in all directories used by images in argv.
@@ -118,6 +123,7 @@ class MetaPhoWindow(object):
             if img.displayed:
                 loaded = self.viewer.load_image(img)
                 if loaded:
+                    self.viewer.scale_and_rotate()
                     self.viewer.show_image()
                 else:
                     img.displayed = False
@@ -159,8 +165,10 @@ class MetaPhoWindow(object):
             img = metapho.Image.g_image_list[self.imgno]
             if img.displayed:
                 loaded = self.viewer.load_image(img)
-                self.viewer.show_image()
-                if not loaded:
+                if loaded:
+                    self.viewer.scale_and_rotate()
+                    self.viewer.show_image()
+                else:
                     img.displayed = False
                     # See comment in next_image
                     #del(metapho.Image.g_image_list[self.imgno])
@@ -379,7 +387,7 @@ def main():
         sys.exit(0)
 
     metapho = MetaPhoWindow(sys.argv[1:])
-    metapho.first_image()
+    # metapho.first_image()
     try:
         metapho.main()
     except KeyboardInterrupt:
