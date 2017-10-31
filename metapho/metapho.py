@@ -539,16 +539,15 @@ def main():
     nef = Image.find_nonexistent_files()
     if nef:
         print "Tagged files that don't exist on disk:", ' '.join(nef)
+        print
 
     utf, utd = tagger.find_untagged_files('.')
+
     if utd:
-        if nef:
-            print
         print "Directories that need a Tags file:", ' '.join(utd)
+        print
 
     if utf:
-        if utd:
-            print
         print "Individual files that aren't tagged:", ' '.join(utf)
 
 if __name__ == '__main__':
