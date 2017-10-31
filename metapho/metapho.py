@@ -252,7 +252,7 @@ class Tagger(object):
         if recursive:
             for root, dirs, files in os.walk(dirname):
                 for d in dirs:
-                    if not Tagger.ignore_directory(d):
+                    if not Tagger.ignore_directory(d, root):
                         self.read_tags(os.path.join(root, d), recursive=False)
 
         # Keep track of the dir common to all directories we use:
@@ -471,10 +471,10 @@ tag Bruny Island: img 008.jpg
             for d in dirs:
                 # Build up a list of ignored directories
                 # since we can't delete from dirs while iterating over it.
-                if Tagger.ignore_directory(d):
+                if Tagger.ignore_directory(d, root):
                     deletes.append(d)
-                for d in deletes:
-                    dirs.remove(d)
+            for d in deletes:
+                dirs.remove(d)
 
             some_local_tags = False
             local_untagged = []
@@ -508,13 +508,16 @@ tag Bruny Island: img 008.jpg
         return untagged_files, untagged_dirs
 
     @classmethod
-    def ignore_directory(cls, d):
+    def ignore_directory(cls, d, path=None):
         '''Detect directory names that don't need to be indexed separately
            and aren't likely to have a Tags file;
            for instance, those that likely contain copies of what's in
            the parent, or small copies for a web page.
+           Also, you can skip tagging by creating a file named NoTags.
         '''
         if d == "html" or d == "web" or d == "bad":
+            return True
+        if path and os.path.exists(os.path.join(path, d, "NoTags")):
             return True
         return False
 
