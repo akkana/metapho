@@ -19,5 +19,3 @@ everything you need without moving your hands to the mouse, though
 there are some mouse operations for those who find them easier.
 
 It depends on python-gtk, but not on gnome or any other desktop services.
-
-The name is provisional. I might change it. Suggestions?
