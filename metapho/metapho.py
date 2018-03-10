@@ -502,7 +502,7 @@ tag Bruny Island: img 008.jpg
             if some_local_tags:    # Something was tagged in this root
                 untagged_files += local_untagged
             elif nfiles:       # There are files, but nothing was tagged
-                print root, "has no Tags file but has", nfiles, "files"
+                # print root, "has no Tags file but has", nfiles, "files"
                 untagged_dirs.append(os.path.normpath(root))
 
         return untagged_files, untagged_dirs
@@ -520,6 +520,47 @@ tag Bruny Island: img 008.jpg
         if path and os.path.exists(os.path.join(path, d, "NoTags")):
             return True
         return False
+
+    @staticmethod
+    def print_files_by_directory(filelist):
+        '''Given a list of pathnames, group them by which directory
+           they belong to and print them in an organized way.
+        '''
+        dirdic = {}
+        for f in filelist:
+            # Split into dirname and basename:
+            dn, bn = os.path.split(f)
+            if dn in dirdic:
+                dirdic[dn].append(bn)
+            else:
+                dirdic[dn] = [ bn ]
+
+        dirlist = dirdic.keys()
+        dirlist.sort()
+        for d in dirlist:
+            print '  %s:' % d
+            print Tagger.split_by_line_length(' '.join(dirdic[d]), 74, '    ')
+
+    @staticmethod
+    def split_by_line_length(s, linelen, prefix=''):
+        '''Given a long string, split it into lines no longer than linelen,
+           with each line optionally prefixed, e.g. with indentation.
+           Currently this splits only at spaces, not tabs.
+        '''
+        ret = ''
+        while True:
+            if len(s) <= linelen:
+                return ret + prefix + s
+            lastspace = linelen
+            while s[lastspace] != ' ':
+                lastspace -= 1
+            # s[lastspace] is the last space before linelen.
+            # Now go back to the last non-space character.
+            pos = lastspace
+            while s[pos] == ' ':
+                pos -= 1
+            ret += prefix + s[:pos+1] + '\n'
+            s = s[lastspace + 1:]
 
 def main():
     '''Read tags and report any inconsistencies:
@@ -548,7 +589,8 @@ def main():
         print
 
     if utf:
-        print "Individual files that aren't tagged:", ' '.join(utf)
+        print "Individual files that aren't tagged:" # , ' '.join(utf)
+        tagger.print_files_by_directory(utf)
 
 if __name__ == '__main__':
     main()
