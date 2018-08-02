@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # Copyright 2013,2016 by Akkana Peck: share and enjoy under the GPL v2 or later.
 

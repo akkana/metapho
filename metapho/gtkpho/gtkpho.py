@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 '''
 GTK UI classes for metapho: an image tagger and viewer.
