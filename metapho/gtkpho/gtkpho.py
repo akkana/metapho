@@ -160,6 +160,8 @@ class TagViewer(metapho.Tagger, gtk.Table):
         return True
 
     def toggled(self, button, btnno):
+        '''Called when clicking on either a tag button or a category button.
+        '''
         # We'll get a recursion loop if we don't block events here --
         # adding and removing tags update the GUI state, which
         # changes the toggle button state, which calls toggled() again.
@@ -167,7 +169,10 @@ class TagViewer(metapho.Tagger, gtk.Table):
         if self.ignore_events:
             return
 
-        tagno = self.categories[self.current_category][btnno] or None
+        if self.categories:
+            tagno = self.categories[self.current_category][btnno]
+        else:
+            tagno = None
 
         # get_active() is the state *after* the button has been pressed.
         if button.get_active():
