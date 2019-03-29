@@ -319,12 +319,11 @@ tag Bruny Island: img 008.jpg
                 continue
 
             # Any other legal line type must have a colon.
-            colon = line.find(':')
+            # To allow for tags that contain colons, look only for the
+            # last one.
+            colon = line.rfind(':')
             if colon < 0:
                 continue    # If there's no colon, it's not a legal tag line
-            if line.find(':', colon+1) >= 0:
-                print("%s : Too many colons -- can't parse!" % (pathname, line))
-                continue
 
             # Now we know we have tagname, typename or photoname.
             # Get the list of objects after the colon.
