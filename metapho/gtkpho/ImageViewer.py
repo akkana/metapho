@@ -30,6 +30,7 @@ class ImageViewer(Gtk.DrawingArea):
         # The cairo thingamabob
         self.cr = None
 
+
     def draw(self, widget, cr):
         w, h = self.get_window().get_geometry()[2:4]
         if w != self.width or h != self.height:
@@ -44,12 +45,14 @@ class ImageViewer(Gtk.DrawingArea):
         self.cr = cr
         self.show_image()
 
+
     # Mapping from EXIF orientation tag to degrees rotated.
     # http://sylvana.net/jpegcrop/exif_orientation.html
     exif_rot_table = [ 0, 0, 180, 180, 270, 270, 90, 90 ]
     # Note that orientations 2, 4, 5 and 7 also involve a flip.
     # We're not implementing that right now, because nobody
     # uses it in practice.
+
 
     def load_image(self, img):
         # load_image is called from the MetaPhoWindow map event,
@@ -69,6 +72,7 @@ class ImageViewer(Gtk.DrawingArea):
 
         self.label_text = None
         return loaded
+
 
     def prepare_image(self):
         '''Load the image passed in, and show it.
@@ -144,7 +148,7 @@ class ImageViewer(Gtk.DrawingArea):
             loaded = True
 
         except Exception as e:
-            print("Error reading image " + self.cur_img)
+            print("Error reading image " + self.cur_img.filename)
             print(e)
             self.pixbuf = None
             loaded = False
@@ -156,6 +160,7 @@ class ImageViewer(Gtk.DrawingArea):
 
         return loaded
 
+
     def show_image(self):
         if not self.pixbuf:
             print("pixbuf not ready yet")
@@ -163,16 +168,24 @@ class ImageViewer(Gtk.DrawingArea):
                 self.draw_text("No image")
             return
 
-        # Center it:
+        self.cr = self.get_window().cairo_create()
+        self.clear(self.cr)
+
+        # Center the image:
         x = (self.width - self.pixbuf.get_width()) / 2
         y = (self.height - self.pixbuf.get_height()) / 2
 
-        self.cr = self.get_window().cairo_create()
         Gdk.cairo_set_source_pixbuf(self.cr, self.pixbuf, x, y)
         self.cr.paint()
 
         if self.label_text:
             self.draw_text(self.label_text)
+
+
+    def clear(self, cr):
+        cr.set_source_rgb(0, 0, 0)
+        cr.rectangle(0, 0, self.width, self.height)
+        cr.fill()
 
 
 class ImageViewerWindow(Gtk.Window):
@@ -209,13 +222,16 @@ class ImageViewerWindow(Gtk.Window):
         if self.file_list:
             self.viewer.load_image(self.file_list[0])
 
+
     def run(self):
         self.show_all();
         self.set_opacity(.5)
         Gtk.main()
 
+
     def set_key_handler(self, fcn):
         self.connect("key-press-event", fcn, self)
+
 
     def new_image(self, imgfile):
         self.file_list = [ imgfile ]
@@ -224,13 +240,16 @@ class ImageViewerWindow(Gtk.Window):
         if imgfile:
             self.viewer.show_image()
 
+
     def next_image(self):
         self.imgno = (self.imgno + 1) % len(self.file_list)
         self.viewer.load_image(self.file_list[self.imgno])
         self.viewer.show_image()
 
+
     def quit(self):
         Gtk.main_quit()
+
 
 if __name__ == "__main__":
 
