@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 # Copyright 2013,2016 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
@@ -74,7 +74,7 @@ class Image:
            from the imageList. DOES NOT ASK FOR CONFIRMATION --
            do that (if desired) from the calling program.
         '''
-        print "Deleting", self.filename
+        print("Deleting", self.filename)
         os.unlink(self.filename)
         Image.g_image_list.remove(self)
 
@@ -110,7 +110,7 @@ class Image:
             fbase = os.path.basename(f)
             nefbases.add(fbase)
             if fbase in nefdict:
-                print "Warning: multiple files named", fbase
+                print("Warning: multiple files named", fbase)
             else:
                 nefdict[fbase] = f
 
@@ -122,8 +122,8 @@ class Image:
                         i = cls.image_index(nefdict[f])
                         cls.g_image_list[i].filename = os.path.join(root, f)
                     except ValueError:
-                        print "Eek!", nefdict[f], \
-                            "has vanished from the global image list"
+                        print("Eek!", nefdict[f], \
+                            "has vanished from the global image list")
 
                     nefbases.remove(f)
 
@@ -131,8 +131,8 @@ class Image:
         # But what about files that have simply been removed?
         # Those are still in nefbases.
         if nefbases:
-            print "Removing missing files from Tags file:", \
-                ' '.join([nefdict[f] for f in nefbases])
+            print("Removing missing files from Tags file:", \
+                ' '.join([nefdict[f] for f in nefbases]))
             for f in nefbases:
                 Image.g_image_list.remove(nefdict[f])
 
@@ -227,11 +227,11 @@ class Tagger(object):
            as Tags.bak.
         '''
         if not self.changed:
-            print "No tags changed; not rewriting Tags file"
+            print("No tags changed; not rewriting Tags file")
             return
 
         outpath = os.path.join(self.commondir, "Tags")
-        print "Saving to", outpath
+        print("Saving to", outpath)
         if os.path.exists(outpath):
             os.rename(outpath, outpath + ".bak")
         outfile = open(outpath, "w")
@@ -314,8 +314,8 @@ tag Bruny Island: img 008.jpg
                     if self.current_category not in self.categories:
                         self.categories[self.current_category] = []
                 else:
-                    print("%s: Parse error: couldn't read category name, %s"
-                          % (pathname, line))
+                    print(("%s: Parse error: couldn't read category name, %s"
+                          % (pathname, line)))
                 continue
 
             # Any other legal line type must have a colon.
@@ -335,7 +335,7 @@ tag Bruny Island: img 008.jpg
                     objects = [os.path.normpath(os.path.join(dirname, o))
                                for o in objects]
             except ValueError:
-                print pathname, "Couldn't parse:", line
+                print(pathname, "Couldn't parse:", line)
                 continue
 
             if line.startswith('tagtype '):
@@ -353,7 +353,7 @@ tag Bruny Island: img 008.jpg
                     tagstr = line[:colon].strip()
 
                 # It may be several comma-separated tags.
-                tagnames = map(str.strip, tagstr.split(','))
+                tagnames = list(map(str.strip, tagstr.split(',')))
 
                 for tagname in tagnames:
                     self.process_tag(tagname, objects)
@@ -534,11 +534,11 @@ tag Bruny Island: img 008.jpg
             else:
                 dirdic[dn] = [ bn ]
 
-        dirlist = dirdic.keys()
+        dirlist = list(dirdic.keys())
         dirlist.sort()
         for d in dirlist:
-            print '  %s:' % d
-            print Tagger.split_by_line_length(' '.join(dirdic[d]), 74, '    ')
+            print('  %s:' % d)
+            print(Tagger.split_by_line_length(' '.join(dirdic[d]), 74, '    '))
 
     @staticmethod
     def split_by_line_length(s, linelen, prefix=''):
@@ -569,7 +569,7 @@ def main():
     tagger = Tagger()
     tagger.read_tags('.')
 
-    print
+    print()
 
     # This might be interesting information but it's too long a list
     # when evaluating a year's photos.
@@ -578,17 +578,17 @@ def main():
 
     nef = Image.find_nonexistent_files()
     if nef:
-        print "Tagged files that don't exist on disk:", ' '.join(nef)
-        print
+        print("Tagged files that don't exist on disk:", ' '.join(nef))
+        print()
 
     utf, utd = tagger.find_untagged_files('.')
 
     if utd:
-        print "Directories that need a Tags file:", ' '.join(utd)
-        print
+        print("Directories that need a Tags file:", ' '.join(utd))
+        print()
 
     if utf:
-        print "Individual files that aren't tagged:" # , ' '.join(utf)
+        print("Individual files that aren't tagged:") # , ' '.join(utf)
         tagger.print_files_by_directory(utf)
 
 if __name__ == '__main__':

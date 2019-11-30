@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 '''
 metapho: an image tagger and viewer.
@@ -54,7 +54,9 @@ class MetaPhoWindow(object):
 
         self.win.connect("delete_event", self.quit)
         self.win.connect("destroy", self.quit)
+
         self.win.connect("map-event", self.mapped)
+
         self.win.connect("key-press-event", self.key_press_event)
 
         self.win.show_all();
@@ -94,6 +96,7 @@ class MetaPhoWindow(object):
 
     def first_image(self):
         self.imgno = -1
+        # raise(RuntimeException("first_image: where are we?"))
         self.next_image()
 
     def lastImage(self):
@@ -114,7 +117,7 @@ class MetaPhoWindow(object):
             if self.imgno >= 0 and metapho.Image.g_image_list[self.imgno].tags:
                 oldtags = metapho.Image.g_image_list[self.imgno].tags
         except:
-            print "Couldn't load image #", self.imgno
+            print("Couldn't load image #", self.imgno)
             pass
 
         while self.imgno < len(metapho.Image.g_image_list)-1 and not loaded:
@@ -123,7 +126,7 @@ class MetaPhoWindow(object):
             if img.displayed:
                 loaded = self.viewer.load_image(img)
                 if loaded:
-                    self.viewer.scale_and_rotate()
+                    # self.viewer.scale_and_rotate()
                     self.viewer.show_image()
                 else:
                     img.displayed = False
@@ -166,7 +169,7 @@ class MetaPhoWindow(object):
             if img.displayed:
                 loaded = self.viewer.load_image(img)
                 if loaded:
-                    self.viewer.scale_and_rotate()
+                    # self.viewer.scale_and_rotate()
                     self.viewer.show_image()
                 else:
                     img.displayed = False
@@ -176,7 +179,7 @@ class MetaPhoWindow(object):
         if loaded:
             self.tagger.set_image(metapho.Image.g_image_list[self.imgno])
         else :          # couldn't load anything in the list
-            print "Can't go before first image"
+            print("Can't go before first image")
 
     def delete_confirm(self):
         '''Ask the user whether to really delete an image.
@@ -338,7 +341,7 @@ class MetaPhoWindow(object):
             return True
 
         # A key we didn't understand
-        #print "Read key:", event.string, "keyval", event.keyval
+        # print("Read key:", event.string, "keyval", event.keyval)
         return False
 
     def isearch_key_press(self, widget, event):
@@ -373,8 +376,8 @@ class MetaPhoWindow(object):
 
 def main():
     def Usage():
-        print "Usage: %s file [file file ...]" \
-            % os.path.basename(sys.argv[0])
+        print("Usage: %s file [file file ...]" \
+            % os.path.basename(sys.argv[0]))
 
     if len(sys.argv) <= 1:
         Usage()
@@ -383,7 +386,7 @@ def main():
         Usage()
         sys.exit(0)
     if sys.argv[1] == "-v" or sys.argv[1] == "--version":
-        print  metapho.__version__
+        print(metapho.__version__)
         sys.exit(0)
 
     metapho = MetaPhoWindow(sys.argv[1:])
@@ -393,7 +396,7 @@ def main():
     except KeyboardInterrupt:
         # Deliberately don't call self.quit() -- we may be using Ctrl-C
         # as a way to quit without updating anything.
-        print '\n'
+        print('\n')
         # This doesn't do anything useful:
         # traceback.print_stack()
         sys.exit(1)

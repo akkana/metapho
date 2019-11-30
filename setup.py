@@ -19,7 +19,7 @@ def get_version_re():
                                   version_file, re.M)
         if version_match:
             return version_match.group(1)
-        print "No version information!"
+        print("No version information!")
         return None
 
 # Some people recommend this, but it returns '-0.6-' rather than '0.6'
@@ -35,7 +35,7 @@ class CleanCommand(Command):
     def finalize_options(self):
         pass
     def run(self):
-        os.system('rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./docs/sphinxdoc/_build')
+        os.system('rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./docs/sphinxdoc/_build metapho/__pycache__')
 
 setup(name='metapho',
       packages=['metapho', 'metapho.gtkpho'],
@@ -45,13 +45,13 @@ setup(name='metapho',
       author='Akkana Peck',
       author_email='akkana@shallowsky.com',
       url='https://github.com/akkana/metapho',
-      download_url='https://github.com/akkana/metapho/tarball/0.6',
+      download_url='https://github.com/akkana/metapho/tarball/1.0',
+      # Metapho requires GTK, but PyPI doesn't work for GTK.
       # install_requires=["pygtk"],
       license="GPLv2+",
       keywords=['image', 'viewer', 'tagger'],
       classifiers = [
-          'Programming Language :: Python :: 2',
-          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3',
           'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
           'Intended Audience :: End Users/Desktop',
           'Topic :: Multimedia :: Graphics',

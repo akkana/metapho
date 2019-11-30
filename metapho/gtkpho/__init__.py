@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 # metapho: an image tagger and viewer.
 
@@ -6,7 +6,7 @@
 
 '''metapho.gtkpho: GTK-based display functions for metapho.'''
 
-from gtkpho import *
-from ImageViewer import *
+from .gtkpho import *
+from .ImageViewer import *
 
 
