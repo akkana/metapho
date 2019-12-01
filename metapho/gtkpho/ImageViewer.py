@@ -19,16 +19,11 @@ class ImageViewer(Gtk.DrawingArea):
         super(ImageViewer, self).__init__()
         # self.connect("expose-event", self.expose_handler)
         self.connect("draw", self.draw)
-        self.xgc_bg = None
-        self.xgc_fg = None
         self.pixbuf = None
         self.label_text = None
         self.width = None
         self.height = None
         self.cur_img = None
-
-        # The cairo thingamabob
-        self.cr = None
 
 
     def draw(self, widget, cr):
@@ -42,8 +37,7 @@ class ImageViewer(Gtk.DrawingArea):
         if w and h and self.cur_img and not self.pixbuf:
             self.prepare_image()
 
-        self.cr = cr
-        self.show_image()
+        self.show_image(cr)
 
 
     # Mapping from EXIF orientation tag to degrees rotated.
@@ -161,25 +155,21 @@ class ImageViewer(Gtk.DrawingArea):
         return loaded
 
 
-    def show_image(self):
+    def show_image(self, cr=None):
         if not self.pixbuf:
             print("pixbuf not ready yet")
-            if not self.label_text:
-                self.draw_text("No image")
             return
 
-        self.cr = self.get_window().cairo_create()
-        self.clear(self.cr)
+        if not cr:
+            cr = self.get_window().cairo_create()
+        self.clear(cr)
 
         # Center the image:
         x = (self.width - self.pixbuf.get_width()) / 2
         y = (self.height - self.pixbuf.get_height()) / 2
 
-        Gdk.cairo_set_source_pixbuf(self.cr, self.pixbuf, x, y)
-        self.cr.paint()
-
-        if self.label_text:
-            self.draw_text(self.label_text)
+        Gdk.cairo_set_source_pixbuf(cr, self.pixbuf, x, y)
+        cr.paint()
 
 
     def clear(self, cr):
