@@ -19,12 +19,11 @@ everything you need without moving your hands to the mouse, though
 you can use the mouse if you find that easier.
 
 It depends on PyGTK, but not on gnome or any other desktop services.
-Linux users can get PyGTK and its dependencies through their distro
-(e.g. apt-get install python-gtk2); Windows users can install it from pip.
-I don't have a good answer for Mac users;
-possibly the easiest solution is to install GIMP (follow the install
-links from [GIMP.org](https://gimp.org) then fiddle with paths
-so that other programs can find the PyGTK libraries that comes with GIMP.
+
+It includes a program called "notags" that you can run to examine
+the current directory recursively and tell you about files and
+directories that still need to be tagged. Run it at the root of
+an image directory that might have untagged subdirectories.
 
 [Metapho is available on PyPi](https://pypi.python.org/pypi/metapho/),
 so you can install it as `pip install metapho`.

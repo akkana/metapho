@@ -11,16 +11,22 @@ def read(fname):
     '''Utility function to read the README file, for the long_description.'''
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-def get_version_re():
-    '''Read the pytopo module versions from pytopo/__init__.py'''
+def get_version():
+    '''Read the module versions from */__init__.py'''
     with open("metapho/__init__.py") as fp:
-        version_file = fp.read()
-        version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
-                                  version_file, re.M)
-        if version_match:
-            return version_match.group(1)
-        print("No version information!")
-        return None
+        for line in fp:
+            line = line.strip()
+            if line.startswith("__version__"):
+                versionpart = line.split("=")[-1] \
+                                  .strip().replace('"', '').replace("'", '')
+                if versionpart.startswith('"') or versionpart.startswith("'"):
+                    versionpart = versionpart[1:]
+                if versionpart.endswith('"') or versionpart.endswith("'"):
+                    versionpart = versionpart[:-1]
+                return versionpart
+
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
 # Some people recommend this, but it returns '-0.6-' rather than '0.6'
 # import pkg_resources  # part of setuptools
@@ -39,18 +45,21 @@ class CleanCommand(Command):
 
 setup(name='metapho',
       packages=['metapho', 'metapho.gtkpho'],
-      version=get_version_re(),
+      version=get_version(),
       description='Image viewer and tagger',
-      scripts=['helpers/notags'],
+      long_description=long_description,
+      long_description_content_type="text/markdown",
       author='Akkana Peck',
       author_email='akkana@shallowsky.com',
       url='https://github.com/akkana/metapho',
       download_url='https://github.com/akkana/metapho/tarball/1.0',
-      # Metapho requires GTK, but PyPI doesn't work for GTK.
-      # install_requires=["pygtk"],
+
+      install_requires=["PyGObject", "pycairo"],
       license="GPLv2+",
+
       keywords=['image', 'viewer', 'tagger'],
       classifiers = [
+          'Programming Language :: Python :: 2',
           'Programming Language :: Python :: 3',
           'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
           'Intended Audience :: End Users/Desktop',
@@ -59,13 +68,15 @@ setup(name='metapho',
           'Topic :: Utilities'
         ],
       entry_points={
-          # metapho should be in gui_scripts according to some
-          # pages I've found, but none of the official documentation
-          # mentions gui_scripts at all.
-          'console_scripts': [
+          # Python.org documentation doesn't mention gui_scripts, but
+          # on Windows, console_scripts bring up a terminal, gui_scripts don't.
+          # On Linux they're the same.
+          'gui_scripts': [
               'metapho=metapho.gtkpho.main:main',
-              'notags=metapho.main:main',
               'mpiv=metapho.gtkpho.ImageViewer:main'
+          ],
+          'console_scripts': [
+              'notags=metapho:main'
           ]
       },
 

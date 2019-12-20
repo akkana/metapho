@@ -10,6 +10,7 @@ for viewing images and tagging them.
 # Copyright 2013-2017 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
 import metapho
+from metapho import __version__
 import metapho.gtkpho as gtkpho
 
 import gtk
@@ -386,7 +387,11 @@ def main():
         Usage()
         sys.exit(0)
     if sys.argv[1] == "-v" or sys.argv[1] == "--version":
-        print(metapho.__version__)
+        # referencing metapho.__version__ dies with:
+        # UnboundLocalError: local variable 'metapho' referenced before assignment
+        # but from metapho import __version, then printing __version_, works.
+        # Go figure.
+        print(__version__)
         sys.exit(0)
 
     metapho = MetaPhoWindow(sys.argv[1:])
