@@ -54,7 +54,7 @@ setup(name='metapho',
       url='https://github.com/akkana/metapho',
       download_url='https://github.com/akkana/metapho/tarball/1.0',
 
-      install_requires=["PyGObject", "pycairo", "m2r"],
+      install_requires=["PyGObject", "pycairo"],
       license="GPLv2+",
 
       keywords=['image', 'viewer', 'tagger'],
