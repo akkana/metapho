@@ -28,6 +28,6 @@ an image directory that might have untagged subdirectories.
 [Metapho is available on PyPi](https://pypi.python.org/pypi/metapho/),
 so you can install it as `pip install metapho`.
 
-Read the [Metapho Documentation](http://pythonhosted.org/metapho/)
+Read the [Metapho Documentation](https://metapho.readthedocs.io/en/latest/)
 for more information on both the app and the API of the classes
 inside it.
