@@ -1,0 +1,13 @@
+HTML docs are generated with Sphinx following
+https://samnicholls.net/2016/06/15/how-to-sphinx-readthedocs/
+
+It needs the m2r extension, which isn't available on Debian/Ubuntu.
+So you have to pip install sphinx-markdown sphinx m2r
+(sphinx-markdown may not be strictly necessary).
+It doesn't work to have m2r from pip but sphinx from distro packages;
+then sphinx-build has /usr/bin/python3 hardwired in, and it won't
+see your pip installed m2r.
+
+To generate the HTML docs:
+    cd sphinxdoc
+    make html

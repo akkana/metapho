@@ -278,10 +278,10 @@ class TagViewer(metapho.Tagger, gtk.Table):
                 (catname, len(self.categories[catname])))
 
 
+    # XXX This is broken.
     def highlight_categories(self):
         '''Highlight the button for any category that includes tags
            set in this image.
-        XXX This is broken.
         '''
         # self.catviewer.unhighlight_all()
         # for tag in self.cur_img.tags:

@@ -8,15 +8,15 @@ image viewer ([Pho on GitHub](https://github.com/akkana/pho)).
 It started to get unwieldy adding ever more tagging features to what
 was intended as just a fast, light image viewer.
 
-Metapho is intended as a fast, lightweight, flexible way of organizing
-large numbers of photos. It uses flat files, not a proprietary database,
+Metapho is intended as a lightweight, flexible way of organizing
+large numbers of photos. It uses text files, not a proprietary database,
 so you're not locked down to one app or a proprietary database,
 and you can view your tags databases at any time, or edit them in a
 text editor if you should ever want to.
 
-Metapho is driven primarily from the keyboard: you should be able to do
-everything you need without moving your hands to the mouse, though
-you can use the mouse if you find that easier.
+Metapho can be driven entirely from the keyboard: you should be able
+to do everything you need without moving your hands to the mouse,
+though you can use the mouse if you find that easier.
 
 It depends on PyGTK, but not on gnome or any other desktop services.
 

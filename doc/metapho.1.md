@@ -1,4 +1,4 @@
-METAPHO l "Apr 24 2017" "User Manuals"
+metapho (1)
 ======================================
 
 NAME
@@ -14,7 +14,7 @@ metapho *file* ...
 DESCRIPTION
 -----------
 
-`metapho` lets you tag large numbers of images as efficiently as possible.
+metapho lets you tag large numbers of images as efficiently as possible.
 Although it uses a graphical user interface, it's intended
 to be controllable entirely through the keyboard.
 
@@ -101,12 +101,12 @@ that fits on your screen, or zoom in to the image's full resolution.
 AUTHOR
 ------
 
-Akkana Peck, with a lot of design help from John Sturdy.
+Akkana Peck, with initial design input from John Sturdy.
 
 COPYRIGHT
 ---------
 
-Copyright &copy; 2013,2016 Akkana Peck
+Copyright &copy; 2013,2016,2019 Akkana Peck.
 Metapho is free software, licensed under the GNU Public License version 2.
 
 SEE ALSO
