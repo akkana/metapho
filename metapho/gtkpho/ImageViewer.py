@@ -11,23 +11,45 @@ from gi.repository import Pango
 import cairo
 import gc
 
+from metapho import Image
+
+
 class ImageViewer(Gtk.DrawingArea):
-    '''A generic PyGTK image viewer widget
+    '''A simple PyGTK image viewer widget.
     '''
 
     def __init__(self):
         super(ImageViewer, self).__init__()
+
         # self.connect("expose-event", self.expose_handler)
         self.connect("draw", self.draw)
+        self.connect("size-allocate", self.resize)
+        # g_signal_connect(G_OBJECT(window), "configure-event", G_CALLBACK(callback_func), NULL);
+
         self.pixbuf = None
         self.label_text = None
         self.width = None
         self.height = None
+
+        # Current image is a Image.
         self.cur_img = None
 
 
+    def get_window_size(self):
+        '''Return width, height of the current window allocation.'''
+        rect = self.get_allocation()
+        return rect.width, rect.height
+
+
+    def resize(self, w, rect):
+        self.width, self.height = self.get_window_size()
+        self.prepare_image()
+        self.show_image()
+
+
     def draw(self, widget, cr):
-        w, h = self.get_window().get_geometry()[2:4]
+        '''Draw the image, scaled appropriately.'''
+        w, h = self.get_window_size()
         if w != self.width or h != self.height:
             self.width = w
             self.height = h
@@ -49,13 +71,19 @@ class ImageViewer(Gtk.DrawingArea):
 
 
     def load_image(self, img):
+        '''Load an image from a filename or metaphe.Image.
+        '''
         # load_image is called from the MetaPhoWindow map event,
         # which happens before ImageViewer gets its own first draw event.
         # So we don't have a size yet when this is first called.
         if not self.width or not self.height:
-            self.width, self.height = self.get_window().get_geometry()[2:4]
+            self.width, self.height = self.get_window_size()
 
-        self.cur_img = img
+        if isinstance(img, Image):
+            self.cur_img = img
+        else:
+            self.cur_img = Image(img)
+
         if self.width and self.height:
             if self.cur_img:
                 loaded = self.prepare_image()
@@ -69,10 +97,13 @@ class ImageViewer(Gtk.DrawingArea):
 
 
     def prepare_image(self):
-        '''Load the image passed in, and show it.
+        '''Load the current image, scale and rotate, and show it.
            img is a filename.
            Return True for success, False for error.
         '''
+        if not self.cur_img:
+            return
+
         self.label_text = None
 
         # Clean up memory from any existing pixbuf.
@@ -141,9 +172,10 @@ class ImageViewer(Gtk.DrawingArea):
 
             loaded = True
 
-        except Exception as e:
-            print("Error reading image " + self.cur_img.filename)
-            print(e)
+        except gi.repository.GLib.Error as e:
+            # print("Error reading image " + self.cur_img.filename)
+            # print(e)
+            print("Skipping %s: not an image" % self.cur_img.filename)
             self.pixbuf = None
             loaded = False
 
@@ -156,12 +188,11 @@ class ImageViewer(Gtk.DrawingArea):
 
 
     def show_image(self, cr=None):
-        if not self.pixbuf:
-            print("pixbuf not ready yet")
+        if not self.pixbuf or not self.window:
             return
 
         if not cr:
-            cr = self.get_window().cairo_create()
+            cr = self.window.cairo_create()
         self.clear(cr)
 
         # Center the image:
@@ -180,11 +211,25 @@ class ImageViewer(Gtk.DrawingArea):
 
 class ImageViewerWindow(Gtk.Window):
     '''Bring up a window that can view images.
+       Pass in a list of Images, or a list of filenames,
+       or just one Image or filename.
     '''
 
-    def __init__(self, file_list=None, width=1024, height=768):
+    def __init__(self, img_list=None, width=1024, height=768, exit_on_q=True):
         super(ImageViewerWindow, self).__init__()
-        self.file_list = file_list
+
+        if type(img_list) is str:
+            self.img_list = [ Image(img_list) ]
+        elif isinstance(img_list, Image):
+            self.img_list = [ img_list ]
+        elif hasattr(img_list, "__getitem__"):
+            self.img_list = [ f if isinstance(f, Image) else Image(f)
+                              for f in img_list ]
+        else:
+            self.img_list = None
+
+        self.exit_on_q = exit_on_q
+
         self.imgno = 0
 
         # The size of the image viewing area:
@@ -197,6 +242,7 @@ class ImageViewerWindow(Gtk.Window):
 
         self.connect("delete_event", Gtk.main_quit)
         self.connect("destroy", Gtk.main_quit)
+        self.set_key_handler(self.key_press_event)
 
         self.main_vbox = Gtk.VBox(spacing=8)
 
@@ -209,8 +255,13 @@ class ImageViewerWindow(Gtk.Window):
         # Realize apparently happens too early.
         # self.connect("realize", self.expose_handler)
 
-        if self.file_list:
-            self.viewer.load_image(self.file_list[0])
+        while self.img_list:
+            loaded = self.viewer.load_image(self.img_list[0])
+            if loaded:
+                break
+            # Couldn't load that image. Remove it from the list.
+            print("Couldn't load", self.img_list[0].filename)
+            self.img_list = self.img_list[1:]
 
 
     def run(self):
@@ -223,17 +274,36 @@ class ImageViewerWindow(Gtk.Window):
         self.connect("key-press-event", fcn, self)
 
 
-    def new_image(self, imgfile):
-        self.file_list = [ imgfile ]
-        self.imgno = 0
-        self.viewer.load_image(imgfile)
-        if imgfile:
-            self.viewer.show_image()
+    def add_image(self, img):
+        if not isinstance(img, Image):
+            img = Image(img)
+
+        try:
+            self.imgno = self.img_list.index(img)
+        except (AttributeError, ValueError):
+            self.img_list.append(img)
+            self.imgno = len(self.img_list) - 1
+
+        self.viewer.load_image(img)
+        self.viewer.show_image()
+
+
+    def new_image(self, img):
+        self.img_list = []
+        self.add_image(img)
 
 
     def next_image(self):
-        self.imgno = (self.imgno + 1) % len(self.file_list)
-        self.viewer.load_image(self.file_list[self.imgno])
+        self.imgno = (self.imgno + 1) % len(self.img_list)
+        self.viewer.load_image(self.img_list[self.imgno])
+        self.viewer.show_image()
+
+
+    def prev_image(self):
+        self.imgno = (self.imgno - 1)
+        if self.imgno < 0:
+            self.imgno = 0
+        self.viewer.load_image(self.img_list[self.imgno])
         self.viewer.show_image()
 
 
@@ -241,18 +311,30 @@ class ImageViewerWindow(Gtk.Window):
         Gtk.main_quit()
 
 
-if __name__ == "__main__":
-
-    def key_press_event(widget, event, imagewin):
-        '''Handle a key press event anywhere in the window'''
+    def key_press_event(self, widget, event, imagewin):
+        '''Handle a key press event anywhere in the window.
+           Optional; to install it, call handle_key_presses.
+        '''
         if event.string == " ":
-            imagewin.next_image()
+            self.next_image()
+            return
+        if event.keyval == Gtk.keysyms.BackSpace:
+            self.prev_image()
             return
         if event.string == "q":
-            Gtk.main_quit()
+            if self.exit_on_q:
+                Gtk.main_quit()
+            else:
+                self.hide()
             return
 
+
+def main():
+
     import sys
-    win = ImageViewerWindow(sys.argv[1:])
-    win.set_key_handler(key_press_event)
+    win = ImageViewerWindow(sys.argv[1:], exit_on_q=True)
     win.run()
+
+
+if __name__ == "__main__":
+    main()

@@ -13,7 +13,9 @@ import metapho
 from metapho import __version__
 import metapho.gtkpho as gtkpho
 
-import gtk
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk as gtk
 
 import sys, os
 
@@ -282,12 +284,13 @@ class MetaPhoWindow(object):
         # Ctrl-z brings up a zoom window
         if event.keyval == gtk.keysyms.z and \
                 event.state & gtk.gdk.CONTROL_MASK:
-            filename = metapho.Image.g_image_list[self.imgno].filename
             if not self.zoomview:
-                self.zoomview = gtkpho.ImageViewerWindow(filename)
+                self.zoomview = gtkpho.ImageViewerWindow(
+                    metapho.Image.g_image_list[self.imgno],
+                    exit_on_q=False)
             else:
-                self.zoomview.add_image(filename)
-                self.zoomview.show()
+                self.zoomview.add_image(metapho.Image.g_image_list[self.imgno])
+            self.zoomview.run()
             return True
 
         if event.string == " ":
