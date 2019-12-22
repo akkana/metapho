@@ -7,10 +7,6 @@ from setuptools import setup, Command
 import re
 import os
 
-def read(fname):
-    '''Utility function to read the README file, for the long_description.'''
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
-
 def get_version():
     '''Read the module versions from */__init__.py'''
     with open("metapho/__init__.py") as fp:
@@ -25,8 +21,9 @@ def get_version():
                     versionpart = versionpart[:-1]
                 return versionpart
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+def get_readme_contents():
+    with open("README.md", "r") as fh:
+        return fh.read()
 
 # Some people recommend this, but it returns '-0.6-' rather than '0.6'
 # import pkg_resources  # part of setuptools
@@ -47,7 +44,7 @@ setup(name='metapho',
       packages=['metapho', 'metapho.gtkpho'],
       version=get_version(),
       description='Image viewer and tagger',
-      long_description=long_description,
+      long_description=get_readme_contents(),
       long_description_content_type="text/markdown",
       author='Akkana Peck',
       author_email='akkana@shallowsky.com',
@@ -73,7 +70,7 @@ setup(name='metapho',
           # On Linux they're the same.
           'gui_scripts': [
               'metapho=metapho.gtkpho.main:main',
-              'mpiv=metapho.gtkpho.ImageViewer:main'
+              'mpiv=metapho.gtkpho.ImageViewer:main'   # MetaPho Image Viewer
           ],
           'console_scripts': [
               'notags=metapho:main'
