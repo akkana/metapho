@@ -13,7 +13,9 @@ import metapho
 from metapho import __version__
 import metapho.gtkpho as gtkpho
 
-import gtk
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk as gtk
 
 import sys, os
 

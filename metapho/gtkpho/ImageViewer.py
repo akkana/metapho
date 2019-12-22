@@ -11,6 +11,9 @@ from gi.repository import Pango
 import cairo
 import gc
 
+from metapho import Image
+
+
 class ImageViewer(Gtk.DrawingArea):
     '''A generic PyGTK image viewer widget
     '''
@@ -26,8 +29,14 @@ class ImageViewer(Gtk.DrawingArea):
         self.cur_img = None
 
 
+    def get_window_size(self):
+        '''Return width, height of the current window allocation.'''
+        rect = self.get_allocation()
+        return rect.width, rect.height
+
+
     def draw(self, widget, cr):
-        w, h = self.get_window().get_geometry()[2:4]
+        w, h = self.get_window_size()
         if w != self.width or h != self.height:
             self.width = w
             self.height = h
@@ -53,7 +62,7 @@ class ImageViewer(Gtk.DrawingArea):
         # which happens before ImageViewer gets its own first draw event.
         # So we don't have a size yet when this is first called.
         if not self.width or not self.height:
-            self.width, self.height = self.get_window().get_geometry()[2:4]
+            self.width, self.height = self.get_window_size()
 
         self.cur_img = img
         if self.width and self.height:
@@ -141,9 +150,10 @@ class ImageViewer(Gtk.DrawingArea):
 
             loaded = True
 
-        except Exception as e:
-            print("Error reading image " + self.cur_img.filename)
-            print(e)
+        except gi.repository.GLib.Error as e:
+            # print("Error reading image " + self.cur_img.filename)
+            # print(e)
+            print("Skipping %s: not an image" % self.cur_img.filename)
             self.pixbuf = None
             loaded = False
 
@@ -184,7 +194,7 @@ class ImageViewerWindow(Gtk.Window):
 
     def __init__(self, file_list=None, width=1024, height=768):
         super(ImageViewerWindow, self).__init__()
-        self.file_list = file_list
+        self.file_list = [ Image(f) for f in file_list ]
         self.imgno = 0
 
         # The size of the image viewing area:
@@ -209,8 +219,11 @@ class ImageViewerWindow(Gtk.Window):
         # Realize apparently happens too early.
         # self.connect("realize", self.expose_handler)
 
-        if self.file_list:
-            self.viewer.load_image(self.file_list[0])
+        while self.file_list:
+            loaded = self.viewer.load_image(self.file_list[0])
+            if loaded:
+                break
+            self.file_list = self.file_list[1:]
 
 
     def run(self):
@@ -241,8 +254,7 @@ class ImageViewerWindow(Gtk.Window):
         Gtk.main_quit()
 
 
-if __name__ == "__main__":
-
+def main():
     def key_press_event(widget, event, imagewin):
         '''Handle a key press event anywhere in the window'''
         if event.string == " ":
@@ -256,3 +268,7 @@ if __name__ == "__main__":
     win = ImageViewerWindow(sys.argv[1:])
     win.set_key_handler(key_press_event)
     win.run()
+
+
+if __name__ == "__main__":
+    main()
