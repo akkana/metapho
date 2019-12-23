@@ -23,13 +23,21 @@ class ImageViewer(Gtk.DrawingArea):
 
         # self.connect("expose-event", self.expose_handler)
         self.connect("draw", self.draw)
-        self.connect("size-allocate", self.resize)
-        # g_signal_connect(G_OBJECT(window), "configure-event", G_CALLBACK(callback_func), NULL);
+        self.connect("size-allocate", self.detect_resize)
 
         self.pixbuf = None
         self.label_text = None
+
         self.width = None
         self.height = None
+
+        self.savewidth = None
+        self.saveheight = None
+
+        # Zoomed to full resolution?
+        self.fullzoom = False
+        # Function to call when we want to resize the window
+        self.resize_fn = None
 
         # Current image is a Image.
         self.cur_img = None
@@ -37,11 +45,15 @@ class ImageViewer(Gtk.DrawingArea):
 
     def get_window_size(self):
         '''Return width, height of the current window allocation.'''
+        # Before the window is created, get_allocation will return 1, 1
+        # which plays havoc with various calculations.
+        if not self.window:
+            return None, None
         rect = self.get_allocation()
         return rect.width, rect.height
 
 
-    def resize(self, w, rect):
+    def detect_resize(self, w, rect):
         self.width, self.height = self.get_window_size()
         self.prepare_image()
         self.show_image()
@@ -72,6 +84,8 @@ class ImageViewer(Gtk.DrawingArea):
 
     def load_image(self, img):
         '''Load an image from a filename or metaphe.Image.
+           Return 1 for success, 0 for valid image but not ready,
+           -1 for invalid image or other error.
         '''
         # load_image is called from the MetaPhoWindow map event,
         # which happens before ImageViewer gets its own first draw event.
@@ -84,22 +98,26 @@ class ImageViewer(Gtk.DrawingArea):
         else:
             self.cur_img = Image(img)
 
-        if self.width and self.height:
-            if self.cur_img:
-                loaded = self.prepare_image()
-            else:
-                self.pixbuf = None
-                self.clear()
-                loaded = False
-
         self.label_text = None
+
+        if not self.window or not self.width or not self.height:
+            return 0
+
+        if self.cur_img:
+            loaded = self.prepare_image()
+        else:
+            self.pixbuf = None
+            self.clear()
+            loaded = -1
+
         return loaded
 
 
     def prepare_image(self):
         '''Load the current image, scale and rotate, and show it.
            img is a filename.
-           Return True for success, False for error.
+           Return 1 for success, 0 for valid image but not ready,
+           -1 for invalid image or other error.
         '''
         if not self.cur_img:
             return
@@ -136,31 +154,38 @@ class ImageViewer(Gtk.DrawingArea):
             # Scale the image to our display image size.
             # We need it to fit in the space available.
             # If we're not changing aspect ratios, that's easy.
-            oldw = newpb.get_width()
-            oldh = newpb.get_height()
-            if rot in [ 0, 180]:
-                if oldw > oldh :     # horizontal format photo
-                    neww = self.width
-                    newh = oldh * self.width / oldw
-                else :               # vertical format
-                    newh = self.height
-                    neww = oldw * self.height / oldh
+            if self.fullzoom:
+                self.width = newpb.get_width()
+                self.height = newpb.get_height()
+                if self.resize_fn:
+                    self.resize_fn(self.width, self.height)
 
-            # If the image needs to be rotated 90 or 270 degrees,
-            # scale so that the scaled width will fit in the image
-            # height area -- even though it's still width because we
-            # haven't rotated yet.
-            else :     # We'll be changing aspect ratios
-                if oldw > oldh :     # horizontal format, will be vertical
-                    neww = self.height
-                    newh = oldh * self.height / oldw
-                else :               # vertical format, will be horiz
-                    neww = self.width
-                    newh = oldh * self.width / oldw
+            else:
+                oldw = newpb.get_width()
+                oldh = newpb.get_height()
+                if rot in [ 0, 180]:
+                    if oldw > oldh :     # horizontal format photo
+                        neww = self.width
+                        newh = oldh * self.width / oldw
+                    else :               # vertical format
+                        newh = self.height
+                        neww = oldw * self.height / oldh
 
-            # Finally, do the scale:
-            newpb = newpb.scale_simple(neww, newh,
-                                       GdkPixbuf.InterpType.BILINEAR)
+                # If the image needs to be rotated 90 or 270 degrees,
+                # scale so that the scaled width will fit in the image
+                # height area -- even though it's still width because we
+                # haven't rotated yet.
+                else :     # We'll be changing aspect ratios
+                    if oldw > oldh :     # horizontal format, will be vertical
+                        neww = self.height
+                        newh = oldh * self.height / oldw
+                    else :               # vertical format, will be horiz
+                        neww = self.width
+                        newh = oldh * self.width / oldw
+
+                # Finally, do the scale:
+                newpb = newpb.scale_simple(neww, newh,
+                                           GdkPixbuf.InterpType.BILINEAR)
 
             # Rotate the image if needed
             if rot != 0:
@@ -209,6 +234,35 @@ class ImageViewer(Gtk.DrawingArea):
         cr.fill()
 
 
+    def toggle_fullsize(self):
+        '''Toggle whether images are shown at full size,
+           in a window that may not fit on the screen,
+           or scaled to the existing window size.
+           Note that ImageViewer can't directly change the size
+           of its containing window; if you want the viewer to
+           be able to do that, set the viewer's resize_fn,
+           as ImageViewerWindow does.
+        '''
+        if not self.cur_img:
+            return
+
+        if self.fullzoom:
+            self.width = self.savewidth
+            self.height = self.saveheight
+            self.fullzoom = False
+
+            if self.resize_fn:
+                self.resize_fn(self.width, self.height)
+
+        else:
+            self.savewidth = self.width
+            self.saveheight = self.height
+            self.fullzoom = True
+
+        self.prepare_image()
+        self.show_image()
+
+
 class ImageViewerWindow(Gtk.Window):
     '''Bring up a window that can view images.
        Pass in a list of Images, or a list of filenames,
@@ -248,6 +302,7 @@ class ImageViewerWindow(Gtk.Window):
 
         self.viewer = ImageViewer()
         self.viewer.set_size_request(self.width, self.height)
+        self.viewer.resize_fn =  self.resize_fn
         self.main_vbox.pack_start(self.viewer, True, True, 0)
 
         self.add(self.main_vbox)
@@ -257,16 +312,14 @@ class ImageViewerWindow(Gtk.Window):
 
         while self.img_list:
             loaded = self.viewer.load_image(self.img_list[0])
-            if loaded:
+            if loaded >= 0:
                 break
             # Couldn't load that image. Remove it from the list.
-            print("Couldn't load", self.img_list[0].filename)
             self.img_list = self.img_list[1:]
 
 
     def run(self):
         self.show_all();
-        self.set_opacity(.5)
         Gtk.main()
 
 
@@ -288,18 +341,22 @@ class ImageViewerWindow(Gtk.Window):
         self.viewer.show_image()
 
 
-    def new_image(self, img):
-        self.img_list = []
-        self.add_image(img)
+    # def new_image(self, img):
+    #     self.img_list = []
+    #     self.add_image(img)
 
 
     def next_image(self):
+        if not self.img_list:
+            return
         self.imgno = (self.imgno + 1) % len(self.img_list)
         self.viewer.load_image(self.img_list[self.imgno])
         self.viewer.show_image()
 
 
     def prev_image(self):
+        if not self.img_list:
+            return
         self.imgno = (self.imgno - 1)
         if self.imgno < 0:
             self.imgno = 0
@@ -309,6 +366,15 @@ class ImageViewerWindow(Gtk.Window):
 
     def quit(self):
         Gtk.main_quit()
+
+
+    def resize_fn(self, width, height):
+        '''A function the ImageViewer can call when it's in fullsize
+           mode and wants to resize the window.
+        '''
+        self.resize(self.viewer.width, self.viewer.height)
+        # self.set_default_size(self.viewer.width, self.viewer.height)
+        # self.resize(self.viewer.width, self.viewer.height)
 
 
     def key_press_event(self, widget, event, imagewin):
@@ -321,6 +387,9 @@ class ImageViewerWindow(Gtk.Window):
         if event.keyval == Gtk.keysyms.BackSpace:
             self.prev_image()
             return
+        if event.string == "f":
+            self.viewer.toggle_fullsize()
+            return
         if event.string == "q":
             if self.exit_on_q:
                 Gtk.main_quit()
@@ -330,7 +399,6 @@ class ImageViewerWindow(Gtk.Window):
 
 
 def main():
-
     import sys
     win = ImageViewerWindow(sys.argv[1:], exit_on_q=True)
     win.run()
