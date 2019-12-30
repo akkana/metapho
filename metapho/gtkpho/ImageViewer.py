@@ -15,8 +15,8 @@ from metapho import Image
 
 
 class ImageViewer(Gtk.DrawingArea):
-    '''A simple PyGTK image viewer widget.
-    '''
+    """A simple PyGTK image viewer widget.
+    """
 
     def __init__(self):
         super(ImageViewer, self).__init__()
@@ -44,7 +44,7 @@ class ImageViewer(Gtk.DrawingArea):
 
 
     def get_window_size(self):
-        '''Return width, height of the current window allocation.'''
+        """Return width, height of the current window allocation."""
         # Before the window is created, get_allocation will return 1, 1
         # which plays havoc with various calculations.
         if not self.window:
@@ -60,7 +60,7 @@ class ImageViewer(Gtk.DrawingArea):
 
 
     def draw(self, widget, cr):
-        '''Draw the image, scaled appropriately.'''
+        """Draw the image, scaled appropriately."""
         w, h = self.get_window_size()
         if w != self.width or h != self.height:
             self.width = w
@@ -83,10 +83,10 @@ class ImageViewer(Gtk.DrawingArea):
 
 
     def load_image(self, img):
-        '''Load an image from a filename or metaphe.Image.
+        """Load an image from a filename or metaphe.Image.
            Return 1 for success, 0 for valid image but not ready,
            -1 for invalid image or other error.
-        '''
+        """
         # load_image is called from the MetaPhoWindow map event,
         # which happens before ImageViewer gets its own first draw event.
         # So we don't have a size yet when this is first called.
@@ -114,11 +114,11 @@ class ImageViewer(Gtk.DrawingArea):
 
 
     def prepare_image(self):
-        '''Load the current image, scale and rotate, and show it.
+        """Load the current image, scale and rotate, and show it.
            img is a filename.
            Return 1 for success, 0 for valid image but not ready,
            -1 for invalid image or other error.
-        '''
+        """
         if not self.cur_img:
             return
 
@@ -235,14 +235,14 @@ class ImageViewer(Gtk.DrawingArea):
 
 
     def toggle_fullsize(self):
-        '''Toggle whether images are shown at full size,
+        """Toggle whether images are shown at full size,
            in a window that may not fit on the screen,
            or scaled to the existing window size.
            Note that ImageViewer can't directly change the size
            of its containing window; if you want the viewer to
            be able to do that, set the viewer's resize_fn,
            as ImageViewerWindow does.
-        '''
+        """
         if not self.cur_img:
             return
 
@@ -264,10 +264,10 @@ class ImageViewer(Gtk.DrawingArea):
 
 
 class ImageViewerWindow(Gtk.Window):
-    '''Bring up a window that can view images.
+    """Bring up a window that can view images.
        Pass in a list of Images, or a list of filenames,
        or just one Image or filename.
-    '''
+    """
 
     def __init__(self, img_list=None, width=1024, height=768, exit_on_q=True):
         super(ImageViewerWindow, self).__init__()
@@ -369,18 +369,18 @@ class ImageViewerWindow(Gtk.Window):
 
 
     def resize_fn(self, width, height):
-        '''A function the ImageViewer can call when it's in fullsize
+        """A function the ImageViewer can call when it's in fullsize
            mode and wants to resize the window.
-        '''
+        """
         self.resize(self.viewer.width, self.viewer.height)
         # self.set_default_size(self.viewer.width, self.viewer.height)
         # self.resize(self.viewer.width, self.viewer.height)
 
 
     def key_press_event(self, widget, event, imagewin):
-        '''Handle a key press event anywhere in the window.
+        """Handle a key press event anywhere in the window.
            Optional; to install it, call handle_key_presses.
-        '''
+        """
         if event.string == " ":
             self.next_image()
             return

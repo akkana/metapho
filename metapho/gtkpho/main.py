@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-'''
+"""
 metapho: an image tagger and viewer.
 
 This is the runnable script, which calls up a GTK-based user interface
 for viewing images and tagging them.
-'''
+"""
 
 # Copyright 2013-2017 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
@@ -22,10 +22,10 @@ import sys, os
 # import traceback
 
 class MetaPhoWindow(object):
-    '''The main controller window for metapho.
+    """The main controller window for metapho.
        This holds any child widgets, like the image viewer and tags window,
        and manages key events and other user commands.
-    '''
+    """
 
     def __init__(self, file_list):
         for filename in file_list:
@@ -84,8 +84,8 @@ class MetaPhoWindow(object):
             self.first_image()
 
     def read_all_tags(self):
-        '''Read tags in all directories used by images in argv.
-        '''
+        """Read tags in all directories used by images in argv.
+        """
         dirs = set()
         for img in metapho.Image.g_image_list:
             dirname = os.path.dirname(img.filename) or '.'
@@ -107,9 +107,9 @@ class MetaPhoWindow(object):
         self.prev_image()
 
     def next_image(self):
-        '''Advance to the next image, if possible.
+        """Advance to the next image, if possible.
            Tell the viewer to load and show the image.
-        '''
+        """
         loaded = False
 
         # Save the tags of the current image, so we can copy them
@@ -185,11 +185,11 @@ class MetaPhoWindow(object):
             print("Can't go before first image")
 
     def delete_confirm(self):
-        '''Ask the user whether to really delete an image.
+        """Ask the user whether to really delete an image.
            Return True for yes, False for no.
            Accept some keystrokes beyond the usual ones,
            e.g. d or ctrl-d confirms the delete.
-        '''
+        """
         dialog = gtk.MessageDialog(self.win,
                                    gtk.DIALOG_DESTROY_WITH_PARENT,
                                    gtk.MESSAGE_QUESTION,
@@ -220,7 +220,7 @@ class MetaPhoWindow(object):
         return False
 
     def key_press_event(self, widget, event):
-        '''Handle a key press event anywhere in the window'''
+        """Handle a key press event anywhere in the window"""
         if self.isearch:
             return self.isearch_key_press(widget, event)
 
@@ -349,9 +349,9 @@ class MetaPhoWindow(object):
         return False
 
     def isearch_key_press(self, widget, event):
-        '''Handle key presses when we're in isearch mode,
+        """Handle key presses when we're in isearch mode,
            typing in a search pattern.
-        '''
+        """
 
         # Return shifts out of isearch mode
         # but also accepts (shifts focus to) the first match.

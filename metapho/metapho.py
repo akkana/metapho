@@ -2,11 +2,11 @@
 
 # Copyright 2013,2016 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
-'''
+"""
 These are the base class for metapho images and taggers.
 Programs with better UI can inherit from these classes.
 
-'''
+"""
 
 # Image and Tagger classes have to be defined here in order for
 # other files to be able to use them as metapho.Image rather than
@@ -17,18 +17,18 @@ import os
 import collections    # for OrderedDict
 
 class Image:
-    '''An image, with additional info such as rotation and tags.
-    '''
+    """An image, with additional info such as rotation and tags.
+    """
 
     # A list of all the filenames we know about:
     g_image_list = []
 
     def __init__(self, filename, displayed=True):
-        '''Initialize an image filename.
+        """Initialize an image filename.
            Pass displayed=False if this image isn't to be shown
            in the current session, only used for remembering
            previously set tags.
-        '''
+        """
         self.filename = filename
         self.tags = []
 
@@ -70,17 +70,17 @@ class Image:
         return self.filename >= other.filename
 
     def delete(self):
-        '''Delete the image file FROM DISK, and the image object
+        """Delete the image file FROM DISK, and the image object
            from the imageList. DOES NOT ASK FOR CONFIRMATION --
            do that (if desired) from the calling program.
-        '''
+        """
         print("Deleting", self.filename)
         os.unlink(self.filename)
         Image.g_image_list.remove(self)
 
     @classmethod
     def image_index(cls, filename):
-        '''Find a name in the global image list. Return index, or None.'''
+        """Find a name in the global image list. Return index, or None."""
         for i, img in enumerate(cls.g_image_list):
             if img.filename == filename:
                 return i
@@ -88,8 +88,8 @@ class Image:
 
     @classmethod
     def find_nonexistent_files(cls):
-        '''Returns a list of images in the imagelist that don't exist on disk.
-        '''
+        """Returns a list of images in the imagelist that don't exist on disk.
+        """
         not_on_disk = set()
         for im in cls.g_image_list:
             if not os.path.exists(im.filename):
@@ -100,10 +100,10 @@ class Image:
 
     @classmethod
     def clean_up_nonexistent_files(cls, topdir):
-        '''For any file that was referenced in a tag file but doesn't
+        """For any file that was referenced in a tag file but doesn't
            exist on disk, see if perhaps it's been moved to a different
            subdirectory under topdir. If so, adjust file path appropriately.
-        '''
+        """
         nefbases = set()
         nefdict = {}
         for f in cls.find_nonexistent_files():
@@ -139,11 +139,11 @@ class Image:
 import shlex
 
 class Tagger(object):
-    '''Manages tags for images.
-    '''
+    """Manages tags for images.
+    """
 
     def __init__(self):
-        '''tagger: an object to manage metapho image tags'''
+        """tagger: an object to manage metapho image tags"""
 
         # The actual per-image lists of tags live in the Image class.
         # Each image has img.tags, which is a list of tag indices.
@@ -182,9 +182,9 @@ class Tagger(object):
                                ]
 
     def __repr__(self):
-        '''Returns a string summarizing all known images and tags,
+        """Returns a string summarizing all known images and tags,
            suitable for printing on stdout or pasting into a Tags file.
-        '''
+        """
         outstr = ''
         for cat in self.categories:
             outstr += '\ncategory ' + cat + '\n\n'
@@ -221,11 +221,11 @@ class Tagger(object):
             self.categories[new if old == k else k] = v
 
     def write_tag_file(self):
-        '''Save the current set of tags to a Tags file chosen from
+        """Save the current set of tags to a Tags file chosen from
            the top-level directory used in the images we've seen.
            If there was a previous Tags file there, it will be saved
            as Tags.bak.
-        '''
+        """
         if not self.changed:
             print("No tags changed; not rewriting Tags file")
             return
@@ -239,12 +239,12 @@ class Tagger(object):
         outfile.close()
 
     def read_tags(self, dirname, recursive=True):
-        '''Read in tags from files named in the given directory,
+        """Read in tags from files named in the given directory,
            and tag images in the imagelist appropriately.
            Tags will be appended to the tag_list.
            If recursive is True, we'll also look for
            Tags files in subdirectories.
-        '''
+        """
 
         # Handle tag files in subdirectories first.
         # The tag file at the top level will override anything lower,
@@ -266,7 +266,7 @@ class Tagger(object):
                 # but this causes other problems:
                 # .rpartition(os.path.sep)[0]
 
-        '''Format of the Tags file:
+        """Format of the Tags file:
 category Animals
 tag squirrels: img_001.jpg img_030.jpg
 tag horses: img_042.jpg
@@ -281,7 +281,7 @@ tag Bruny Island: img 008.jpg
            tagtype or photo is taken to be a specific tag.
            What are tagtype and photo, you ask? Good question;
            I'm sure there were big plans for them at one time.)
-        '''
+        """
         # The default category name is Tags.
         if not self.current_category:
             self.current_category = "Tags"
@@ -361,10 +361,10 @@ tag Bruny Island: img 008.jpg
         fp.close()
 
     def process_tag(self, tagname, filenames):
-        '''After reading a tag from a tags file, add it to the global
+        """After reading a tag from a tags file, add it to the global
            tags list if it isn't there already, and add the given filenames
            to it.
-        '''
+        """
         try:
             tagindex = self.tag_list.index(tagname)
         except:
@@ -397,13 +397,13 @@ tag Bruny Island: img 008.jpg
                 Image.g_image_list.append(newim)
 
     def add_tag(self, tag, img):
-        '''Add a tag to the given image.
+        """Add a tag to the given image.
            img is a metapho.Image.
            tag may be a string, which can be a new string or an existing one,
            or an integer index into the tag list.
            Return the index (in the global tags list) of the tag just added,
            or None if error.
-        '''
+        """
         self.changed = True
 
         if type(tag) is int:
@@ -442,7 +442,7 @@ tag Bruny Island: img 008.jpg
         img.tags = []
 
     def toggle_tag(self, tagno, img):
-        '''Toggle tag number tagno for the given img.'''
+        """Toggle tag number tagno for the given img."""
         self.changed = True
 
         if tagno in img.tags:
@@ -456,13 +456,13 @@ tag Bruny Island: img 008.jpg
         img.tags.append(tagno)
 
     def match_tag(self, pattern):
-        '''Return a list of tags matching the pattern.'''
+        """Return a list of tags matching the pattern."""
         return None
 
     def find_untagged_files(self, topdir):
-        '''Return a list of untagged files and a list of directories
+        """Return a list of untagged files and a list of directories
            in which nothing is tagged, under topdir.
-        '''
+        """
         untagged_files = []
         untagged_dirs = []
         for root, dirs, files in os.walk(topdir):
@@ -508,12 +508,12 @@ tag Bruny Island: img 008.jpg
 
     @classmethod
     def ignore_directory(cls, d, path=None):
-        '''Detect directory names that don't need to be indexed separately
+        """Detect directory names that don't need to be indexed separately
            and aren't likely to have a Tags file;
            for instance, those that likely contain copies of what's in
            the parent, or small copies for a web page.
            Also, you can skip tagging by creating a file named NoTags.
-        '''
+        """
         if d == "html" or d == "web" or d == "bad":
             return True
         if path and os.path.exists(os.path.join(path, d, "NoTags")):
@@ -522,9 +522,9 @@ tag Bruny Island: img 008.jpg
 
     @staticmethod
     def print_files_by_directory(filelist):
-        '''Given a list of pathnames, group them by which directory
+        """Given a list of pathnames, group them by which directory
            they belong to and print them in an organized way.
-        '''
+        """
         dirdic = {}
         for f in filelist:
             # Split into dirname and basename:
@@ -542,10 +542,10 @@ tag Bruny Island: img 008.jpg
 
     @staticmethod
     def split_by_line_length(s, linelen, prefix=''):
-        '''Given a long string, split it into lines no longer than linelen,
+        """Given a long string, split it into lines no longer than linelen,
            with each line optionally prefixed, e.g. with indentation.
            Currently this splits only at spaces, not tabs.
-        '''
+        """
         ret = ''
         while True:
             if len(s) <= linelen:
@@ -562,10 +562,10 @@ tag Bruny Island: img 008.jpg
             s = s[lastspace + 1:]
 
 def main():
-    '''Read tags and report any inconsistencies:
+    """Read tags and report any inconsistencies:
        images in the Tags file that don't exist on disk,
        images on disk that aren't in ./Tags.
-    '''
+    """
     tagger = Tagger()
     tagger.read_tags('.')
 
