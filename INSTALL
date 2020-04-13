@@ -1,3 +1,23 @@
+INSTALLING PYTOPO
+
+Install pytopo on your local machine with
+    python setup.py install
+(you'll need Python's setuptools package).
+
+Or get it from PyPI:
+    pip install pytopo
+
+Install from the development directory to a virtualenv:
+    pip install .
+
+Either way, the executables will be called pytopo and ellie.
+On its first run it will create the configuration file it needs.
+
+Developers: To run from the development directory
+    pip install -e .
+or
+    setup.py develop
+
 HTML docs are generated with Sphinx following
 https://samnicholls.net/2016/06/15/how-to-sphinx-readthedocs/
 
