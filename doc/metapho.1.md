@@ -106,7 +106,7 @@ Akkana Peck, with initial design input from John Sturdy.
 COPYRIGHT
 ---------
 
-Copyright &copy; 2013,2016,2019 Akkana Peck.
+Copyright (C) 2013,2016,2019,2020 Akkana Peck.
 Metapho is free software, licensed under the GNU Public License version 2.
 
 SEE ALSO
