@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright 2013,2016 by Akkana Peck: share and enjoy under the GPL v2 or later.
+# Copyright 2013,2016,2019 by Akkana Peck:
+# share and enjoy under the GPL v2 or later.
 
 """
 These are the base class for metapho images and taggers.
@@ -16,11 +17,17 @@ Programs with better UI can inherit from these classes.
 import os
 import collections    # for OrderedDict
 
+import shlex
+
 class Image:
     """An image, with additional info such as rotation and tags.
     """
 
-    # A list of all the filenames we know about:
+    # A list of all the filenames the program knows about.
+    # Note that this is a class variable! So if you finish using
+    # one set of files and want to continue using the class in the
+    # same program (or in a suite of automated tests), you may
+    # need to clear this out.
     g_image_list = []
 
     def __init__(self, filename, displayed=True):
@@ -135,8 +142,6 @@ class Image:
                 ' '.join([nefdict[f] for f in nefbases]))
             for f in nefbases:
                 Image.g_image_list.remove(nefdict[f])
-
-import shlex
 
 class Tagger(object):
     """Manages tags for images.
