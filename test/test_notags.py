@@ -2,8 +2,6 @@
 
 # Tests for the notags helper for Metapho
 
-from __future__ import print_function
-
 import unittest
 
 from pathlib import Path
@@ -38,8 +36,9 @@ class NotagsTests(unittest.TestCase):
         afile.touch()
         afile = self.testdir / "dir1/img4.jpg"
         afile.touch()
+
         afile = self.testdir / "dir1/Tags"
-        afile.write_text('''tag tagged file: img1.jpg img2.jpg img5.jpg img6.jpg''')
+        afile.write_text('tag tagged file: img1.jpg img2.jpg img5.jpg img6.jpg')
 
         adir = self.testdir / "dir2"
         adir.mkdir()
@@ -61,38 +60,43 @@ class NotagsTests(unittest.TestCase):
         tagger = Tagger()
         tagger.read_tags(self.testdir)
 
+        abstestdir = os.path.abspath(self.testdir)
+
         nef = Image.find_nonexistent_files()
         utf, utd = tagger.find_untagged_files(self.testdir)
 
         nef.sort()
-        self.assertEqual(nef, ['test/testdir/dir1/img5.jpg',
-                               'test/testdir/dir1/img6.jpg'])
+        self.assertEqual(nef, [os.path.join(abstestdir, 'dir1/img5.jpg'),
+                               os.path.join(abstestdir, 'dir1/img6.jpg')])
 
         utf.sort()
-        self.assertEqual(utf, ['test/testdir/dir1/img3.jpg',
-                               'test/testdir/dir1/img4.jpg'])
+        self.assertEqual(utf, [os.path.join(abstestdir, 'dir1/img3.jpg'),
+                               os.path.join(abstestdir, 'dir1/img4.jpg')])
 
-        self.assertEqual(utd, ['test/testdir/dir2'])
+        self.assertEqual(utd, [os.path.join(abstestdir, 'dir2')])
 
 
     def test_dirtree(self):
         """Make sure the tagger can handle tag files from several directories.
         """
+        abstestdir = os.path.abspath(self.testdir)
 
-        with open(self.testdir / "dir2/Tags", 'w') as tagfp:
-            print("""tag phred: imgb""", file=tagfp)
-        with open(self.testdir / "Tags", 'w') as tagfp:
-            print("""tag ann: dir1/img1 dir2/imgc""", file=tagfp)
+        tagfile = self.testdir / "dir2/Tags"
+        tagfile.write_text("tag phred: imgb")
+        tagfile = self.testdir / "Tags"
+        tagfile.write_text("tag ann: dir1/img1 dir2/imgc")
 
         tagger = Tagger()
         tagger.read_tags(self.testdir)
 
+        self.assertEqual(tagger.commondir, abstestdir)
+
         self.assertEqual(str(tagger), """
 category Tags
 
-tag phred : test/testdir/dir2/imgb
-tag tagged file : test/testdir/dir1/img1.jpg test/testdir/dir1/img2.jpg test/testdir/dir1/img5.jpg test/testdir/dir1/img6.jpg
-tag ann : test/testdir/dir1/img1 test/testdir/dir2/imgc
+tag phred : dir2/imgb
+tag tagged file : dir1/img1.jpg dir1/img2.jpg dir1/img5.jpg dir1/img6.jpg
+tag ann : dir1/img1 dir2/imgc
 """)
 
 

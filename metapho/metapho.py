@@ -16,7 +16,6 @@ Programs with better UI can inherit from these classes.
 
 import os
 import collections    # for OrderedDict
-
 import shlex
 
 class Image:
@@ -36,7 +35,9 @@ class Image:
            in the current session, only used for remembering
            previously set tags.
         """
-        self.filename = filename
+        # filename is an absolute path
+        self.filename = os.path.abspath(filename)
+
         self.tags = []
 
         self.displayed = displayed
@@ -194,6 +195,8 @@ class Tagger(object):
         for cat in self.categories:
             outstr += '\ncategory ' + cat + '\n\n'
 
+            commondirlen = len(self.commondir)
+
             for tagno in self.categories[cat]:
                 tagstr = self.tag_list[tagno]
 
@@ -211,10 +214,13 @@ class Tagger(object):
                 # Sort them alphabetically by name.
                 imglist.sort()
                 for img in imglist:
-                    if ' ' in img.filename:
-                        imgstr += ' "' + img.filename + '"'
+                    filename = img.filename
+                    if filename.startswith(self.commondir):
+                        filename = filename[commondirlen+1:]
+                    if ' ' in filename:
+                        imgstr += ' "' + filename + '"'
                     else:
-                        imgstr += ' ' + img.filename
+                        imgstr += ' ' + filename
                 if imgstr:
                     outstr += "tag %s :" % tagstr + imgstr + '\n'
 
@@ -250,6 +256,7 @@ class Tagger(object):
            If recursive is True, we'll also look for
            Tags files in subdirectories.
         """
+        dirname = os.path.abspath(dirname)
 
         # Handle tag files in subdirectories first.
         # The tag file at the top level will override anything lower,
@@ -262,10 +269,11 @@ class Tagger(object):
 
         # Keep track of the dir common to all directories we use:
         # XXX commondir code is still experimental and untested.
+        absdir = os.path.abspath(dirname)
         if self.commondir == None:
-            self.commondir = dirname
+            self.commondir = absdir
         else:
-            self.commondir = os.path.commonprefix([self.commondir, dirname])
+            self.commondir = os.path.commonprefix([self.commondir, absdir])
                 # commonpre has a bug, see
                 # http://rosettacode.org/wiki/Find_common_directory_path#Python
                 # but this causes other problems:
@@ -297,13 +305,13 @@ tag Bruny Island: img 008.jpg
             fp = open(pathname)
             self.tagfiles.append(pathname)
         except IOError:
-            # print "Couldn't find a file named Tags, trying Keywords"
+            # print("Couldn't find a file named Tags, trying Keywords")
             try:
                 pathname = os.path.join(dirname, "Keywords")
                 fp = open(pathname)
                 self.tagfiles.append(pathname)
             except IOError:
-                # print "No Tags or Keywords file in", dirname
+                # print("No Tags or Keywords file in", dirname)
                 return
 
         pathname = os.path.normpath(pathname)
@@ -498,7 +506,7 @@ tag Bruny Island: img 008.jpg
 
                 # Now we have a file that should be tagged. Is it?
                 nfiles += 1
-                filepath = os.path.normpath(os.path.join(root, f))
+                filepath = os.path.abspath(os.path.join(root, f))
                 if filepath not in Image.g_image_list:
                     local_untagged.append(filepath)
                 elif not some_local_tags:
@@ -507,7 +515,7 @@ tag Bruny Island: img 008.jpg
                 untagged_files += local_untagged
             elif nfiles:       # There are files, but nothing was tagged
                 # print root, "has no Tags file but has", nfiles, "files"
-                untagged_dirs.append(os.path.normpath(root))
+                untagged_dirs.append(os.path.abspath(root))
 
         return untagged_files, untagged_dirs
 
