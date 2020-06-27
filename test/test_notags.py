@@ -13,6 +13,15 @@ sys.path.insert(0, '..')
 
 from metapho import Image, Tagger
 
+
+def sortlines(filecontents):
+    """Given a long string meant to be the contents of a Tags file,
+       sort the lines and remove blank lines.
+    """
+    lines = [ l for l in filecontents.split('\n') if l.strip() ]
+    return '\n'.join(sorted(lines))
+
+
 class NotagsTests(unittest.TestCase):
 
     # executed prior to each test
@@ -77,27 +86,57 @@ class NotagsTests(unittest.TestCase):
 
 
     def test_dirtree(self):
-        """Make sure the tagger can handle tag files from several directories.
+        """Test tag files from several directories, by recursive dir,
+           using read_tags(recursive=True).
         """
         abstestdir = os.path.abspath(self.testdir)
 
         tagfile = self.testdir / "dir2/Tags"
-        tagfile.write_text("tag phred: imgb")
+        tagfile.write_text("tag phred: imgb.jpg")
         tagfile = self.testdir / "Tags"
-        tagfile.write_text("tag ann: dir1/img1 dir2/imgc")
+        tagfile.write_text("tag ann: dir1/img1.jpg dir2/imgc.jpg")
 
         tagger = Tagger()
-        tagger.read_tags(self.testdir)
+        tagger.read_tags(self.testdir, recursive=True)
 
         self.assertEqual(tagger.commondir, abstestdir)
 
-        self.assertEqual(str(tagger), """
-category Tags
+        self.assertEqual(sortlines(str(tagger)), """category Tags
+tag ann : dir1/img1.jpg dir2/imgc.jpg
+tag phred : dir2/imgb.jpg
+tag tagged file : dir1/img1.jpg dir1/img2.jpg dir1/img5.jpg dir1/img6.jpg""")
 
-tag phred : dir2/imgb
-tag tagged file : dir1/img1.jpg dir1/img2.jpg dir1/img5.jpg dir1/img6.jpg
-tag ann : dir1/img1 dir2/imgc
-""")
+
+    def test_dirtree_by_images(self):
+        """Test tag files from several directories, by image list.
+           This is how gtkpho's main initializes the tagger.
+        """
+
+        abstestdir = os.path.abspath(self.testdir)
+
+        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir1/img1.jpg")))
+        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir1/img2.jpg")))
+        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir1/img3.jpg")))
+        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir1/img4.jpg")))
+
+        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir2/imga.jpg")))
+        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir2/imgb.jpg")))
+        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir2/imgc.jpg")))
+
+        tagfile = self.testdir / "dir2/Tags"
+        tagfile.write_text("tag phred: imgb.jpg")
+        tagfile = self.testdir / "Tags"
+        tagfile.write_text("tag ann: dir1/img1.jpg dir2/imgc.jpg")
+
+        tagger = Tagger()
+        tagger.read_all_tags_for_images()
+
+        self.assertEqual(tagger.commondir, abstestdir)
+
+        self.assertEqual(sortlines(str(tagger)), """category Tags
+tag ann : dir1/img1.jpg dir2/imgc.jpg
+tag phred : dir2/imgb.jpg
+tag tagged file : dir1/img1.jpg dir1/img2.jpg""")
 
 
 if __name__ == '__main__':

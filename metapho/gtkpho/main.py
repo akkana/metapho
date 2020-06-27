@@ -64,7 +64,9 @@ class MetaPhoWindow(object):
 
         self.win.show_all();
 
-        self.read_all_tags()
+        self.tagger.read_all_tags_for_images()
+
+        self.tagger.display_tags()
 
     def quit(self, widget=None, data=None):
         # If focus is currently in a text entry, there may be changed
@@ -82,20 +84,6 @@ class MetaPhoWindow(object):
     def mapped(self, widget, event):
         if self.imgno < 0:
             self.first_image()
-
-    def read_all_tags(self):
-        """Read tags in all directories used by images in argv.
-        """
-        dirs = set()
-        for img in metapho.Image.g_image_list:
-            dirname = os.path.dirname(img.filename) or '.'
-            if dirname not in dirs:
-                dirs.add(dirname)
-                self.tagger.read_tags(dirname)
-
-        metapho.Image.clean_up_nonexistent_files(self.tagger.commondir)
-
-        self.tagger.display_tags()
 
     def first_image(self):
         self.imgno = -1

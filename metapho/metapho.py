@@ -18,6 +18,20 @@ import os
 import collections    # for OrderedDict
 import shlex
 
+from itertools import takewhile
+
+# commonprefix is buggy, doesn't restrict itself to path components, see
+# http://rosettacode.org/wiki/Find_common_directory_path#Python
+# A replacement:
+def commonprefix(paths):
+    def allnamesequal(name):
+        return all(n==name[0] for n in name[1:])
+
+    bydirectorylevels = zip(*[p.split(os.path.sep) for p in paths])
+    return os.path.sep.join(x[0] for x in takewhile(allnamesequal,
+                                                    bydirectorylevels))
+
+
 class Image:
     """An image, with additional info such as rotation and tags.
     """
@@ -139,8 +153,8 @@ class Image:
         # But what about files that have simply been removed?
         # Those are still in nefbases.
         if nefbases:
-            print("Removing missing files from Tags file:", \
-                ' '.join([nefdict[f] for f in nefbases]))
+            # print("Removing missing files from Tags file:", \
+            #     ' '.join([nefdict[f] for f in nefbases]))
             for f in nefbases:
                 Image.g_image_list.remove(nefdict[f])
 
@@ -192,11 +206,14 @@ class Tagger(object):
            suitable for printing on stdout or pasting into a Tags file.
         """
         outstr = ''
-        for cat in self.categories:
+        commondirlen = len(self.commondir)
+
+        for cat in sorted(self.categories):
             outstr += '\ncategory ' + cat + '\n\n'
 
-            commondirlen = len(self.commondir)
-
+            # self.categories[cat] is a list of numeric tag indices,
+            # so sorting tags would require a lot more code
+            # and there's no particular reason to.
             for tagno in self.categories[cat]:
                 tagstr = self.tag_list[tagno]
 
@@ -249,6 +266,39 @@ class Tagger(object):
         outfile.write(str(self))
         outfile.close()
 
+    def check_commondir(self, d):
+        """Keep track of the dir common to all directories we use:
+           XXX commondir code is still somewhat experimental.
+        """
+        if self.commondir == None:
+            self.commondir = d
+        else:
+            # self.commondir = os.path.commonprefix([self.commondir, d])
+            self.commondir = commonprefix([self.commondir, d])
+
+    def read_all_tags_for_images(self):
+        """Read tags in all directories used by known images,
+           plus the common dir, plus .
+        """
+        dirs = set()
+
+        for img in Image.g_image_list:
+            dirname = os.path.abspath(os.path.dirname(img.filename))
+            dirs.add(dirname)
+
+        for d in dirs:
+            self.check_commondir(d)
+
+        if not self.commondir:
+            print("Yikes! No commondir")
+
+        dirs.add(self.commondir)
+
+        for d in dirs:
+            self.read_tags(d, recursive=False)
+
+        Image.clean_up_nonexistent_files(self.commondir)
+
     def read_tags(self, dirname, recursive=True):
         """Read in tags from files named in the given directory,
            and tag images in the imagelist appropriately.
@@ -256,7 +306,9 @@ class Tagger(object):
            If recursive is True, we'll also look for
            Tags files in subdirectories.
         """
+        # print("read_tags", dirname, "recursive", recursive)
         dirname = os.path.abspath(dirname)
+        self.check_commondir(dirname)
 
         # Handle tag files in subdirectories first.
         # The tag file at the top level will override anything lower,
@@ -266,18 +318,6 @@ class Tagger(object):
                 for d in dirs:
                     if not Tagger.ignore_directory(d, root):
                         self.read_tags(os.path.join(root, d), recursive=False)
-
-        # Keep track of the dir common to all directories we use:
-        # XXX commondir code is still experimental and untested.
-        absdir = os.path.abspath(dirname)
-        if self.commondir == None:
-            self.commondir = absdir
-        else:
-            self.commondir = os.path.commonprefix([self.commondir, absdir])
-                # commonpre has a bug, see
-                # http://rosettacode.org/wiki/Find_common_directory_path#Python
-                # but this causes other problems:
-                # .rpartition(os.path.sep)[0]
 
         """Format of the Tags file:
 category Animals
