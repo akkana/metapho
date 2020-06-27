@@ -624,6 +624,15 @@ def main():
 
     print()
 
+    curdir = os.path.abspath('.')
+    curdirlen = len(curdir)
+
+    def rel_dirs(dirs):
+        """Take absolute paths and make them relative to curdir
+        """
+        return [ p[curdirlen+1:] if p.startswith(curdir) else p
+                 for p in dirs ]
+
     # This might be interesting information but it's too long a list
     # when evaluating a year's photos.
     # print "Found Tags files in:", ' '.join(tagger.all_tags_files)
@@ -631,18 +640,18 @@ def main():
 
     nef = Image.find_nonexistent_files()
     if nef:
-        print("Tagged files that don't exist on disk:", ' '.join(nef))
+        print("Tagged files that don't exist on disk:", ' '.join(rel_dirs(nef)))
         print()
 
     utf, utd = tagger.find_untagged_files('.')
 
     if utd:
-        print("Directories that need a Tags file:", ' '.join(utd))
+        print("Directories that need a Tags file:", ' '.join(rel_dirs(utd)))
         print()
 
     if utf:
         print("Individual files that aren't tagged:") # , ' '.join(utf)
-        tagger.print_files_by_directory(utf)
+        tagger.print_files_by_directory(rel_dirs(utf))
 
 if __name__ == '__main__':
     main()
