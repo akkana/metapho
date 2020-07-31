@@ -196,7 +196,7 @@ class Tagger(object):
 
         # Extensions we explicitly don't handle that might nevertheless
         # be in the same directory as images:
-        self.skip_extensions = [ ".cr2", ".xcf",
+        self.skip_extensions = [ ".cr2", ".arw", ".xcf",
                                  ".mvi", ".avi", ".mov", ".thm",
                                  ".pto", ".txt", ".wav", ".mp3"
                                ]

@@ -1,7 +1,7 @@
 metapho
 =======
 
-A keyboard-driven app for tagging and organizing large numbers of photos efficiently.
+An app for tagging and organizing large numbers of photos efficiently.
 
 This arose out of my [Pho](http://shallowsky.com/software/pho/)
 image viewer ([Pho on GitHub](https://github.com/akkana/pho)).
@@ -26,7 +26,9 @@ directories that still need to be tagged. Run it at the root of
 an image directory that might have untagged subdirectories.
 
 [Metapho is available on PyPi](https://pypi.python.org/pypi/metapho/),
-so you can install it as `pip install metapho`.
+so you can install it as `pip install metapho`
+(though of course the PyPI version won't always have the
+very latest features and bug fixes).
 
 Read the [Metapho Documentation](https://metapho.readthedocs.io/en/latest/)
 for more information on both the app and the API of the classes

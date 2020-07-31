@@ -31,7 +31,7 @@ SKIPPED FILES AND DIRECTORIES
 
 notags will skip files with the following extensions:
 
-cr2, xcf, mvi, avi, mov, thm, pto, txt, wav, mp3
+cr2, arw, xcf, mvi, avi, mov, thm, pto, txt, wav, mp3
 
 It will also skip directories named "web" and directories with the
 same name as the parent directory (e.g. yosemite/yosemite).
