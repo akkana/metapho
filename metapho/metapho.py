@@ -164,11 +164,18 @@ class Tagger(object):
 
     # Extensions we explicitly don't handle that might nevertheless
     # be in the same directory as images:
-    SKIP_EXTENSIONS = [ ".cr2", ".arw", ".xcf",
-                        ".mvi", ".avi", ".mov", ".thm",
-                        ".pto", ".txt", ".wav", ".mp3"
-    ]
-    IGNORE_DIRNAMES = [ "html", "web", "bad" ]
+    try:
+        SKIP_EXTENSIONS = os.getenv("NOTAGS_SKIP_EXTENSIONS").split()
+    except:
+        SKIP_EXTENSIONS =  [
+            ".cr2", ".arw", ".xcf",
+            ".mvi", ".avi", ".mov", ".thm", ".mp4", ".mkv",
+            ".pto", ".txt", ".wav", ".mp3"
+        ]
+    try:
+        IGNORE_DIRNAMES = os.getenv("NOTAGS_IGNORE_DIRNAMES").split()
+    except:
+        IGNORE_DIRNAMES = [ "html", "web", "bad" ]
 
     def __init__(self):
         """tagger: an object to manage metapho image tags"""
@@ -568,7 +575,7 @@ tag Bruny Island: img 008.jpg
            the parent, or small copies for a web page.
            Also, you can skip tagging by creating a file named NoTags.
         """
-        if d in self.IGNORE_DIRNAMES:
+        if d in Tagger.IGNORE_DIRNAMES:
             return True
         if path and os.path.exists(os.path.join(path, d, "NoTags")):
             return True
@@ -625,8 +632,12 @@ but lack a file named either Tags or Keywords.""")
     print()
     print(progname, "will ignore files with the following extensions:")
     print('   ', ' '.join(Tagger.SKIP_EXTENSIONS))
+    print("    (you can configure that with an environment variable,")
+    print("    e.g. export NOTAGS_SKIP_EXTENSIONS='.cr2 .mp3')")
     print(progname, "will ignore directories with these names:")
     print('   ', ' '.join(Tagger.IGNORE_DIRNAMES))
+    print("    (configure that with the environment variable "
+          "NOTAGS_IGNORE_DIRNAMES)")
     print("    as well as directories with the same name "
           "as the parent directory,\n    e.g. yosemite/yosemite")
     print("It will also ignore any directory containing a file named NoTags.")

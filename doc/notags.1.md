@@ -33,10 +33,26 @@ notags will skip files with the following extensions:
 
 cr2, arw, xcf, mvi, avi, mov, thm, pto, txt, wav, mp3
 
+You can configure that by setting the environment variable
+"NOTAGS_SKIP_EXTENSIONS", space-separated, e.g.
+```
+export NOTAGS_SKIP_EXTENSIONS='.cr2 .mp3'
+```
+
+Use an empty string to skip nothing:
+```
+export NOTAGS_SKIP_EXTENSIONS=''
+```
+
 It will also skip directories named "web" and directories with the
 same name as the parent directory (e.g. yosemite/yosemite).
 The assumption is that these are probably scaled or edited copies
 of images in the parent directory, intended for sharing.
+You can configure that with the environment variable NOTAGS_IGNORE_DIRNAMES,
+e.g.
+```
+export NOTAGS_IGNORE_DIRNAMES='bad good ignored'
+```
 
 Finally, it will ignore any directory (and its subdirectories)
 containing a file named NoTags.
