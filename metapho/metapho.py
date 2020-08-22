@@ -663,8 +663,13 @@ def main():
     def rel_dirs(dirs):
         """Take absolute paths and make them relative to curdir
         """
-        return [ p[curdirlen+1:] if p.startswith(curdir) else p
-                 for p in dirs ]
+        # Nested list comprehension, ugh.
+        # Remove leading curdir when it exists,
+        # but if that results in a null string, substitute '.'.
+        return [ d if d else '.'
+                 for d in [ p[curdirlen+1:]
+                            if p.startswith(curdir)
+                            else p for p in dirs ] ]
 
     # This might be interesting information but it's too long a list
     # when evaluating a year's photos.
