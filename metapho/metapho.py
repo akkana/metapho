@@ -14,7 +14,7 @@ Programs with better UI can inherit from these classes.
 # metapho.Image.Image. I haven't found any way that lets me split
 # the classes into separate files. Sigh!
 
-import os
+import sys, os
 import collections    # for OrderedDict
 import shlex
 
@@ -162,6 +162,14 @@ class Tagger(object):
     """Manages tags for images.
     """
 
+    # Extensions we explicitly don't handle that might nevertheless
+    # be in the same directory as images:
+    SKIP_EXTENSIONS = [ ".cr2", ".arw", ".xcf",
+                        ".mvi", ".avi", ".mov", ".thm",
+                        ".pto", ".txt", ".wav", ".mp3"
+    ]
+    IGNORE_DIRNAMES = [ "html", "web", "bad" ]
+
     def __init__(self):
         """tagger: an object to manage metapho image tags"""
 
@@ -193,13 +201,6 @@ class Tagger(object):
         # All the Tags files we read to initialize.
         # We don't necessarily use this, but callers might want to know.
         self.all_tags_files = []
-
-        # Extensions we explicitly don't handle that might nevertheless
-        # be in the same directory as images:
-        self.skip_extensions = [ ".cr2", ".arw", ".xcf",
-                                 ".mvi", ".avi", ".mov", ".thm",
-                                 ".pto", ".txt", ".wav", ".mp3"
-                               ]
 
     def __repr__(self):
         """Returns a string summarizing all known images and tags,
@@ -541,7 +542,7 @@ tag Bruny Island: img 008.jpg
 
                 # Filter out file extensions we know we don't handle:
                 base, ext = os.path.splitext(f)
-                if ext in self.skip_extensions:
+                if ext in self.SKIP_EXTENSIONS:
                     continue
 
                 # Now we have a file that should be tagged. Is it?
@@ -567,7 +568,7 @@ tag Bruny Island: img 008.jpg
            the parent, or small copies for a web page.
            Also, you can skip tagging by creating a file named NoTags.
         """
-        if d == "html" or d == "web" or d == "bad":
+        if d in self.IGNORE_DIRNAMES:
             return True
         if path and os.path.exists(os.path.join(path, d, "NoTags")):
             return True
@@ -614,11 +615,32 @@ tag Bruny Island: img 008.jpg
             ret += prefix + s[:pos+1] + '\n'
             s = s[lastspace + 1:]
 
+
+def Usage():
+    progname = os.path.basename(sys.argv[0])
+    print("Usage:", progname)
+    print()
+    print("""Find directories under the current one that have image files
+but lack a file named either Tags or Keywords.""")
+    print()
+    print(progname, "will ignore files with the following extensions:")
+    print('   ', ' '.join(Tagger.SKIP_EXTENSIONS))
+    print(progname, "will ignore directories with these names:")
+    print('   ', ' '.join(Tagger.IGNORE_DIRNAMES))
+    print("    as well as directories with the same name "
+          "as the parent directory,\n    e.g. yosemite/yosemite")
+    print("It will also ignore any directory containing a file named NoTags.")
+    sys.exit(0)
+
+
 def main():
     """Read tags and report any inconsistencies:
        images in the Tags file that don't exist on disk,
        images on disk that aren't in ./Tags.
     """
+    if len(sys.argv) > 1 and (sys.argv[1] == '-h' or sys.argv[1] == '--help'):
+        Usage()
+
     tagger = Tagger()
     tagger.read_tags('.')
 
