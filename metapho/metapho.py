@@ -170,7 +170,8 @@ class Tagger(object):
         SKIP_EXTENSIONS =  [
             ".cr2", ".arw", ".xcf",
             ".mvi", ".avi", ".mov", ".thm", ".mp4", ".mkv",
-            ".pto", ".txt", ".wav", ".mp3"
+            ".pto", ".txt", ".wav", ".mp3",
+            ".xml"
         ]
     try:
         IGNORE_DIRNAMES = os.getenv("NOTAGS_IGNORE_DIRNAMES").split()
@@ -559,10 +560,10 @@ tag Bruny Island: img 008.jpg
                     local_untagged.append(filepath)
                 elif not some_local_tags:
                     some_local_tags = True
+
             if some_local_tags:    # Something was tagged in this root
                 untagged_files += local_untagged
             elif nfiles:       # There are files, but nothing was tagged
-                # print root, "has no Tags file but has", nfiles, "files"
                 untagged_dirs.append(os.path.abspath(root))
 
         return untagged_files, untagged_dirs
@@ -598,7 +599,8 @@ tag Bruny Island: img 008.jpg
         dirlist = list(dirdic.keys())
         dirlist.sort()
         for d in dirlist:
-            print('  %s:' % d)
+            if d.strip():
+                print('  %s:' % d)
             print(Tagger.split_by_line_length(' '.join(dirdic[d]), 74, '    '))
 
     @staticmethod
@@ -688,7 +690,7 @@ def main():
         print()
 
     if utf:
-        print("Individual files that aren't tagged:") # , ' '.join(utf)
+        print("Individual files that aren't tagged:")
         tagger.print_files_by_directory(rel_dirs(utf))
 
 if __name__ == '__main__':
