@@ -21,6 +21,7 @@ import sys, os
 
 # import traceback
 
+
 class MetaPhoWindow(object):
     """The main controller window for metapho.
        This holds any child widgets, like the image viewer and tags window,
@@ -365,6 +366,7 @@ class MetaPhoWindow(object):
 
     def main(self):
         gtk.main()
+
 
 def main():
     def Usage():
