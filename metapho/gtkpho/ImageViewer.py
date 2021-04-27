@@ -294,8 +294,12 @@ class ImageViewerWindow(Gtk.Window):
 
         self.set_border_width(10)
 
-        self.connect("delete_event", Gtk.main_quit)
-        self.connect("destroy", Gtk.main_quit)
+        # Clicking the windowmanager x will send a delete event
+        self.connect("delete_event", self.delete)
+
+        # We don't seem to need the destroy event
+        # self.connect("destroy", self.destroy)
+
         self.set_key_handler(self.key_press_event)
 
         self.main_vbox = Gtk.VBox(spacing=8)
@@ -317,15 +321,12 @@ class ImageViewerWindow(Gtk.Window):
             # Couldn't load that image. Remove it from the list.
             self.img_list = self.img_list[1:]
 
-
     def run(self):
         self.show_all();
         Gtk.main()
 
-
     def set_key_handler(self, fcn):
         self.connect("key-press-event", fcn, self)
-
 
     def add_image(self, img):
         if not isinstance(img, Image):
@@ -340,19 +341,12 @@ class ImageViewerWindow(Gtk.Window):
         self.viewer.load_image(img)
         self.viewer.show_image()
 
-
-    # def new_image(self, img):
-    #     self.img_list = []
-    #     self.add_image(img)
-
-
     def next_image(self):
         if not self.img_list:
             return
         self.imgno = (self.imgno + 1) % len(self.img_list)
         self.viewer.load_image(self.img_list[self.imgno])
         self.viewer.show_image()
-
 
     def prev_image(self):
         if not self.img_list:
@@ -363,10 +357,15 @@ class ImageViewerWindow(Gtk.Window):
         self.viewer.load_image(self.img_list[self.imgno])
         self.viewer.show_image()
 
-
     def quit(self):
         Gtk.main_quit()
 
+    def delete(self, parentwin, event):
+        if self.exit_on_q:
+            Gtk.main_quit()
+        else:
+            self.hide()
+        return True
 
     def resize_fn(self, width, height):
         """A function the ImageViewer can call when it's in fullsize
@@ -375,7 +374,6 @@ class ImageViewerWindow(Gtk.Window):
         self.resize(self.viewer.width, self.viewer.height)
         # self.set_default_size(self.viewer.width, self.viewer.height)
         # self.resize(self.viewer.width, self.viewer.height)
-
 
     def key_press_event(self, widget, event, imagewin):
         """Handle a key press event anywhere in the window.

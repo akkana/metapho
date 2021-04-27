@@ -269,7 +269,7 @@ class MetaPhoWindow(object):
             self.quit()
             return True
 
-        # Ctrl-z brings up a zoom window
+        # Ctrl-z brings up a zoomable image viewer window
         if event.keyval == gtk.keysyms.z and \
                 event.state & gtk.gdk.CONTROL_MASK:
             if not self.zoomview:
