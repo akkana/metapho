@@ -20,6 +20,7 @@ import shlex
 
 from itertools import takewhile
 
+
 # commonprefix is buggy, doesn't restrict itself to path components, see
 # http://rosettacode.org/wiki/Find_common_directory_path#Python
 # A replacement:
@@ -184,13 +185,13 @@ class Tagger(object):
         # The actual per-image lists of tags live in the Image class.
         # Each image has img.tags, which is a list of tag indices.
 
-        # The category list is a list of lists:
-        # [ [ "First category", 3, 5, 11 ] ]
+        # The category list is an OrderedDict
+        # { "First category": [ 3, 5, 11 ] }
         # means category 0 has the name "First category" and includes
         # tags 3, 5 and 11 from the tag_list.
         self.categories = collections.OrderedDict()
 
-        # The tag list is just a list of all tags we know about (strings).
+        # The tag list is a list of all tags we know about (strings).
         # A tag may be in several categories.
         self.tag_list = []
 
@@ -473,7 +474,7 @@ tag Bruny Island: img 008.jpg
                 img.tags.append(tag)
             return tag
 
-        # Else it's a string. Make a new tag.
+        # Else it's a string. Is it already inthe tag list?
         if tag in self.tag_list:
             tagno = self.tag_list.index(tag)
             if tagno not in self.categories[self.current_category]:
@@ -481,6 +482,7 @@ tag Bruny Island: img 008.jpg
             img.tags.append(tagno)
             return tagno
 
+        # Make a new tag.
         self.tag_list.append(tag)
         newindex = len(self.tag_list) - 1
         img.tags.append(newindex)

@@ -87,9 +87,37 @@ class TagViewer(metapho.Tagger, gtk.Table):
 
     def change_tag(self, entryno, newstr):
         """Update a tag: called on focus_out from one of the text entries"""
-        if entryno < len(self.categories[self.current_category]):
+
+        # Number of tags in this category:
+        numtags = len(self.categories[self.current_category])
+
+        newstr = newstr.strip()
+
+        # If the string is now empty, and it's the last tag
+        # in both this category and the overall tag list,
+        # remove it from the tag list, the category and the current image.
+        # XXX Note that other images may still refer to this
+        # nonexistent tag. Possibly we should consider looping through
+        # the whole image list.
+        if not newstr:
+            if entryno == numtags-1:
+                tag_list_no = self.categories[self.current_category][entryno]
+                if entryno == numtags - 1 and tag_list_no == len(self.tag_list) - 1:
+                    tagno = self.categories[self.current_category].pop(-1)
+                    self.tag_list.pop(-1)
+                    try:
+                        index = self.cur_img.tags.index(tagno)
+                        self.cur_img.tags.pop(index)
+                    except ValueError:
+                        pass
+
+        # If it's changing an existing tag, just do it.
+        elif entryno < numtags:
             self.tag_list[self.categories[self.current_category][entryno]] \
                 = newstr
+
+        # The string is nonempty and doesn't change an existing tag,
+        # so add a new tag.
         else:
             self.add_tag(newstr, self.cur_img)
 
@@ -126,9 +154,6 @@ class TagViewer(metapho.Tagger, gtk.Table):
 
     def sync_entry(self, entry, entryno):
         entry_text = entry.get_text()
-        # Ignore blank entries
-        if entry_text.strip() == '':
-            return
         self.change_tag(entryno, entry_text)
 
     def sync(self):
@@ -146,10 +171,10 @@ class TagViewer(metapho.Tagger, gtk.Table):
         entryno = None
         for i, e in enumerate(self.entries):
             if entry == e:
-                entryno = i
-                break
-        self.sync_entry(entry, entryno)
-        self.focus_none()
+                self.sync_entry(entry, i)
+                self.focus_none()
+                return
+        print("can't get the focused entry number")
 
     def focus_out(self, entry, event, entryno):
         """Called when a text entry loses focus."""
@@ -158,14 +183,22 @@ class TagViewer(metapho.Tagger, gtk.Table):
         # loses focus. Detect that case:
         winfocused = self.parentwin.get_focus()
         if winfocused == entry:
-            # print "The window was unfocused, not the entry within the window"
+            print("The window was unfocused, not the entry within the window")
             return
 
+        # I think ??? this should always be true
+        if entry == self.entries[entryno]:
+            self.sync_entry(entry, entryno)
+            return True
+
+        # Just in case that assumption is wrong, search for it.
         for i, e in enumerate(self.entries):
             if entry == e:
-                break
+                print("eek, entry is", entry, "and e is", e)
+                self.sync_entry(entry, entryno)
+                return True
 
-        self.sync_entry(entry, entryno)
+        # print("Didn't find the focused entry")
         return True
 
     def toggled(self, button, btnno):
@@ -247,8 +280,10 @@ class TagViewer(metapho.Tagger, gtk.Table):
                 try:
                     cur_img_tags.append(self.tag_list[i])
                 except IndexError:
-                    print(i, "is out of range, we only have", \
-                        len(self.tag_list), "tags")
+                    print(i, "is out of range, we only have space for", \
+                        len(self.tag_list))
+                    print("img", self.cur_img)
+                    print("img.tags:", self.cur_img.tags)
         else:
             cur_img_tags = []
         self.current_category = catname
@@ -345,25 +380,33 @@ class TagViewer(metapho.Tagger, gtk.Table):
         """Turn tag number tagno on (if val=True) or off (val=False)."""
 
         # if val:
-        #     print "\n======== highlight_tag", tagno
+        #     print("\n======== highlight_tag", tagno)
         #     traceback.print_stack()
-        if len(self.buttons) < tagno:
-            print("Argh! Tried to highlight tag", tagno)
-        if self.buttons[tagno].get_active() != val:
-            self.ignore_events = True
-            self.buttons[tagno].set_active(val)
-            self.ignore_events = False
 
+        if len(self.buttons) < tagno:
+            print("Argh! Tried to highlight tag", tagno,
+                  "but can only show", len(self.buttons))
+            return
+
+        # If the last entry is expected to be higlighted,
+        # but it's empty, the user probably just deleted the tag.
+        # Remove that tag from the image and the tag list.
+        if val and not self.entries[tagno].get_text().strip() \
+           and tagno == len(self.categories[self.current_category]) - 1:
+            self.parentwin.set_focus(self.entries[tagno])
+            # Remove it from the image:
+            self.remove_tag(tagno, self.cur_img)
+
+        self.ignore_events = True
         if val:
             self.entries[tagno].modify_base(gtk.STATE_NORMAL, self.highlight_bg)
-            # If a tag is highlighted and the associated entry is empty,
-            # put focus there so the user can type something.
-            if not self.entries[tagno].get_text().strip():
-                self.parentwin.set_focus(self.entries[tagno])
+            self.buttons[tagno].set_active(True)
         else:
             self.entries[tagno].modify_base(gtk.STATE_NORMAL, self.grey_bg)
+            self.buttons[tagno].set_active(False)
             if self.parentwin.get_focus() == self.entries[tagno]:
                 self.focus_none()
+        self.ignore_events = False
 
     def show_matches(self, pat):
         """Colorize any tags that match the given pattern.
@@ -483,20 +526,34 @@ class TagViewer(metapho.Tagger, gtk.Table):
         self.toggle_tag(btnno, img)
 
     def focus_next_entry(self):
-        """Set focus to the next available entry.
+        """Set focus to the next available entry (user just hit Enter).
            If we're already typing in a new tag entry that hasn't been
            saved yet, save it first before switching to the new one.
+
+           When testing this, try:
+           - erase what's in the last entry, then hit Enter:
+             should go to the entry just erased
+           - erase what's in the last entry, then click in another
+             entry, then hit Enter:
+             should go to the entry just erased
         """
-        newindex = len(self.categories[self.current_category])
+        # If focus is currently in an entry, force it to unfocus,
+        # which will force an update of the tags list.
+        self.focus_none()
 
-        # No need to save this entry's new contents explicitly;
-        # when we call highlight_tag it'll get a focus out which
-        # will automatically save. But we do need to increment newindex
-        # if the user typed anything here.
+        # First time for this category, no entries filled yet
+        if not self.categories[self.current_category]:
+            newindex = 0
 
-        curtext = self.entries[newindex].get_text()
-        if curtext.strip() != '':
-            newindex += 1
+        else:
+            # First check whether the entry corresponding to the last tag
+            # is empty, e.g. if the user accidentally entered something
+            # and then tried to erase it.
+            newindex = len(self.categories[self.current_category]) - 1
+            curtext = self.entries[newindex].get_text().strip()
+            if curtext:
+                # There's something there, so jump to the next entry.
+                newindex += 1
 
         self.parentwin.set_focus(self.entries[newindex])
         self.highlight_tag(newindex, True)
