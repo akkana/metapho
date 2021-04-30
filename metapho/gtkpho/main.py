@@ -86,6 +86,11 @@ class MetaPhoWindow(object):
         if self.imgno < 0:
             self.first_image()
 
+            # Now that the image and tagger are loaded,
+            # make sure all the entries are the right color.
+            # XXX Seems like this could be done when the button colors are set.
+            # self.tagger.highlight_entries()
+
     def first_image(self):
         self.imgno = -1
         # raise(RuntimeException("first_image: where are we?"))
@@ -354,12 +359,13 @@ class MetaPhoWindow(object):
         # ESC shifts out of isearch mode.
         if event.keyval == gtk.keysyms.Escape:
             self.isearch = False
-            self.tagger.show_matches('')
+            self.tagger.highlight_entries()
             return True
 
         if event.string:
             self.search_string += event.string
-            self.tagger.show_matches(self.search_string)
+            self.tagger.title.set_text("search: " + self.search_string)
+            self.tagger.highlight_entries(self.search_string)
             return True
 
         return False

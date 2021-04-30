@@ -35,9 +35,20 @@ class TagViewer(metapho.Tagger, gtk.Table):
 
         self.cur_img = None
 
-        self.highlight_bg = gtk.gdk.color_parse("#FFFFFF")
-        self.grey_bg = gtk.gdk.color_parse("#DDDDDD")
-        self.match_bg = gtk.gdk.color_parse("#DDFFEE")
+        # The Byzantine GTK3 way of changing background color:
+        self.provider = gtk.CssProvider()
+        # Load the CSS
+        # Note: GTK doesn't understand 3-digit colors like #fff
+        self.provider.load_from_data(b"""
+  .normal        { background-color: #eeeeee; }
+  .highlighted   { background-color: #ffffff; }
+  .matched       { background-color: #ddffdd; }
+  button         { background:       #cccccc; }
+  button:checked { background:       #f8f8ff; }
+        """)
+        gtk.StyleContext.add_provider_for_screen(gtk.gdk.Screen.get_default(),
+                                                 self.provider,
+                                  gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
         self.ignore_events = False
 
@@ -47,8 +58,7 @@ class TagViewer(metapho.Tagger, gtk.Table):
         # The category viewer, on the upper right
         self.catviewer = CategoryViewer(3,
                                         change_cat_cb=self.change_category,
-                                        new_cat_cb=self.edit_categories,
-                                        highlight_color=self.highlight_bg)
+                                        new_cat_cb=self.edit_categories)
         self.attach(self.catviewer, 0, 4, 1, 2)
         self.catviewer.show()
 
@@ -76,6 +86,7 @@ class TagViewer(metapho.Tagger, gtk.Table):
                 entry.set_width_chars(25)
                 #entry.connect("changed", self.entry_changed, i)
                 #entry.connect("focus-in-event", self.focus_in, i)
+                entry.get_style_context().add_class("normal")
 
                 entry.connect("focus-out-event", self.focus_out,
                               len(self.entries))
@@ -134,14 +145,6 @@ class TagViewer(metapho.Tagger, gtk.Table):
             self.highlight_tag(i, False)
         self.catviewer.unhighlight_all()
 
-    def unhighlight_empty_entries(self):
-        """Check whether any entries are empty.
-           If so, make sure they're unhighlighted.
-        """
-        for i, ent in enumerate(self.entries):
-            if self.buttons[i].get_active() and not ent.get_text():
-                self.highlight_tag(i, False)
-
     def focus_none(self):
         """Un-focus any currently focused text entry,
            leaving nothing focused.
@@ -150,7 +153,6 @@ class TagViewer(metapho.Tagger, gtk.Table):
         """
         # Make sure we're leaving nothing focused:
         self.parentwin.set_focus(None)
-        self.unhighlight_empty_entries()
 
     def sync_entry(self, entry, entryno):
         entry_text = entry.get_text()
@@ -211,7 +213,12 @@ class TagViewer(metapho.Tagger, gtk.Table):
         if self.ignore_events:
             return
 
-        if self.categories:
+        numtags = len(self.categories[self.current_category])
+        if btnno >= numtags:
+            print("button number too big!", btnno)
+            return
+
+        elif self.categories:
             tagno = self.categories[self.current_category][btnno]
         else:
             tagno = None
@@ -384,7 +391,7 @@ class TagViewer(metapho.Tagger, gtk.Table):
         #     traceback.print_stack()
 
         if len(self.buttons) < tagno:
-            print("Argh! Tried to highlight tag", tagno,
+            print("Argh! Tried to highlight too big a tag", tagno,
                   "but can only show", len(self.buttons))
             return
 
@@ -399,31 +406,46 @@ class TagViewer(metapho.Tagger, gtk.Table):
 
         self.ignore_events = True
         if val:
-            self.entries[tagno].modify_base(gtk.STATE_NORMAL, self.highlight_bg)
             self.buttons[tagno].set_active(True)
         else:
-            self.entries[tagno].modify_base(gtk.STATE_NORMAL, self.grey_bg)
             self.buttons[tagno].set_active(False)
             if self.parentwin.get_focus() == self.entries[tagno]:
                 self.focus_none()
         self.ignore_events = False
 
-    def show_matches(self, pat):
-        """Colorize any tags that match the given pattern.
-           If pat == None, un-colorize everything.
+        # Set the color of the corresponding text entry
+        if val:
+            self.highlight_entry(self.entries[tagno], "highlighted")
+        else:
+            self.highlight_entry(self.entries[tagno])
+
+    def highlight_entry(self, entry, classname=None):
+        context = entry.get_style_context()
+        context.remove_class("highlighted")
+        context.remove_class("matched")
+        if classname:
+            context.add_class(classname)
+
+    def highlight_entries(self, pat=None):
+        """Highlight all the entries, with a special color for any tags
+           that match the given pattern.
         """
+        if not self.cur_img:
+            print("highlight_entries called too early")
+            return
         if pat:
             self.title.set_text("search: " + pat)
+            pat = pat.lower()
         else:
             self.title.set_text(os.path.basename(self.cur_img.filename))
-        pat = pat.lower()
+
         for i, ent in enumerate(self.entries):
             if pat and (ent.get_text().lower().find(pat) >= 0):
-                ent.modify_base(gtk.STATE_NORMAL, self.match_bg)
+                self.highlight_entry(ent, "matched")
             elif self.buttons[i].get_active():
-                ent.modify_base(gtk.STATE_NORMAL, self.highlight_bg)
+                self.highlight_entry(ent, "highlighted")
             else:
-                ent.modify_base(gtk.STATE_NORMAL, self.grey_bg)
+                self.highlight_entry(ent)
 
     def focus_first_match(self, pat):
         """Focus the first text field matching the pattern."""
@@ -432,7 +454,7 @@ class TagViewer(metapho.Tagger, gtk.Table):
         for i, ent in enumerate(self.entries):
             if pat and (ent.get_text().lower().find(pat) >= 0):
                 self.buttons[i].set_active(True)
-                ent.modify_base(gtk.STATE_NORMAL, self.match_bg)
+                self.highlight_entry(ent, "matched")
                 return
 
     def img_has_tags_in(self, img, cat):
@@ -591,31 +613,6 @@ class CategoryViewer(gtk.Table):
         self.add_cat_btn.show()
         if new_cat_cb:
             self.add_cat_btn.connect("clicked", new_cat_cb)
-
-        #
-        # XXX Color handling changed completely in GTK3:
-        # it now requires CSS, so none of the old color handling code
-        # works at all. Left in place, commented out, while I decide
-        # whether it actually did anything useful that makes it worth
-        # reimplementing in the much more complicated new CSS world.
-        #
-
-        # # Color to highlight and unhighlight buttons.
-        # # We can't get these until we've created a button.
-        # widgcopy = self.add_cat_btn.get_style().copy()
-        # oldcolors = widgcopy.bg
-        # print("oldcolors:", oldcolors)
-        # # def printcolor(c):
-        # #     print c.red * 256/65535, c.green * 256/65535, c.blue * 256/65535
-
-        # def highlightier(c):
-        #     """Make the color a little greener than before"""
-        #     return gtk.gdk.Color(c.red, (2 * c.green + 65535) / 3, c.blue)
-
-        # self.normalcolor = oldcolors[gtk.STATE_NORMAL]
-        # self.activecolor = oldcolors[gtk.STATE_ACTIVE]
-        # self.normalhighlight = highlightier(self.normalcolor)
-        # self.activehighlight = highlightier(self.activecolor)
 
     def add_category(self, newcat):
         if newcat in self.categories:
