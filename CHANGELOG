@@ -1,3 +1,17 @@
+2021-04-29  Akkana Peck  <akkana@shallowsky.com>
+
+	Colorize searches -- that's something that had been lost
+	in the move to GTK3.
+	Some bug fixes involving tags added mistakenly.
+
+2020-06-26  Akkana Peck  <akkana@shallowsky.com>
+
+	Make the notags script smarter: add a -h for help,
+	improve handling of skipped extensions and directories
+	and make that user-configurable, and show paths as relative.
+
+2020-04-13  Akkana Peck  <akkana@shallowsky.com>
+	Bump version to 1.0 and release on PyPI.
 
 2019-12-22  Akkana Peck  <akkana@shallowsky.com>
 
