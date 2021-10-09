@@ -206,11 +206,20 @@ def parse_args(args):
         elif args[0] == '+i':
             ret["ignorecase"] = False
             args = args[1:]
-        elif args[0] == '-d':
+        elif args[0].startswith('-d'):
+            # -d2019,2020
+            if len(args[0]) > 2:
+                ret["dirlist"] = args[0][2:].split(',')
+                args = args[1:]
+                continue
+            # -d 2019,2020
             if len(args) == 1:
                 Usage()
             ret["dirlist"] = args[1].split(',')
             args = args[2:]
+        elif args[0][0] == '-':
+            print("Unknown flag", args[0])
+            Usage()
         else:
             break
 
