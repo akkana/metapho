@@ -73,8 +73,9 @@ setup(name='metapho',
               'mpiv=metapho.gtkpho.ImageViewer:main'   # MetaPho Image Viewer
           ],
           'console_scripts': [
-              'notags=metapho:main'
-          ]
+              'notags=metapho:main',
+              'fotogr=scripts.fotogr:main'
+          ],
       },
 
       cmdclass={

@@ -185,7 +185,7 @@ class TagViewer(metapho.Tagger, gtk.Table):
         # loses focus. Detect that case:
         winfocused = self.parentwin.get_focus()
         if winfocused == entry:
-            print("The window was unfocused, not the entry within the window")
+            # print("The window was unfocused, not the entry within the window")
             return
 
         # I think ??? this should always be true
