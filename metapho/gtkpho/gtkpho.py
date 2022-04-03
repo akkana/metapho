@@ -186,22 +186,22 @@ class TagViewer(metapho.Tagger, gtk.Table):
         winfocused = self.parentwin.get_focus()
         if winfocused == entry:
             # print("The window was unfocused, not the entry within the window")
-            return
+            return gtk.gdk.EVENT_PROPAGATE
 
         # I think ??? this should always be true
         if entry == self.entries[entryno]:
             self.sync_entry(entry, entryno)
-            return True
+            return gtk.gdk.EVENT_PROPAGATE        # was True
 
         # Just in case that assumption is wrong, search for it.
         for i, e in enumerate(self.entries):
             if entry == e:
                 print("eek, entry is", entry, "and e is", e)
                 self.sync_entry(entry, entryno)
-                return True
+                return gtk.gdk.EVENT_PROPAGATE    # was True
 
         # print("Didn't find the focused entry")
-        return True
+        return gtk.gdk.EVENT_PROPAGATE
 
     def toggled(self, button, btnno):
         """Called when clicking on either a tag button or a category button.
