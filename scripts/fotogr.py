@@ -24,7 +24,7 @@ TAG_FILE_NAMES = ["Tags", "Keywords"]
 
 
 def search_for_keywords(grepdirs, orpats, andpats, notpats,
-                        ignorecase):
+                        ignorecase, taglines):
     """Generator: return all files inside the given grepdirs
        which have tags matching the pattern sets.
 
@@ -56,7 +56,8 @@ def search_for_keywords(grepdirs, orpats, andpats, notpats,
                         for f in search_for_keywords_in(
                                 root,
                                 os.path.join(root, tagfilename),
-                                orpats, andpats, notpats, ignorecase):
+                                orpats, andpats, notpats,
+                                ignorecase, taglines):
                             yield os.path.normpath(f)
 
                             # If Tags matched, don't look in Keywords.
@@ -74,7 +75,8 @@ def search_for_keywords(grepdirs, orpats, andpats, notpats,
                         pass
 
 
-def search_for_keywords_in(d, f, orpats, andpats, notpats, ignorecase):
+def search_for_keywords_in(d, f, orpats, andpats, notpats,
+                           ignorecase, taglines):
     """Generator:
        Search in d (directory)/f (tagfile) for lines matching or,
        and, and not pats. f is a path to a file named Tags or Keywords,
@@ -86,6 +88,7 @@ def search_for_keywords_in(d, f, orpats, andpats, notpats, ignorecase):
     """
     results = []
     filetags = {}
+    taglist = []      # only used if taglines is set
     if d.startswith('./'):
         d = d[2:]
     if DEBUG:
@@ -96,17 +99,21 @@ def search_for_keywords_in(d, f, orpats, andpats, notpats, ignorecase):
             line = line.strip()
             if not line:
                 continue
+            if line.startswith("category "):
+                continue
             if line.startswith("tag "):
                 line = line[4:]
-            elif line.startswith("category "):
-                continue
             # Now we know it's a tag line.
             parts = line.split(':')
             if len(parts) < 2:
                 continue
             tags = parts[0].strip()
+            if ignorecase:
+                tags = tags.lower()
             # There may be several comma-separated tags here, but we
             # actually don't care about that for matching purposes.
+
+            taglist.append(tags)
 
             for imgfile in parts[1].strip().split():
                 filepath = os.path.join(d, imgfile)
@@ -123,9 +130,10 @@ def search_for_keywords_in(d, f, orpats, andpats, notpats, ignorecase):
                 if d not in filetags[filepath]:
                     filetags[filepath] += ", " + d
 
-    if ignorecase:
-        for path in filetags:
-            filetags[path] = filetags[path].lower()
+    if taglines:
+        for tags in taglist:
+            if has_match(tags, orpats, andpats, notpats, ignorecase):
+                print(d, "has matching tags:", tags)
 
     # Now we have a list of tagged files in the directory, and their tags.
     for imgfile in list(filetags.keys()):
@@ -183,11 +191,15 @@ Conditions can include three types of patterns:
   3. Starts with neither: one of these must be present (OR).
 
 Optional arguments:
+  -i              ignore case (this is the default)
   +i              don't ignore case (case is ignored by default)
+  -t              taglines: print out the tag lines that match, not just
+                  the filenames, in case you need to narrow the search
+  -D              show verbose output for debugging
   -d dir,dir,dir  comma-separated list of directories to use (else .)
                   Each dir may be a shell-style pattern, e.g. 19??,20??
 
-Copyright 1009,2014,2020 by Akkana Peck.
+Copyright 2009-2022 by Akkana Peck.
 Share and enjoy under the GPL v2 or later.''' % os.path.basename(sys.argv[0]))
     sys.exit(0)
 
@@ -205,6 +217,13 @@ def parse_args(args):
             args = args[1:]
         elif args[0] == '+i':
             ret["ignorecase"] = False
+            args = args[1:]
+        elif args[0] == '-t':
+            ret["taglines"] = True
+            args = args[1:]
+        elif args[0] == '-D':
+            global DEBUG
+            DEBUG = True
             args = args[1:]
         elif args[0].startswith('-d'):
             # -d2019,2020
@@ -227,6 +246,8 @@ def parse_args(args):
         ret["dirlist"] = ['.']
     if "ignorecase" not in ret:
         ret["ignorecase"] = True
+    if "taglines" not in ret:
+        ret["taglines"] = False
 
     ret["andpats"] = []
     ret["orpats"]  = []
@@ -250,10 +271,14 @@ def main():
 
     r = search_for_keywords(args["dirlist"],
                             args["orpats"], args["andpats"], args["notpats"],
-                            args["ignorecase"])
+                            args["ignorecase"], args["taglines"])
     s = set(r)
     r = list(s)
     r.sort()
+
+    if args["taglines"]:
+        print()
+
     for f in r:
         print(f, end=' ')
     print()
