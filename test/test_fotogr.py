@@ -62,25 +62,25 @@ tag chickens : chicken.jpg
 
         # Test several OR options
         r = list(fotogr.search_for_keywords([TMPDIR], ["testcase"],
-                                            [], [], True))
+                                            [], [], True, False))
         self.assertEqual(r, [os.path.join(TMPDIR, 'a.jpg'),
                              os.path.join(TMPDIR, 'b.jpg'),
                              os.path.join(TMPDIR, 'A.jpg'),
                              os.path.join(TMPDIR, 'B.jpg')])
 
         r = list(fotogr.search_for_keywords([TMPDIR], ["testcase"],
-                                            [], [], False))
+                                            [], [], False, False))
         self.assertEqual(r, [os.path.join(TMPDIR, 'a.jpg'),
                              os.path.join(TMPDIR, 'b.jpg')])
 
         r = list(fotogr.search_for_keywords([TMPDIR], ["TestCase"],
-                                            [], [], False))
+                                            [], [], False, False))
         self.assertEqual(r, [os.path.join(TMPDIR, 'A.jpg'),
                              os.path.join(TMPDIR, 'B.jpg')])
 
         # ignorecase=True
         r = list(fotogr.search_for_keywords([TMPDIR], ["TestCase"],
-                                            [], [], True))
+                                            [], [], True, False))
         self.assertEqual(r, [os.path.join(TMPDIR, 'a.jpg'),
                              os.path.join(TMPDIR, 'b.jpg'),
                              os.path.join(TMPDIR, 'A.jpg'),
@@ -91,7 +91,7 @@ tag chickens : chicken.jpg
                                             ['testcase'],
                                             [],
                                             ['AAA'],
-                                            False))
+                                            False, False))
         self.assertEqual(r, [os.path.join(TMPDIR, 'b.jpg')])
 
         # NOT and ignorecase
@@ -99,21 +99,21 @@ tag chickens : chicken.jpg
                                             ['testcase'],
                                             [],
                                             ['AAA'],
-                                            True))
+                                            True, False))
         self.assertEqual(r, [os.path.join(TMPDIR, 'b.jpg'),
                              os.path.join(TMPDIR, 'B.jpg')])
 
         # Test subdirs
         r = list(fotogr.search_for_keywords([TMPDIR],
                                             ['ponies', 'chickens'],
-                                            [], [], False))
+                                            [], [], False, False))
         self.assertEqual(r, [os.path.join(subdir, 'pony.jpg'),
                              os.path.join(subdir, 'chicken.jpg')])
 
         r = list(fotogr.search_for_keywords([TMPDIR],
                                             ['ponies', 'chickens', "AAA"],
                                             [], [],
-                                            False))
+                                            False, False))
         self.assertEqual(r, [os.path.join(TMPDIR, 'a.jpg'),
                              os.path.join(TMPDIR, 'A.jpg'),
                              os.path.join(subdir, 'pony.jpg'),
@@ -122,7 +122,7 @@ tag chickens : chicken.jpg
         r = list(fotogr.search_for_keywords([TMPDIR],
                                             [],
                                             ['ponies', 'chickens'],
-                                            [], False))
+                                            [], False, False))
         self.assertEqual(r, [])
 
 

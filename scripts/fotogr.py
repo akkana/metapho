@@ -76,7 +76,7 @@ def search_for_keywords(grepdirs, orpats, andpats, notpats,
 
 
 def search_for_keywords_in(d, f, orpats, andpats, notpats,
-                           ignorecase, taglines):
+                           ignorecase: bool, taglines: bool):
     """Generator:
        Search in d (directory)/f (tagfile) for lines matching or,
        and, and not pats. f is a path to a file named Tags or Keywords,
@@ -85,6 +85,7 @@ def search_for_keywords_in(d, f, orpats, andpats, notpats,
        Also treat the directory name as a tag:
        all files match if the patterns match the directory name.
        Yield one matching file at a time.
+       taglines: If true, print out tag lines that matched.
     """
     results = []
     filetags = {}
