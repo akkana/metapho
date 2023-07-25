@@ -15,6 +15,7 @@ Programs with better UI can inherit from these classes.
 # the classes into separate files. Sigh!
 
 import sys, os
+import re
 import collections    # for OrderedDict
 import shlex
 
@@ -177,7 +178,7 @@ class Tagger(object):
     try:
         IGNORE_DIRNAMES = os.getenv("NOTAGS_IGNORE_DIRNAMES").split()
     except:
-        IGNORE_DIRNAMES = [ "html", "web", "bad" ]
+        IGNORE_DIRNAMES = [ "html", "web", "bad", ".*_assets$" ]
 
     def __init__(self):
         """tagger: an object to manage metapho image tags"""
@@ -578,8 +579,9 @@ tag Bruny Island: img 008.jpg
            the parent, or small copies for a web page.
            Also, you can skip tagging by creating a file named NoTags.
         """
-        if d in Tagger.IGNORE_DIRNAMES:
-            return True
+        for ipat in Tagger.IGNORE_DIRNAMES:
+            if re.match(ipat, d):
+                return True
         if path and os.path.exists(os.path.join(path, d, "NoTags")):
             return True
         return False
@@ -638,7 +640,7 @@ but lack a file named either Tags or Keywords.""")
     print('   ', ' '.join(Tagger.SKIP_EXTENSIONS))
     print("    (you can configure that with an environment variable,")
     print("    e.g. export NOTAGS_SKIP_EXTENSIONS='.cr2 .mp3')")
-    print(progname, "will ignore directories with these names:")
+    print(progname, "will ignore directories with these names (regex):")
     print('   ', ' '.join(Tagger.IGNORE_DIRNAMES))
     print("    (configure that with the environment variable "
           "NOTAGS_IGNORE_DIRNAMES)")
