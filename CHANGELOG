@@ -1,3 +1,22 @@
+2022-04-04  Akkana Peck  <akkana@shallowsky.com>
+
+	fotogr: add a -t, taglines, option
+	to print all matching taglines found in Tags files,
+	which can guide the next search.
+
+2021-10-09  Akkana Peck  <akkana@shallowsky.com>
+
+	fotogr: allow -d2020 as well as -d 2020,
+	and give an error for unrecognized tags.
+
+2021-06-12  Akkana Peck  <akkana@shallowsky.com>
+
+	1.1b2: Add fotogr tests.
+
+2021-06-12  Akkana Peck  <akkana@shallowsky.com>
+
+	1.1b1: Add fotogr (moved from scripts repository).
+
 2021-04-29  Akkana Peck  <akkana@shallowsky.com>
 
 	Colorize searches -- that's something that had been lost
