@@ -22,6 +22,25 @@ import shlex
 from itertools import takewhile
 
 
+# A list of all the filenames the program knows about.
+g_image_list = []
+
+# The image list has both displayed and nondisplayed images,
+# because it's possible to run metapho on a subset of images in a directory,
+# to change or add tags on only those images, but there may be an existing
+# Tags file in the directory covering the other images, and we wouldn't
+# want to forget their tags.
+# XXX would this be any faster as a generator comprehension?
+def num_displayed_images():
+    return len([ i for i in g_image_list if i.displayed ])
+
+def num_hidden_images():
+    return len([ i for i in g_image_list if not i.displayed ])
+
+def num_total_images():
+    return len(g_image_list)
+
+
 # commonprefix is buggy, doesn't restrict itself to path components, see
 # http://rosettacode.org/wiki/Find_common_directory_path#Python
 # A replacement:
@@ -37,13 +56,6 @@ def commonprefix(paths):
 class Image:
     """An image, with additional info such as rotation and tags.
     """
-
-    # A list of all the filenames the program knows about.
-    # Note that this is a class variable! So if you finish using
-    # one set of files and want to continue using the class in the
-    # same program (or in a suite of automated tests), you may
-    # need to clear this out.
-    g_image_list = []
 
     def __init__(self, filename, displayed=True):
         """Initialize an image filename.
@@ -100,12 +112,12 @@ class Image:
         """
         print("Deleting", self.filename)
         os.unlink(self.filename)
-        Image.g_image_list.remove(self)
+        g_image_list.remove(self)
 
     @classmethod
     def image_index(cls, filename):
         """Find a name in the global image list. Return index, or None."""
-        for i, img in enumerate(cls.g_image_list):
+        for i, img in enumerate(g_image_list):
             if img.filename == filename:
                 return i
         return None
@@ -115,7 +127,7 @@ class Image:
         """Returns a list of images in the imagelist that don't exist on disk.
         """
         not_on_disk = set()
-        for im in cls.g_image_list:
+        for im in g_image_list:
             if not os.path.exists(im.filename):
                 not_on_disk.add(im.filename)
         not_on_disk = list(not_on_disk)
@@ -144,7 +156,7 @@ class Image:
                 if f in nefbases:
                     try:
                         i = cls.image_index(nefdict[f])
-                        cls.g_image_list[i].filename = os.path.join(root, f)
+                        g_image_list[i].filename = os.path.join(root, f)
                     except ValueError:
                         print("Eek!", nefdict[f], \
                             "has vanished from the global image list")
@@ -158,7 +170,7 @@ class Image:
             # print("Removing missing files from Tags file:", \
             #     ' '.join([nefdict[f] for f in nefbases]))
             for f in nefbases:
-                Image.g_image_list.remove(nefdict[f])
+                g_image_list.remove(nefdict[f])
 
 class Tagger(object):
     """Manages tags for images.
@@ -234,7 +246,7 @@ class Tagger(object):
 
                 imgstr = ''
                 imglist = []
-                for img in Image.g_image_list:
+                for img in g_image_list:
                     if tagno in img.tags:
                         imglist.append(img)
 
@@ -293,7 +305,7 @@ class Tagger(object):
         """
         dirs = set()
 
-        for img in Image.g_image_list:
+        for img in g_image_list:
             dirname = os.path.abspath(os.path.dirname(img.filename))
             dirs.add(dirname)
 
@@ -448,7 +460,7 @@ tag Bruny Island: img 008.jpg
         # there could be collisions.
         for fil in filenames:
             tagged = False
-            for img in Image.g_image_list:
+            for img in g_image_list:
                 if img.filename.endswith(fil) and tagindex not in img.tags:
                     img.tags.append(tagindex)
                     tagged = True
@@ -458,7 +470,7 @@ tag Bruny Island: img 008.jpg
             if not tagged:
                 newim = Image(fil, displayed=False)
                 newim.tags.append(tagindex)
-                Image.g_image_list.append(newim)
+                g_image_list.append(newim)
 
     def add_tag(self, tag, img):
         """Add a tag to the given image.
@@ -559,7 +571,7 @@ tag Bruny Island: img 008.jpg
                 # Now we have a file that should be tagged. Is it?
                 nfiles += 1
                 filepath = os.path.abspath(os.path.join(root, f))
-                if filepath not in Image.g_image_list:
+                if filepath not in g_image_list:
                     local_untagged.append(filepath)
                 elif not some_local_tags:
                     some_local_tags = True

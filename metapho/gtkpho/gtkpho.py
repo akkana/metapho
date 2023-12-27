@@ -22,6 +22,7 @@ import traceback
 
 class TagViewer(metapho.Tagger, gtk.Table):
     """A PyGTK widget for showing tags.
+       This is the right side of the metapho window.
     """
     def __init__(self, parentwin):
         metapho.Tagger.__init__(self)

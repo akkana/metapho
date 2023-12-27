@@ -30,7 +30,7 @@ class MetaPhoWindow(object):
 
     def __init__(self, file_list):
         for filename in file_list:
-            metapho.Image.g_image_list.append(metapho.Image(filename))
+            metapho.g_image_list.append(metapho.Image(filename))
 
         self.imgno = -1
 
@@ -97,7 +97,7 @@ class MetaPhoWindow(object):
         self.next_image()
 
     def lastImage(self):
-        self.imgno = len(metapho.Image.g_image_list)
+        self.imgno = len(metapho.g_image_list)
         self.prev_image()
 
     def next_image(self):
@@ -111,27 +111,31 @@ class MetaPhoWindow(object):
         self.tagger.sync()
         oldtags = None
         try:
-            if self.imgno >= 0 and metapho.Image.g_image_list[self.imgno].tags:
-                oldtags = metapho.Image.g_image_list[self.imgno].tags
+            if self.imgno >= 0 and metapho.g_image_list[self.imgno].tags:
+                oldtags = metapho.g_image_list[self.imgno].tags
         except:
             print("Couldn't load image #", self.imgno)
             pass
 
-        while self.imgno < len(metapho.Image.g_image_list)-1 and not loaded:
+        while self.imgno < len(metapho.g_image_list)-1 and not loaded:
             self.imgno += 1
-            img = metapho.Image.g_image_list[self.imgno]
+            img = metapho.g_image_list[self.imgno]
             if img.displayed:
                 loaded = self.viewer.load_image(img)
                 if loaded:
                     # self.viewer.scale_and_rotate()
                     self.viewer.show_image()
+                    self.win.set_title("%s (%d of %d)" % (
+                        os.path.basename(img.filename),
+                        self.imgno + 1,
+                        metapho.num_displayed_images()))
                 else:
                     img.displayed = False
                     # Should arguably delete it from the list
                     # so we don't continue to save tags for a
                     # file we can't load. But what if it's just
                     # temporarily unreadable and the user can fix it?
-                    #del(metapho.Image.g_image_list[self.imgno])
+                    #del(metapho.g_image_list[self.imgno])
                     # The loop is about to increment imgno, but we actually want
                     # it to stay the same since deleting the nonexistent image
                     # slid the next image into the current position;
@@ -141,10 +145,10 @@ class MetaPhoWindow(object):
         if loaded:
             # If we have an image, and it has no tags set yet,
             # clone the tags from the previous image:
-            if oldtags and not metapho.Image.g_image_list[self.imgno].tags:
-                metapho.Image.g_image_list[self.imgno].tags = oldtags[:]
+            if oldtags and not metapho.g_image_list[self.imgno].tags:
+                metapho.g_image_list[self.imgno].tags = oldtags[:]
 
-            self.tagger.set_image(metapho.Image.g_image_list[self.imgno])
+            self.tagger.set_image(metapho.g_image_list[self.imgno])
 
         else :           # couldn't load anything in the list
             dialog = gtk.MessageDialog(self.win,
@@ -162,7 +166,7 @@ class MetaPhoWindow(object):
         loaded = False
         while self.imgno >= 1 and not loaded:
             self.imgno -= 1
-            img = metapho.Image.g_image_list[self.imgno]
+            img = metapho.g_image_list[self.imgno]
             if img.displayed:
                 loaded = self.viewer.load_image(img)
                 if loaded:
@@ -171,10 +175,10 @@ class MetaPhoWindow(object):
                 else:
                     img.displayed = False
                     # See comment in next_image
-                    #del(metapho.Image.g_image_list[self.imgno])
+                    #del(metapho.g_image_list[self.imgno])
 
         if loaded:
-            self.tagger.set_image(metapho.Image.g_image_list[self.imgno])
+            self.tagger.set_image(metapho.g_image_list[self.imgno])
         else :          # couldn't load anything in the list
             print("Can't go before first image")
 
@@ -190,7 +194,7 @@ class MetaPhoWindow(object):
                                    #gtk.BUTTONS_YES_NO,
                                    gtk.BUTTONS_CANCEL,
                                    "Delete %s ?" % \
-                                     metapho.Image.g_image_list[self.imgno])
+                                     metapho.g_image_list[self.imgno])
         delete_btn = dialog.add_button("Delete", gtk.RESPONSE_YES)
 
         # Handle key events on the dialog,
@@ -255,7 +259,7 @@ class MetaPhoWindow(object):
         if event.keyval == gtk.keysyms.d and \
                 event.state & gtk.gdk.CONTROL_MASK:
             if self.delete_confirm():
-                metapho.Image.g_image_list[self.imgno].delete()
+                metapho.g_image_list[self.imgno].delete()
                 self.imgno -= 1
                 self.next_image()
             return True
@@ -263,7 +267,7 @@ class MetaPhoWindow(object):
         # Ctrl-U: clear tags, then leave focus in the first empty tag field.
         if event.keyval == gtk.keysyms.u and \
                 event.state & gtk.gdk.CONTROL_MASK:
-            self.tagger.clear_tags(metapho.Image.g_image_list[self.imgno])
+            self.tagger.clear_tags(metapho.g_image_list[self.imgno])
             # Turns out auto-focusing the next entry is annoying,
             # so don't do it:
             # self.tagger.focus_next_entry()
@@ -280,10 +284,10 @@ class MetaPhoWindow(object):
                 event.state & gtk.gdk.CONTROL_MASK:
             if not self.zoomview:
                 self.zoomview = gtkpho.ImageViewerWindow(
-                    metapho.Image.g_image_list[self.imgno],
+                    metapho.g_image_list[self.imgno],
                     exit_on_q=False)
             else:
-                self.zoomview.add_image(metapho.Image.g_image_list[self.imgno])
+                self.zoomview.add_image(metapho.g_image_list[self.imgno])
             self.zoomview.run()
             return True
 
@@ -312,7 +316,7 @@ class MetaPhoWindow(object):
         # Alpha: it's a tag
         if event.string.isalpha():
             self.tagger.toggle_tag_by_letter(event.string,
-                                    metapho.Image.g_image_list[self.imgno])
+                                    metapho.g_image_list[self.imgno])
             return True
 
         # Digits: go to a specific tag category
@@ -353,7 +357,7 @@ class MetaPhoWindow(object):
             self.tagger.focus_first_match(self.search_string)
             self.isearch = False
             self.tagger.title.set_text(os.path.basename(\
-                    metapho.Image.g_image_list[self.imgno].filename))
+                    metapho.g_image_list[self.imgno].filename))
             return True
 
         # ESC shifts out of isearch mode.

@@ -1,3 +1,10 @@
+2023-12-27  Akkana Peck  <akkana@shallowsky.com>
+
+	1.1b3: Show filename and number/total in titlebar.
+	Also move g_image_list out of the Image class (now it's
+	directly in the metapho module) and provide some functions
+	to show total plus total shown and hidden.
+
 2022-04-04  Akkana Peck  <akkana@shallowsky.com>
 
 	fotogr: add a -t, taglines, option

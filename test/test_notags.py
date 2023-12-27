@@ -11,7 +11,7 @@ import os
 import sys
 sys.path.insert(0, '..')
 
-from metapho import Image, Tagger
+from metapho import Image, Tagger, g_image_list
 
 
 def sortlines(filecontents):
@@ -30,7 +30,7 @@ class NotagsTests(unittest.TestCase):
         # XXX Image has a class variable, g_image_list,
         # holding all the images it knows about.
         # Re-using that between tests messes up the tests.
-        Image.g_image_list = []
+        g_image_list.clear()
 
         self.testdir = Path('test/testdir')
         self.testdir.mkdir()
@@ -114,14 +114,14 @@ tag tagged file : dir1/img1.jpg dir1/img2.jpg dir1/img5.jpg dir1/img6.jpg""")
 
         abstestdir = os.path.abspath(self.testdir)
 
-        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir1/img1.jpg")))
-        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir1/img2.jpg")))
-        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir1/img3.jpg")))
-        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir1/img4.jpg")))
+        g_image_list.append(Image(os.path.join(abstestdir, "dir1/img1.jpg")))
+        g_image_list.append(Image(os.path.join(abstestdir, "dir1/img2.jpg")))
+        g_image_list.append(Image(os.path.join(abstestdir, "dir1/img3.jpg")))
+        g_image_list.append(Image(os.path.join(abstestdir, "dir1/img4.jpg")))
 
-        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir2/imga.jpg")))
-        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir2/imgb.jpg")))
-        Image.g_image_list.append(Image(os.path.join(abstestdir, "dir2/imgc.jpg")))
+        g_image_list.append(Image(os.path.join(abstestdir, "dir2/imga.jpg")))
+        g_image_list.append(Image(os.path.join(abstestdir, "dir2/imgb.jpg")))
+        g_image_list.append(Image(os.path.join(abstestdir, "dir2/imgc.jpg")))
 
         tagfile = self.testdir / "dir2/Tags"
         tagfile.write_text("tag phred: imgb.jpg")
