@@ -346,6 +346,13 @@ class MetaPhoWindow(object):
         # print("Read key:", event.string, "keyval", event.keyval)
         return False
 
+    def update_image_title(self):
+        self.tagger.title.set_text("%s (%d of %d)" % (
+                    os.path.basename(
+                        metapho.g_image_list[self.imgno].filename),
+                    self.imgno + 1,
+                    metapho.num_displayed_images()))
+
     def isearch_key_press(self, widget, event):
         """Handle key presses when we're in isearch mode,
            typing in a search pattern.
@@ -356,8 +363,7 @@ class MetaPhoWindow(object):
         if event.keyval == gtk.keysyms.Return:
             self.tagger.focus_first_match(self.search_string)
             self.isearch = False
-            self.tagger.title.set_text(os.path.basename(\
-                    metapho.g_image_list[self.imgno].filename))
+            self.update_image_title()
             return True
 
         # ESC shifts out of isearch mode.

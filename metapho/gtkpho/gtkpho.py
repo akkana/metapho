@@ -427,6 +427,16 @@ class TagViewer(metapho.Tagger, gtk.Table):
         if classname:
             context.add_class(classname)
 
+    def update_titlebar(self):
+        imgname = os.path.basename(self.cur_img.filename)
+        try:
+            index = metapho.g_image_list.index(self.cur_img)
+            self.title.set_text("%s (%d of %d)" % (
+                imgname, index+1,
+                metapho.num_displayed_images()))
+        except Exception as e:
+            self.title.set_text(imgname)
+
     def highlight_entries(self, pat=None):
         """Highlight all the entries, with a special color for any tags
            that match the given pattern.
@@ -438,7 +448,7 @@ class TagViewer(metapho.Tagger, gtk.Table):
             self.title.set_text("search: " + pat)
             pat = pat.lower()
         else:
-            self.title.set_text(os.path.basename(self.cur_img.filename))
+            self.update_titlebar()
 
         for i, ent in enumerate(self.entries):
             if pat and (ent.get_text().lower().find(pat) >= 0):
@@ -450,7 +460,7 @@ class TagViewer(metapho.Tagger, gtk.Table):
 
     def focus_first_match(self, pat):
         """Focus the first text field matching the pattern."""
-        self.title.set_text(os.path.basename(self.cur_img.filename))
+        self.update_titlebar()
         pat = pat.lower()
         for i, ent in enumerate(self.entries):
             if pat and (ent.get_text().lower().find(pat) >= 0):
@@ -466,7 +476,7 @@ class TagViewer(metapho.Tagger, gtk.Table):
     def set_image(self, img):
         self.cur_img = img
 
-        self.title.set_text(os.path.basename(img.filename))
+        self.update_titlebar()
 
         # Decide what category to show.
         # If the image has tags set in the current category,
