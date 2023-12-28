@@ -10,7 +10,7 @@ for viewing images and tagging them.
 # Copyright 2013-2017 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
 import metapho
-from metapho import __version__
+from metapho import __version__    # See comment in main()
 import metapho.gtkpho as gtkpho
 
 import gi
@@ -147,6 +147,7 @@ class MetaPhoWindow(object):
             # clone the tags from the previous image:
             if oldtags and not metapho.g_image_list[self.imgno].tags:
                 metapho.g_image_list[self.imgno].tags = oldtags[:]
+                self.tagger.changed = True
 
             self.tagger.set_image(metapho.g_image_list[self.imgno])
 
