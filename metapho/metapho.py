@@ -31,11 +31,19 @@ g_image_list = []
 # Tags file in the directory covering the other images, and we wouldn't
 # want to forget their tags.
 # XXX would this be any faster as a generator comprehension?
+def displayed_images():
+    return [ im for im in g_image_list if im.displayed and not im.invalid ]
+
 def num_displayed_images():
-    return len([ i for i in g_image_list if i.displayed ])
+    return len(displayed_images())
+
+def find_in_displayed_images():
+    """Return index, total"""
+    imgs = displayed_images()
+    return index, len(imgs)
 
 def num_hidden_images():
-    return len([ i for i in g_image_list if not i.displayed ])
+    return len(( i for i in g_image_list if not i.displayed ))
 
 def num_total_images():
     return len(g_image_list)
@@ -69,6 +77,18 @@ class Image:
         self.tags = []
 
         self.displayed = displayed
+
+        # Some filenames, like Tags, are known not to be images.
+        # In other cases, an image that can't be opened also
+        # shouldn't be considered as an image since it will never
+        # be shown to the user. Start out by assuming everything's valid
+        # except Tags*.
+        if ((filename.startswith("Tags") or filename.startswith("Keywords"))
+            and ("." not in filename or filename.endswith(".bak"))):
+            self.invalid = True
+        else:
+            # For anything else, start out assuming it's okay
+            self.invalid = False
 
         # Rotation of the image relative to what it is on disk.
         # None means we don't know yet, 0 means stay at 0.
@@ -117,6 +137,8 @@ class Image:
     @classmethod
     def image_index(cls, filename):
         """Find a name in the global image list. Return index, or None."""
+        if not self.invalid:
+            return None
         for i, img in enumerate(g_image_list):
             if img.filename == filename:
                 return i
@@ -171,6 +193,7 @@ class Image:
             #     ' '.join([nefdict[f] for f in nefbases]))
             for f in nefbases:
                 g_image_list.remove(nefdict[f])
+
 
 class Tagger(object):
     """Manages tags for images.

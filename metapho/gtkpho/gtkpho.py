@@ -429,11 +429,10 @@ class TagViewer(metapho.Tagger, gtk.Table):
 
     def update_titlebar(self):
         imgname = os.path.basename(self.cur_img.filename)
+        disp = metapho.displayed_images()
         try:
-            index = metapho.g_image_list.index(self.cur_img)
-            self.title.set_text("%s (%d of %d)" % (
-                imgname, index+1,
-                metapho.num_displayed_images()))
+            idx, tot = metapho.find_in_displayed_images(self.cur_img)
+            self.title.set_text("%s (%d of %d)" % (imgname, idx+1, tot))
         except Exception as e:
             self.title.set_text(imgname)
 
