@@ -6,4 +6,5 @@ metapho/gtkpho/__init__.py
 metapho/gtkpho/ImageViewer.py
 metapho/gtkpho/gtkpho.py
 metapho/gtkpho/main.py
-
+metapho/scripts/fotogr.py
+metapho/scripts/photoshare.py

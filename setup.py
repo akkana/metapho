@@ -41,7 +41,7 @@ class CleanCommand(Command):
         os.system('rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./docs/sphinxdoc/_build metapho/__pycache__')
 
 setup(name='metapho',
-      packages=['metapho', 'metapho.gtkpho'],
+      packages=['metapho', 'metapho.gtkpho', 'metapho.scripts'],
       version=get_version(),
       description='Image viewer and tagger',
       long_description=get_readme_contents(),
@@ -74,7 +74,8 @@ setup(name='metapho',
           ],
           'console_scripts': [
               'notags=metapho:main',
-              'fotogr=scripts.fotogr:main'
+              'fotogr=metapho.scripts.fotogr:main',
+              'photoshare=metapho.scripts.photoshare:main',
           ],
       },
 

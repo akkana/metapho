@@ -20,10 +20,18 @@ though you can use the mouse if you find that easier.
 
 It depends on PyGTK, but not on gnome or any other desktop services.
 
-It includes a program called "notags" that you can run to examine
-the current directory recursively and tell you about files and
+It also install three scripts:
+
+notags:  
+Examine the current directory recursively and tell you about files and
 directories that still need to be tagged. Run it at the root of
 an image directory that might have untagged subdirectories.
+
+fotogr:  
+Search for files with particular tags.
+
+photoshare:  
+Manage files tagged with "share".
 
 [Metapho is available on PyPi](https://pypi.python.org/pypi/metapho/),
 so you can install it as `pip install metapho`
