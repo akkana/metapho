@@ -582,10 +582,13 @@ class TagViewer(metapho.Tagger, gtk.Table):
             # is empty, e.g. if the user accidentally entered something
             # and then tried to erase it.
             newindex = len(self.categories[self.current_category]) - 1
-            curtext = self.entries[newindex].get_text().strip()
-            if curtext:
-                # There's something there, so jump to the next entry.
-                newindex += 1
+            try:
+                curtext = self.entries[newindex].get_text().strip()
+                if curtext:
+                    # There's something there, so jump to the next entry.
+                    newindex += 1
+            except IndexError:
+                pass
 
         self.parentwin.set_focus(self.entries[newindex])
         self.highlight_tag(newindex, True)
