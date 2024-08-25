@@ -7,7 +7,7 @@
 
 # Search directories containing photos are expected to have a Tags
 # file (such as those produced by metapho) in which files tagged
-# for sharing have the tag "share".
+# for sharing have the tag "share" or "wallpaper".
 
 # Copyright 2024 by Akkana Peck: share and enjoy under the GPLv2 or later.
 
@@ -67,7 +67,8 @@ def find_unshared_images(dirlist, images_to_check):
     sharedfiles = read_in_sharefile()
 
     if not images_to_check:
-        images_to_check = fotogr.search_for_keywords(dirlist, ['share'],
+        images_to_check = fotogr.search_for_keywords(dirlist, ['share',
+                                                               'wallpaper'],
                                                      [], [],
                                                      True, False)
 
@@ -87,8 +88,10 @@ def main():
     parser = argparse.ArgumentParser(description="",
                                      formatter_class=argparse.RawTextHelpFormatter,
                                      usage="""%(prog)s: Manage shareable photos.
-    Search in . (or in other directories given by -d) for photos tagged
-    with 'share' that haven't already been shared.
+
+%(prog)s
+    Search in . (or in other directories specified with -d) for photos
+    tagged with 'share' that haven't already been shared.
 
 %(prog)s img2.jpg img.jpg ...
     Check whether the specified images have been shared, and when
@@ -98,6 +101,8 @@ def main():
 """)
     parser.add_argument('-d', action="store", dest="dirlist",
                         help='Directories to search, comma-separated')
+    parser.add_argument('-q', dest="quiet", action="store_true", default=False,
+                        help='Quiet: print only the list of images, nothing else')
     args, rest = parser.parse_known_args(sys.argv)
 
     if not args.dirlist:
@@ -106,9 +111,11 @@ def main():
     if len(rest) == 1 or rest[1] != 'add':
         # The most common case, do a search
         shared, unshared = find_unshared_images(args.dirlist, rest[1:])
-        for datestr, img in shared:
-            print(img, "was shared on", datestr)
-        print("unshared images:", ' '.join(unshared))
+        if not args.quiet:
+            for datestr, img in shared:
+                print(img, "was shared on", datestr)
+            print("unshared images:", end='')
+        print(' '.join(unshared))
         sys.exit(0)
 
     # Add files to the sharefile
