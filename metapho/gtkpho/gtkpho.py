@@ -247,7 +247,7 @@ class TagViewer(metapho.Tagger, gtk.Table):
 
     def check_entry_tag(focused_widget):
         """At certain times, such as just before exit, the main window
-           may call us to alert us that a tag may have changed.
+           may call the TagViewer to alert that a tag may have changed.
            We need to find out which entry contains it and check the tag.
         """
         for i, ent in enumerate(self.entries):
