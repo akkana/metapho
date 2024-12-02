@@ -133,7 +133,7 @@ class PhoImage:
             if VERBOSE:
                 print("EXIF rotation is", self.exif_rotation)
             return self.exif_rotation
-        except RuntimeError as e:
+        except Exception as e:
             print("Problem reading EXIF rotation", file=sys.stderr)
             return self.exif_rotation
 
@@ -413,18 +413,17 @@ class PhoWidget:
 
 
 class PhoWindow:
-    def __init__(self, img_list=[], width=0, height=0,
-                 allow_resize=True, exit_on_q=True):
+    def __init__(self, img_list=[], fixed_size=None):
 
         self.root = tk.Tk()
 
         self.root.title("Pho Image Viewer")
 
         # To allow resizing, set self.fixed_size to None
-        if allow_resize:
-            self.fixed_size = None
+        if fixed_size:
+            self.fixed_size = fixed_size
         else:
-            self.fixed_size = (1200, 900)
+            self.fixed_size = None
         self.viewer = PhoWidget(self.root, img_list,
                                         size=self.fixed_size)
 
@@ -446,11 +445,13 @@ class PhoWindow:
         self.root.bind('<Key-Escape>', self.fullscreen_handler)
 
         if self.fixed_size:
+            # Allow the user to resize the window if it has a
+            # fixed size. Otherwise, it will change with image size.
             self.root.bind("<Configure>", self.resize_handler)
 
-        if exit_on_q:
-            self.root.bind('<Key-q>', self.quit_handler)
-            self.root.bind('<Control-Key-q>', self.quit_handler)
+        # Exit on either q or Ctrl-q
+        self.root.bind('<Key-q>', self.quit_handler)
+        self.root.bind('<Control-Key-q>', self.quit_handler)
 
     def run(self):
         self.viewer.next_image()
@@ -520,6 +521,8 @@ class PhoWindow:
 
 if __name__ == '__main__':
     import argparse
+    import re
+
     parser = argparse.ArgumentParser(
         description="Pho, an image viewer and tagger")
     parser.add_argument('-d', "--debug", dest="debug", default=False,
@@ -530,6 +533,9 @@ if __name__ == '__main__':
     parser.add_argument('-v', "--verbosehelp", dest="verbosehelp",
                         default=False,
                         action="store_true", help="Print verbose help")
+    parser.add_argument("--geometry", dest="geometry", action="store",
+                        help="A geometry size string, WIDTHxHEIGHT "
+                             "(sorry, no x and y position)")
     parser.add_argument('images', nargs='+', help="Images to show")
     args = parser.parse_args(sys.argv[1:])
 
@@ -540,6 +546,17 @@ if __name__ == '__main__':
         random.seed()
         args.images = random.shuffle(args.images)
 
-    pwin = PhoWindow(args.images)
+    # The geometry argument is mostly for testing, to make sure
+    # fixed size spaces like in metapho still work.
+    win_width, win_height = 0, 0
+    if args.geometry:
+        try:
+            win_size = list(map(int, re.match(r'([\d]+)x([\d]+)',
+                                              args.geometry).groups()))
+        except RuntimeError as e:
+            win_size = None
+            print("Couldn't parse geometry string '%s'" % args.geometry)
+
+    pwin = PhoWindow(args.images, fixed_size=win_size)
     pwin.run()
 
