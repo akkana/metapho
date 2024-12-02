@@ -7,17 +7,20 @@
    Copyright 2024 by Akkana -- Share and enjoy under the GPLv2 or later.
 """
 
-
 import sys, os
 
 import tkinter as tk
 from tkinter import filedialog
-from PIL import Image, ImageTk, UnidentifiedImageError
+from PIL import Image, ImageTk, ExifTags, UnidentifiedImageError
 
-VERBOSE = True
+VERBOSE = False
 
 FRAC_OF_SCREEN = .85
 
+# The numeric key where EXIF orientation is stored.
+# None means it hasn't been initialized yet;
+# -1 means there was an error initializing, so EXIF orientation won't work.
+EXIF_ORIENTATION_KEY = None
 
 
 def get_screen_size(root):
@@ -30,6 +33,7 @@ class PhoImage:
     def __init__(self, pathname):
         self.pathname = pathname
         self.rotation = 0
+        self.exif_rotation = 0
 
         # The original image as loaded from the file path.
         # This is never rotated.
@@ -40,6 +44,9 @@ class PhoImage:
 
         # If the image couldn't be loaded, an error string is here:
         errstr = None
+
+        # flags, to be set by the user
+        flags = []
 
     def __repr__(self):
         extra = ''
@@ -56,12 +63,6 @@ class PhoImage:
         return self.orig_img.size
 
     size = property(get_size)
-
-    def get_exif_rotation(self):
-        exif = self.orig_img.getexif()
-        # XXX Implement me
-        return 0
-    exif_rotation = property(get_exif_rotation)
     # End Properties
 
     def load(self):
@@ -73,6 +74,7 @@ class PhoImage:
             return
         try:
             self.orig_img = Image.open(self.pathname)
+            self.rotation = self.get_exif_rotation()
             self.display_img = None
 
         except FileNotFoundError as e:
@@ -105,6 +107,35 @@ class PhoImage:
             # Rotating without changing aspect ratio:
             # rotate the display_img since size won't change.
             self.display_img = self.display_img.rotate(180)
+
+    def get_exif_rotation(self):
+        global EXIF_ORIENTATION_KEY
+        # EXIF_ORIENTATION_KEY is currently 274, but don't count on that.
+        if EXIF_ORIENTATION_KEY is None:
+            EXIF_ORIENTATION_KEY = -1
+            for k in ExifTags.TAGS.keys():
+                if ExifTags.TAGS[k] == 'Orientation':
+                    EXIF_ORIENTATION_KEY = k
+                    break
+        if EXIF_ORIENTATION_KEY < 0:
+            print("Internal error: can't read any EXIF")
+            self.exif_rotation = 0
+            return 0
+
+        exif = self.orig_img.getexif()
+        try:
+            if exif[EXIF_ORIENTATION_KEY] == 3:
+                self.exif_rotation = 180
+            elif exif[EXIF_ORIENTATION_KEY] == 6:
+                self.exif_rotation = -90
+            elif exif[EXIF_ORIENTATION_KEY] == 8:
+                self.exif_rotation = 90
+            if VERBOSE:
+                print("EXIF rotation is", self.exif_rotation)
+            return self.exif_rotation
+        except RuntimeError as e:
+            print("Problem reading EXIF rotation", file=sys.stderr)
+            return self.exif_rotation
 
     def resize_to_fit(self, bbox):
         """Ensure that display_img, as rotated and scaled, fits in the
@@ -488,6 +519,27 @@ class PhoWindow:
 
 
 if __name__ == '__main__':
-    iv = PhoWindow(sys.argv[1:])
-    iv.run()
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="Pho, an image viewer and tagger")
+    parser.add_argument('-d', "--debug", dest="debug", default=False,
+                        action="store_true", help="Print debugging messages")
+    parser.add_argument('-R', "--randomize", dest="randomize", default=False,
+                        action="store_true",
+                        help="Present images in random order")
+    parser.add_argument('-v', "--verbosehelp", dest="verbosehelp",
+                        default=False,
+                        action="store_true", help="Print verbose help")
+    parser.add_argument('images', nargs='+', help="Images to show")
+    args = parser.parse_args(sys.argv[1:])
+
+    if args.debug:
+        VERBOSE = True
+
+    if args.randomize:
+        random.seed()
+        args.images = random.shuffle(args.images)
+
+    pwin = PhoWindow(args.images)
+    pwin.run()
 
