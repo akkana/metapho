@@ -8,7 +8,10 @@ GTK UI classes for metapho: an image tagger and viewer.
 
 import metapho
 
+from PhoWidget import PhoWidget
+
 import tkinter as tk
+from tkinter import messagebox
 
 import os, sys
 
@@ -22,9 +25,18 @@ class TkTagViewer(metapho.Tagger):
 
     PADDING = 1
 
-    def __init__(self):
+    def __init__(self, img_list):
+        # Now one to hold the button box
+        buttonbox = tk.Frame(root)
+        # buttonbox.pack(side=tk.RIGHT)
+        buttonbox.grid(row=0, column=1)
+
+        # Configure columns to have equal width
+        root.columnconfigure(0, weight=1)
+        root.columnconfigure(1, weight=1)
+
         # Image name at the top.
-        self.img_name_label = tk.Label(root)
+        self.img_name_label = tk.Label(buttonbox)
         self.img_name_label.grid(row=0, column=0, columnspan=4)
 
         # XXX Eventually, add category buttons here
@@ -40,24 +52,64 @@ class TkTagViewer(metapho.Tagger):
             # end up all using the last value of the loop, i.e. 'z'.
             # callback = lambda: self.letter_button_press(letter)
             callback = partial(self.letter_button_press, letter)
-            self.buttons[row] = tk.Button(root, text=letter, command=callback)
+            self.buttons[row] = tk.Button(buttonbox, text=letter,
+                                          command=callback)
             self.buttons[row].grid(row=row, column=0,
                                    padx=self.PADDING, pady=self.PADDING)
-            self.entries[row] = tk.Entry(root, width=29)
+            self.entries[row] = tk.Entry(buttonbox, width=29)
             self.entries[row].grid(row=row, column=1,
                                    padx=self.PADDING, pady=self.PADDING)
             root.bind(f'<Key-{letter}>', callback)
 
-            self.buttons[row+26] = tk.Button(root, text=letter.upper())
+            callback = partial(self.letter_button_press, letter.upper())
+            self.buttons[row+26] = tk.Button(buttonbox, text=letter.upper(),
+                                             command=callback)
             self.buttons[row+26].grid(row=row, column=2,
                                       padx=self.PADDING, pady=self.PADDING)
-            self.entries[row+26] = tk.Entry(root, width=29)
+            self.entries[row+26] = tk.Entry(buttonbox, width=29)
             self.entries[row+26].grid(row=row, column=3,
                                       padx=self.PADDING, pady=self.PADDING)
+            root.bind(f'<Key-{letter.upper()}>', callback)
 
-            # Exit on Ctrl-q
-            root.bind('<Control-Key-q>', self.quit_handler)
-            root.bind('<Control-Key-slash>', self.search)
+        # Tell the buttonbox to calculate its size, so we can choose
+        # a comparable image viewer size
+        buttonbox.update()
+        print("buttonbox size:",
+              buttonbox.winfo_width(), buttonbox.winfo_height())
+
+        # make a space to hold the image viewer
+        viewer_frame = tk.Frame(root,
+                                width=buttonbox.winfo_width(),
+                                height=buttonbox.winfo_height())
+        # viewer_frame.pack(side=tk.LEFT)
+        viewer_frame.grid_propagate(False)
+        viewer_frame.grid(row=0, column=0)
+
+        # Image viewer on the left
+        self.viewer_size = (int(buttonbox.winfo_width() * .9),
+                            buttonbox.winfo_height())
+        print("viewer size is", self.viewer_size)
+        # viewer_frame.resize(*self.viewer_`size)
+        self.pho_widget = PhoWidget(viewer_frame, img_list=img_list,
+                                    size=self.viewer_size)
+
+        root.bind('<Key-space>', self.next_image_handler)
+
+        # Exit on Ctrl-q
+        root.bind('<Control-Key-q>', self.quit_handler)
+        root.bind('<Key-slash>', self.search)
+
+        self.pho_widget.next_image()
+
+    def next_image_handler(self, event):
+        try:
+            self.pho_widget.next_image()
+        except IndexError:
+            if messagebox.askyesno("Last image", "Last image. Quit?"):
+                self.quit_handler()
+
+    def prev_image_handler(self, event):
+        self.pho_widget.prev_image()
 
     def letter_button_press(self, letter, event=None):
         print("handler for:", letter)
@@ -65,13 +117,13 @@ class TkTagViewer(metapho.Tagger):
     def search(self, event):
         print("Would Search!")
 
-    def quit_handler(self, event):
+    def quit_handler(self, event=None):
         print("Bye")
         sys.exit(0)
 
 
 if __name__ == '__main__':
-    tagger = TkTagViewer()
+    tagger = TkTagViewer(img_list=sys.argv[1:])
     root.mainloop()
 
 

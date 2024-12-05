@@ -218,14 +218,15 @@ class PhoWidget:
        plus a few other functions like deleting the image file.
     """
 
-    def __init__(self, root, img_list=[], size=None):
-        """If size is omitted, the widget will be free to resize itself,
+    def __init__(self, parent, img_list=[], size=None):
+        """img_list is a list of image path strings.
+           If size is omitted, the widget will be free to resize itself,
            otherwise it will try to fit itself in the space available.
         """
         self.img_list = [ PhoImage(f) for f in img_list ]
         self.imgno = -1
 
-        self.root = root    # Needed for queries like screen size
+        self.root = parent    # Needed for queries like screen size
 
         self.fixed_size = size
         self.widget_size = size
@@ -240,12 +241,21 @@ class PhoWidget:
         # Only applies to the current image, reset when changing images.
         self.fullsize_offset = 0, 0
 
-        # The actual widget where images will be shown
+        # The actual widget where images will be shown.
+        # It would be nice to set the widget size here if size is fixed,
+        # but width and height passed in a Label constructor are interpreted
+        # as number of characters, not pixels, and there's apparently
+        # no way to specify size in pixels.
+        # (You can specify pixel size for ImageTk.PhotoImage.resize()
+        # but for that, you have to have an image ready to show.)
         if size:
-            self.lwidget = tk.Label(root, width=size[0], height=size[1])
+            print("PhoWidget initializing Label to size", size)
+            self.lwidget = tk.Label(parent, width=size[0], height=size[1],
+                                    padx=0, pady=0)
+            self.lwidget.pack(fill="both", expand=False, padx=0, pady=0)
         else:
-            self.lwidget = tk.Label(root)
-        self.lwidget.pack(fill="both", expand=True, padx=0, pady=0)
+            self.lwidget = tk.Label(parent)
+            self.lwidget.pack(fill="both", expand=True, padx=0, pady=0)
 
         self.lwidget.configure(background='black')
 
