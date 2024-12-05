@@ -382,7 +382,7 @@ class ImageViewerWindow(Gtk.Window):
             self.img_list = self.img_list[1:]
 
     def run(self):
-        self.show_all();
+        self.show_all()
         Gtk.main()
 
     def add_image(self, img):
