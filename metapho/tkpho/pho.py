@@ -12,6 +12,11 @@ import sys
 
 
 class PhoWindow:
+    """The main window for Pho.
+       Shows a PhoWidget and has bindings to let the user move
+       through the image list, rotate, zoom, delete, etc.
+    """
+
     def __init__(self, img_list=[], fixed_size=None):
         self.full_size = False
 
@@ -26,8 +31,12 @@ class PhoWindow:
             self.fixed_size = None
         self.pho_widget = PhoWidget(self.root, img_list, size=self.fixed_size)
 
+        # Middlemouse drag is only needed when fullscreen AND fullsize
+        self.dragging_from = None
+
         # List of Tk keysyms:
         # https://www.tcl.tk/man/tcl8.4/TkCmd/keysyms.htm
+        # https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/key-names.html
 
         self.root.bind('<Key-space>', self.image_nav_handler)
         self.root.bind('<Key-BackSpace>', self.image_nav_handler)
@@ -46,6 +55,14 @@ class PhoWindow:
         self.root.bind('<Key-Down>',
                        lambda e: self.rotate_handler(e, 180))
 
+        self.root.bind("<ButtonPress-2>",   self.start_drag)
+        self.root.bind("<B2-Motion>",       self.drag)
+        self.root.bind("<ButtonRelease-2>", self.end_drag)
+
+        # self.root.bind("<ButtonPress-2>", lambda x: print("2 PRESS"))
+        # self.root.bind("<ButtonRelease-2>", lambda x: print("2 RELEASE"))
+        # self.root.bind("<B2-Motion>", lambda x: print("2 MOTION"))
+
         # p (presentation) toggles fullscreen mode;
         # ESC always exits it.
         self.root.bind('<Key-p>', self.fullscreen_handler)
@@ -53,6 +70,9 @@ class PhoWindow:
 
         # f toggles full-size mode
         self.root.bind('<Key-f>', self.fullsize_handler)
+
+        self.root.bind('<Key-d>', self.delete_handler)
+
 
         if self.fixed_size:
             # Allow the user to resize the window if it has a
@@ -75,6 +95,10 @@ class PhoWindow:
         self.pho_widget.add_image(img)
 
     def image_nav_handler(self, event):
+        # print("geometry now is %dx%d+%d+%d" % (self.root.winfo_x(),
+        #                                        self.root.winfo_y(),
+        #                                        self.root.winfo_width(),
+        #                                        self.root.winfo_height()))
         try:
             if event.keysym == 'space' or event.keysym == 'Next':
                 self.pho_widget.next_image()
@@ -128,7 +152,11 @@ class PhoWindow:
             self.pho_widget.set_fullscreen(False)
             if VERBOSE:
                 print("Out of fullscreen, fixed_size is", self.fixed_size)
- 
+
+            # disable middlemouse dragging
+            # self.root.bind("<B2-Motion>", None)
+            self.root.unbind("<B2-Motion>")
+
         else:
             # Into fullscreen
             self.root.attributes("-fullscreen", True)
@@ -136,7 +164,16 @@ class PhoWindow:
                 print("Now in fullscreen, size", self.pho_widget.widget_size)
             self.pho_widget.fullscreen = True
             self.pho_widget.set_size((self.root.winfo_screenwidth(),
-                                  self.root.winfo_screenheight()))
+                                      self.root.winfo_screenheight()))
+
+            # if self.pho_widget.fullsize:
+            #     self.pho_widget.center_fullsize()
+
+            # enable middlemouse dragging
+            # https://tkinterexamples.com/events/mouse/
+            self.root.bind("ButtonPress-2", self.start_drag)
+            self.root.bind("<B2-Motion>", self.drag)
+            self.root.bind("ButtonRelease-2", self.end_drag)
 
         # viewer.set_size() should redraw as necessary
 
@@ -146,8 +183,6 @@ class PhoWindow:
                 print("full-size mode not supported in a fixed-size window")
             return
         self.pho_widget.fullsize = not self.pho_widget.fullsize
-        print("fullsize now", self.pho_widget.fullsize)
-        print("VERBOSE from pho.py:", VERBOSE)
         self.pho_widget.show_image()
 
         # Going from fullsize to normal, it's all too easy
@@ -158,6 +193,47 @@ class PhoWindow:
         #       self.root.winfo_width(), self.root.winfo_height())
         if self.root.winfo_x() < 0 or self.root.winfo_y() < 0:
             self.root.geometry("+100+100")
+
+    def start_drag(self, event):
+        self.dragging_from = event.x_root, event.y_root
+
+    def drag(self, event):
+        if not self.pho_widget.fullscreen or not self.pho_widget.fullsize:
+            print("Can't drag except in fullsize+fullscreen mode")
+            return
+        if not self.dragging_from:
+            print("drag without start_drag")
+            return
+
+        # event.x_root is the coordinate relative to the screen,
+        # event.x is relative to the window.
+        # Sure would be nice if TkInter had documentation somewhere.
+
+        # print("ddddddddddddddrag",
+        #       "    dragging_from:", self.dragging_from,
+        #       "    xy_root:", event.x_root, event.y_root,
+        #       "    xy:", event.x, event.y,
+        #       "    -->", event.x_root - self.dragging_from[0],
+        #       event.y_root - self.dragging_from[1])
+
+        self.pho_widget.translate(event.x_root - self.dragging_from[0],
+                                  event.y_root - self.dragging_from[1])
+        self.dragging_from = (event.x_root, event.y_root)
+
+        self.pho_widget.show_image()
+
+    def end_drag(self, event):
+        self.dragging_from = None
+
+    def delete_handler(self, event):
+        # To bind 'd' in the dialog, we'll probably need to replace the
+        # messagebox with a custom dialog, like
+        # https://stackoverflow.com/a/48324446
+        # https://stackoverflow.com/a/10065345
+        ans = messagebox.askyesno("Delete", "Really delete?")
+        # XXX how to intercept a typed 'd' in this dialog?
+        if ans:
+            self.pho_widget.delete_current()
 
     def quit_handler(self, event):
         if VERBOSE:

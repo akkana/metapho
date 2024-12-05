@@ -27,6 +27,12 @@ def get_screen_size(root):
 
 
 class PhoImage:
+    """An image object that saves an original Image object read in from disk,
+       possibly a scaled and rotated display Image,
+       and some state such as rotation.
+       It also knows how to get quantities like size and EXIF rotation.
+    """
+
     INVALID = "Invalid Image"
 
     def __init__(self, pathname):
@@ -105,7 +111,11 @@ class PhoImage:
         elif degrees == 180:
             # Rotating without changing aspect ratio:
             # rotate the display_img since size won't change.
+            # This could be extra work if we have to do it again.
+            # but it could also save work scaling down from the original.
+            # XXX Check this.
             self.display_img = self.display_img.rotate(180)
+            # self.display_img = None
 
     def get_exif_rotation(self):
         global EXIF_ORIENTATION_KEY
@@ -133,7 +143,8 @@ class PhoImage:
                 print("EXIF rotation is", self.exif_rotation)
             return self.exif_rotation
         except Exception as e:
-            print("Problem reading EXIF rotation", file=sys.stderr)
+            if VERBOSE:
+                print("Problem reading EXIF rotation", file=sys.stderr)
             return self.exif_rotation
 
     def resize_to_fit(self, bbox):
@@ -200,6 +211,13 @@ class PhoImage:
 
 
 class PhoWidget:
+    """An object that can be displayed inside a window
+       and holds an image list.
+       It can move forward (next) and back (previous) through the list,
+       properly scale and rotate images to fit the available space,
+       plus a few other functions like deleting the image file.
+    """
+
     def __init__(self, root, img_list=[], size=None):
         """If size is omitted, the widget will be free to resize itself,
            otherwise it will try to fit itself in the space available.
@@ -216,6 +234,11 @@ class PhoWidget:
         # In fullsize mode, the whole image will be displayed
         # even if it's too big to fit on screen.
         self.fullsize = False
+
+        # In fullsize + fullscreen mode, images will be initially centered,
+        # but the user can drag with the middle button to change the offset.
+        # Only applies to the current image, reset when changing images.
+        self.fullsize_offset = 0, 0
 
         # The actual widget where images will be shown
         if size:
@@ -298,23 +321,39 @@ class PhoWidget:
         # self.lwidget.winfo_width(), self.lwidget.winfo_height()
         # is the size of the previous image, i.e. the current widget size,
         # except at the beginning where it's 1, 1
-        if VERBOSE:
-            print("Showing", self.img_list[self.imgno], '\n')
-
-            # help(self.lwidget)
-            # print("Current widget size:", self.lwidget.size())
-            # print("size", self.lwidget.width, self.lwidget.height)
-            # print("winfo size:", self.lwidget.winfo_width(), self.lwidget.winfo_height())
-            # print("Requested size:", self.lwidget.winfo_reqwidth(), self.lwidget.winfo_reqheight())
-            # print("Geometry:", self.lwidget.winfo_geometry())
-            # print("Position:", self.lwidget.winfo_x(), self.winfo_y())
 
     def resize_to_fit(self):
         """Resize the current image to fit in the current widget.
-           but no larger than the bbox (width, height).
+           but no larger than the bbox (width, height)
+           (except in fullsize mode, where it translates as needed).
+           Also rotate if needed.
+
+           Return self.display_img, a PIL Image ready to display.
         """
-        if self.fullsize:
-            target_size = self.img_list[self.imgno].orig_img.size
+        if VERBOSE:
+            print("resize_to_fit")
+        cur_img = self.img_list[self.imgno]
+        if self.fullsize and self.fullscreen:
+            if cur_img.display_img and (self.fullsize_offset[0]
+                                        or self.fullsize_offset[1]):
+                # there's an offset, so don't center.
+                # The user has already dragged, so keep display_img
+                if VERBOSE:
+                    return cur_img.display_img
+
+            # in both fullsize and fullscreen mode, initially center the image
+            if cur_img.rotation:
+                cur_img.display_img = \
+                    cur_img.orig_img.rotate(cur_img.rotation)
+                cur_img.display_img = \
+                    self.center_fullsize(cur_img.orif_img)
+            else:
+                cur_img.display_img = \
+                    self.center_fullsize(cur_img.orig_img)
+            return cur_img.display_img
+
+        elif self.fullsize:
+            target_size = cur_img.orig_img.size
             if VERBOSE:
                 print("resize_to_fit in fullsize mode", target_size)
 
@@ -339,13 +378,62 @@ class PhoWidget:
         if VERBOSE:
             print("Target space:", target_size)
 
-        return self.img_list[self.imgno].resize_to_fit(target_size)
+        return cur_img.resize_to_fit(target_size)
+
+    def translate(self, dx, dy):
+        # print("PhoWidget.translate", dx, dy, "->",
+        #       self.fullsize_offset, end='')
+        self.fullsize_offset = (self.fullsize_offset[0] + dx,
+                                self.fullsize_offset[1] + dy)
+        # print(" ->", self.fullsize_offset)
+        self.img_list[self.imgno].display_img = None
+
+    def center_fullsize(self, pil_img):
+        """translate the given pil_img, assumed to be larger than the
+           widget size, so that it's centered in the available space.
+           Shift it by self.fullsize_offset, set from user mouse drags.
+
+           Return the translated pil_img.
+        """
+        # when in both fullscreen and fullsize, it's best to start
+        # with the center of the image centered on the screen
+        iw, ih = pil_img.size
+        if VERBOSE:
+            print("center_fullsize: transforming",
+                  int((iw - self.root.winfo_screenwidth())/2),
+                  int((ih - self.root.winfo_screenheight())/2))
+
+        return pil_img.transform(pil_img.size, Image.AFFINE,
+                                 (1, 0,
+                                  int((iw - self.root.winfo_screenwidth())/2) - self.fullsize_offset[0],
+                                  0, 1,
+                                  int((ih - self.root.winfo_screenheight())/2 - self.fullsize_offset[1])))
+        # then crop, https://stackoverflow.com/a/44684388
+        # but that doesn't seem to be needed.
+        # Is there any point to cropping off the extra lower right parts?
+        # new_size = (self.img_list[self.imgno].display_img.size[0] - dx,
+        #             self.img_list[self.imgno].display_img.size[1] - dy)
+        # return cur_img.display_img.transform(
+        #         new_size, Image.EXTENT, (0, 0, new_size[0], new_size[1]))
+
+    def rotate(self, rotation):
+        self.img_list[self.imgno].rotate(rotation)
+
+    def delete_current(self):
+        # Remove from the img_list
+        deleted = self.img_list.pop(self.imgno)
+
+        # delete the file on disk
+        os.unlink(deleted.pathname)
+
+        self.show_image()
 
     def next_image(self):
         if not self.img_list:
             raise FileNotFoundError("No image list!")
 
         self.imgno += 1
+
         while True:
             if self.imgno >= len(self.img_list):
                 self.imgno = len(self.img_list) - 1
@@ -370,6 +458,7 @@ class PhoWidget:
             if VERBOSE:
                 print("  to", self.imgno, "->", self.img_list[self.imgno])
 
+            self.fullsize_offset = 0, 0
             self.show_image()
             return
 
@@ -396,6 +485,8 @@ class PhoWidget:
             # Whew, load() worked okay, the image is valid
             if VERBOSE:
                 print("  to", self.imgno, "->", self.img_list[self.imgno])
+
+            self.fullsize_offset = 0, 0
             self.show_image()
             return
 
@@ -411,12 +502,9 @@ class PhoWidget:
             self.prev_image()
             return
         self.imgno = imagenum - 1
+        self.fullsize_offset = 0, 0
         self.next_image()
         return
-
-    def rotate(self, rotation):
-        self.img_list[self.imgno].rotate(rotation)
-        self.show_image()
 
 
 class SimpleImageViewerWindow:
