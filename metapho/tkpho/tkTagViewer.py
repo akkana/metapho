@@ -71,6 +71,7 @@ class TkTagViewer(metapho.Tagger):
             self.root_bindings[f'<Key-{letter}>'] = callback
             self.buttons[row] = tk.Button(buttonbox, text=letter,
                                           bg=self.bg_color,
+                                          name=f'button{letter}',
                                           command=callback)
             self.buttons[row].grid(row=row, column=0,
                                    padx=self.PADDING, pady=self.PADDING)
@@ -84,7 +85,8 @@ class TkTagViewer(metapho.Tagger):
 
             upletter = letter.upper()
             callback = partial(self.letter_button_press, upletter)
-            self.buttons[row+self.num_rows] = tk.Button(buttonbox, text=letter.upper(),
+            self.buttons[row+self.num_rows] = tk.Button(buttonbox,
+                                                        text=letter.upper(),
                                              bg=self.bg_color,
                                              command=callback)
             self.buttons[row+self.num_rows].grid(row=row, column=2,
@@ -124,7 +126,7 @@ class TkTagViewer(metapho.Tagger):
         self.global_key_bindings(True)
 
         # Exit on Ctrl-q
-        root.bind('<Control-Key-q>', self.quit_handler)
+        root.bind('<Control-Key-q>', self.quit)
 
         self.read_all_tags_for_images()
 
@@ -155,17 +157,23 @@ class TkTagViewer(metapho.Tagger):
                 root.unbind(key, None)
 
     def next_image(self, event=None):
+        self.update_image_from_window()
+
         try:
             self.pho_widget.next_image()
         except IndexError:
             if messagebox.askyesno("Last image", "Last image. Quit?"):
-                self.quit_handler()
+                self.quit()
 
         self.update_window_from_image()
 
     def prev_image(self, event=None):
+        self.update_image_from_window()
+
         self.pho_widget.prev_image()
         self.set_title()
+
+        self.update_window_from_image()
 
     def set_title(self):
         img = g_image_list[self.pho_widget.imgno]
@@ -210,7 +218,7 @@ class TkTagViewer(metapho.Tagger):
         # Enable global key bindings
         self.global_key_bindings(True)
 
-    def focus_none(self, event):
+    def focus_none(self, event=None):
         # Called on Escape.
         # Find the currently focused widget:
         w = root.focus_get()
@@ -220,7 +228,7 @@ class TkTagViewer(metapho.Tagger):
                 # Nothing was typed in, so un-highlight the row
                 letter = w._name[-1]
                 index = self.letter2index(letter)
-                self.tag_enabled(index, False)
+                self.enable_tag(index, False)
 
         # Set focus to none
         root.focus()
@@ -233,10 +241,17 @@ class TkTagViewer(metapho.Tagger):
         # print("button", buttonno, "is currently",
         #       self.buttons[buttonno].config())
 
+        self.enable_tag(buttonno, not self.tag_enabled(buttonno))
+
+        self.changed = True
+
     def search(self, event):
         print("Would Search!")
 
-    def quit_handler(self, event=None):
+    def quit(self, event=None):
+        # Write tags to disk, if they changed
+        print("Writing tag file...")
+        self.write_tag_file()
         print("Bye")
         sys.exit(0)
 
@@ -244,14 +259,14 @@ class TkTagViewer(metapho.Tagger):
         # Loop over entries to find the first blank one
         for i, entry in enumerate(self.entries):
             if not entry.get():
-                self.tag_enabled(i, True)
+                self.enable_tag(i, True)
                 entry.focus_set()
                 return
         # No blank entries
         print("All entries are full!")
         return
 
-    def tag_enabled(self, entryno, enabled):
+    def enable_tag(self, entryno, enabled):
         if enabled:
             self.buttons[entryno].config(relief="sunken",
                                          bg=self.active_bg_color)
@@ -262,12 +277,29 @@ class TkTagViewer(metapho.Tagger):
             self.buttons[entryno].config(relief="raised", bg=self.bg_color)
             self.entries[entryno].config(bg=self.bg_color)
 
+    def tag_enabled(self, which):
+        """which can be a button, an entry, or an integer index"""
+        if type(which) is int:
+            return self.buttons[which].cget('relief') == 'sunken'
+
+        if type(which) is tk.Button:
+            print("button", which._name, which.cget('relief'))
+            return which.cget('relief') == 'sunken'
+
+        if type(which) is not tk.Entry:
+            print("Error, tag_enabled called with a", type(which),
+                  file=sys.stderr)
+            return False
+
+        index = self.letter2index(which._name[-1])
+        return self.buttons[index].cget('relief') == 'sunken'
+
     def clear_tags(self, event=None):
         """Clear all tags in the current window
         """
         # metapho.Tagger.clear_tags(self, img)
         for i, button in enumerate(self.buttons):
-            self.tag_enabled(i, False)
+            self.enable_tag(i, False)
 
     def update_window_from_image(self):
         img = g_image_list[self.pho_widget.imgno]
@@ -298,14 +330,14 @@ class TkTagViewer(metapho.Tagger):
             print("tags:", img.tags)
         self.clear_tags()
         for tagno in img.tags:
-            self.tag_enabled(tagno, True)
+            self.enable_tag(tagno, True)
 
-    def sync_to_image(self):
-        """Update the current image to match any user changes to tags.
-           Called on things like next_image and quit.
-        """
-        for entry in self.entries:
-            XXXXXX
+    def update_image_from_window(self):
+        img = g_image_list[self.pho_widget.imgno]
+        print("Before, img tags are", img.tags)
+        img.tags = [ i for i, b in enumerate(self.buttons)
+                     if self.tag_enabled(b) ]
+        print("After, they're", img.tags)
 
 
 if __name__ == '__main__':
