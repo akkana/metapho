@@ -7,15 +7,16 @@ GTK UI classes for metapho: an image tagger and viewer.
 # Copyright 2024 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
 import metapho
+from metapho import MetaphoImage, g_image_list
 
-from PhoWidget import PhoWidget
+from PhoWidget import PhoWidget, PhoImage, VERBOSE
 
 import tkinter as tk
 from tkinter import messagebox
 
 import os, sys
 
-from string import ascii_lowercase
+from string import ascii_lowercase, ascii_uppercase
 from functools import partial
 
 
@@ -26,6 +27,12 @@ class TkTagViewer(metapho.Tagger):
     PADDING = 1
 
     def __init__(self, img_list):
+        for filename in img_list:
+            g_image_list.append(PhoImage(filename))
+
+        metapho.Tagger.__init__(self)
+
+        self.num_rows = 26
 
         # default bg color, which we'll read once the window is up.
         # As I test it initially, it's #d9d9d9
@@ -52,13 +59,16 @@ class TkTagViewer(metapho.Tagger):
         self.buttons = [None] * 52
         self.entries = [None] * 52
 
+        self.root_bindings = {
+            '<Key-space>': self.next_image,
+            '<Key-BackSpace>': self.prev_image,
+            '<Control-Key-u>': self.clear_tags,
+            '<Key-slash>': self.search
+        }
+
         for row, letter in enumerate(ascii_lowercase):
-            # Button doesn't pass an event with its callback,
-            # so have to use a partial here.
-            # Lambda doesn't work, because lambdas inside a loop
-            # end up all using the last value of the loop, i.e. 'z'.
-            # callback = lambda: self.letter_button_press(letter)
             callback = partial(self.letter_button_press, letter)
+            self.root_bindings[f'<Key-{letter}>'] = callback
             self.buttons[row] = tk.Button(buttonbox, text=letter,
                                           bg=self.bg_color,
                                           command=callback)
@@ -71,27 +81,26 @@ class TkTagViewer(metapho.Tagger):
                                    padx=self.PADDING, pady=self.PADDING)
             self.entries[row].bind("<FocusIn>", self.on_focus_in)
             self.entries[row].bind("<FocusOut>", self.on_focus_out)
-            root.bind(f'<Key-{letter}>', callback)
 
-            callback = partial(self.letter_button_press, letter.upper())
             upletter = letter.upper()
-            self.buttons[row+26] = tk.Button(buttonbox, text=letter.upper(),
+            callback = partial(self.letter_button_press, upletter)
+            self.buttons[row+self.num_rows] = tk.Button(buttonbox, text=letter.upper(),
                                              bg=self.bg_color,
                                              command=callback)
-            self.buttons[row+26].grid(row=row, column=2,
+            self.buttons[row+self.num_rows].grid(row=row, column=2,
                                       padx=self.PADDING, pady=self.PADDING)
-            self.entries[row+26] = tk.Entry(buttonbox, width=29,
+            self.entries[row+self.num_rows] = tk.Entry(buttonbox, width=29,
                                             bg=self.bg_color,
                                             name=f"entry{upletter}")
-            self.entries[row+26].grid(row=row, column=3,
+            self.entries[row+self.num_rows].grid(row=row, column=3,
                                       padx=self.PADDING, pady=self.PADDING)
-            root.bind(f'<Key-{upletter}>', callback)
+            self.root_bindings[f'<Key-{upletter}>'] = callback
 
         # Tell the buttonbox to calculate its size, so we can choose
         # a comparable image viewer size
         buttonbox.update()
-        print("buttonbox size:",
-              buttonbox.winfo_width(), buttonbox.winfo_height())
+        # print("buttonbox size:",
+        #       buttonbox.winfo_width(), buttonbox.winfo_height())
 
         # make a space to hold the image viewer
         viewer_frame = tk.Frame(root,
@@ -104,53 +113,108 @@ class TkTagViewer(metapho.Tagger):
         # Image viewer on the left
         self.viewer_size = (int(buttonbox.winfo_width() * .9),
                             buttonbox.winfo_height())
-        print("viewer size is", self.viewer_size)
+        # print("viewer size is", self.viewer_size)
         # viewer_frame.resize(*self.viewer_`size)
         self.pho_widget = PhoWidget(viewer_frame, img_list=img_list,
                                     size=self.viewer_size)
 
-        root.bind('<Key-space>', self.next_image_handler)
         root.bind('<Key-Return>', self.new_tag)
         root.bind('<Key-Escape>', self.focus_none)
-        root.bind('<Control-Key-u>', self.clear_tags)
 
-        root.bind('<Key-slash>', self.search)
+        self.global_key_bindings(True)
 
         # Exit on Ctrl-q
         root.bind('<Control-Key-q>', self.quit_handler)
 
+        self.read_all_tags_for_images()
+
         self.pho_widget.next_image()
 
-    def next_image_handler(self, event):
+        # After next_image, now we should have all the tags.
+        # So populate the tag entries.
+        # print("initially, tag list:", self.tag_list)
+        for i, tag in enumerate(self.tag_list):
+            self.entries[i].delete(0, tk.END)
+            self.entries[i].insert(0, tag)
+
+        self.update_window_from_image()
+
+
+    def global_key_bindings(self, enable):
+        """TkInter doesn't have a way to override window-wide key bindings
+           when focus goes to a widget that needs input, like an Entry.
+           Therefore, when focus goes to an entry, call
+           global_key_bindings(False) to temporarily disable
+           all the other key bindings that might be typed in an entry.
+           On focus out, call global_key_bindings(True) to restore them.
+        """
+        for key in self.root_bindings:
+            if enable:
+                root.bind(key, self.root_bindings[key])
+            else:
+                root.unbind(key, None)
+
+    def next_image(self, event=None):
         try:
             self.pho_widget.next_image()
         except IndexError:
             if messagebox.askyesno("Last image", "Last image. Quit?"):
                 self.quit_handler()
 
-    def prev_image_handler(self, event):
+        self.update_window_from_image()
+
+    def prev_image(self, event=None):
         self.pho_widget.prev_image()
+        self.set_title()
 
-    def on_focus_in(self, event):
-        print("Focus in", event.widget)
-        print("Focused widget is now", root.focus_get())
-
-    def on_focus_out(self, event):
-        print("Focus out", event.widget)
+    def set_title(self):
+        img = g_image_list[self.pho_widget.imgno]
+        root.title("%s (%d of %d)" % (
+            os.path.basename(img.filename),
+            self.pho_widget.imgno + 1,
+            metapho.num_displayed_images()))
 
     @staticmethod
     def letter2index(letter):
         if letter.islower():
             return ord(letter) - ord('a')
         elif letter.isupper():
-            return ord(letter) - ord('A') + 26
+            return ord(letter) - ord('A') + self.num_rows
         return -1
+
+    def on_focus_in(self, event):
+        print("Focus in", event.widget)
+        print("Focused widget is now", root.focus_get())
+        if type(event.widget) is tk.Entry:
+            self.global_key_bindings(False)
+
+    def on_focus_out(self, event):
+        if type(event.widget) is not tk.Entry:
+            if VERBOSE or True:
+                print("Focus out of something other than an entry")
+                return
+
+        print("Focus out", event.widget)
+        # Find the tag number
+        entry = event.widget
+        print("entry name:", entry._name)
+        entryno = self.letter2index(entry._name[-1])
+
+        newstr = event.widget.get()
+        # has the text been erased, or maybe never been there?
+        if not newstr:
+            return
+
+        self.change_tag(entryno, newstr)
+
+        # Enable global key bindings
+        self.global_key_bindings(True)
 
     def focus_none(self, event):
         # Called on Escape.
         # Find the currently focused widget:
         w = root.focus_get()
-        print("focused widget:", w, type(w))
+        print("focus_none: previously focused widget:", w, type(w))
         if type(w) is tk.Entry:
             if not w.get():
                 # Nothing was typed in, so un-highlight the row
@@ -166,7 +230,8 @@ class TkTagViewer(metapho.Tagger):
         # Tk doesn't have actual toggle buttons; you have to handle
         # such things manually.
         buttonno = self.letter2index(letter)
-        print("button", buttonno, "is currently", self.buttons[buttonno].config())
+        # print("button", buttonno, "is currently",
+        #       self.buttons[buttonno].config())
 
     def search(self, event):
         print("Would Search!")
@@ -197,12 +262,50 @@ class TkTagViewer(metapho.Tagger):
             self.buttons[entryno].config(relief="raised", bg=self.bg_color)
             self.entries[entryno].config(bg=self.bg_color)
 
-    def clear_tags(self, event):
+    def clear_tags(self, event=None):
         """Clear all tags in the current window
         """
-        metapho.Tagger.clear_tags(self, img)
+        # metapho.Tagger.clear_tags(self, img)
         for i, button in enumerate(self.buttons):
             self.tag_enabled(i, False)
+
+    def update_window_from_image(self):
+        img = g_image_list[self.pho_widget.imgno]
+        if VERBOSE:
+            print("Current image:", img)
+            print("Current category:", self.current_category)
+            print("All tags:", self.tag_list)
+
+        self.set_title()
+
+        # Decide what category to show.
+        # If the image has tags set in the current category,
+        # or the image has no tags set in any category,
+        # leave the current category unchanged.
+        # Otherwise, switch to the first category where this image has tags.
+        if img.tags and not self.img_has_tags_in(img, self.current_category):
+            for cat in self.categories:
+                if self.img_has_tags_in(img, cat):
+                    self.current_category = cat
+                    break
+
+        # categories aren't implemented yet
+        # self.catviewer.set_active(self.current_category)
+        # self.highlight_categories()
+        # self.display_tags_for_category(self.current_category)
+
+        if VERBOSE:
+            print("tags:", img.tags)
+        self.clear_tags()
+        for tagno in img.tags:
+            self.tag_enabled(tagno, True)
+
+    def sync_to_image(self):
+        """Update the current image to match any user changes to tags.
+           Called on things like next_image and quit.
+        """
+        for entry in self.entries:
+            XXXXXX
 
 
 if __name__ == '__main__':

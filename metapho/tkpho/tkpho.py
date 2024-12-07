@@ -127,6 +127,7 @@ class PhoWindow:
 
     def rotate_handler(self, event, rotation):
         self.pho_widget.rotate(rotation)
+        self.pho_widget.show_image()
 
     def resize_handler(self, event):
         if (event.width, event.height) != self.fixed_size:
