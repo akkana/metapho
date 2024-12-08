@@ -548,6 +548,7 @@ tag Bruny Island: img 008.jpg
         numtags = len(self.categories[self.current_category])
 
         newstr = newstr.strip()
+        cur_img = g_image_list[self.pho_widget.imgno]
 
         # If the string is now empty, and it's the last tag
         # in both this category and the overall tag list,
@@ -562,8 +563,8 @@ tag Bruny Island: img 008.jpg
                     tagno = self.categories[self.current_category].pop(-1)
                     self.tag_list.pop(-1)
                     try:
-                        index = self.cur_img.tags.index(tagno)
-                        self.cur_img.tags.pop(index)
+                        index = cur_img.tags.index(tagno)
+                        cur_img.tags.pop(index)
                     except ValueError:
                         pass
 
@@ -575,7 +576,7 @@ tag Bruny Island: img 008.jpg
         # The string is nonempty and doesn't change an existing tag,
         # so add a new tag.
         else:
-            self.add_tag(newstr, self.cur_img)
+            self.add_tag(newstr, cur_img)
 
     def clear_tags(self, img):
         img.tags = []

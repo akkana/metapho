@@ -15,7 +15,7 @@ from PIL import ImageTk, ExifTags, UnidentifiedImageError
 
 from metapho import MetaphoImage, g_image_list
 
-VERBOSE = True
+VERBOSE = False
 
 FRAC_OF_SCREEN = .85
 
