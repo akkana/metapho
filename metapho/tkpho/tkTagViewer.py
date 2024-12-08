@@ -84,9 +84,11 @@ class TkTagViewer(metapho.Tagger):
                                    padx=self.PADDING, pady=self.PADDING)
             self.entries[row].bind("<FocusIn>", self.on_focus_in)
             self.entries[row].bind("<FocusOut>", self.on_focus_out)
+            self.entries[row].bind('<Control-Key-u>', self.entryerase)
 
             upletter = letter.upper()
             callback = partial(self.letter_button_press, upletter)
+            self.root_bindings[f'<Key-{upletter}>'] = callback
             self.buttons[row+self.num_rows] = tk.Button(buttonbox,
                                                         text=letter.upper(),
                                              bg=self.bg_color,
@@ -98,7 +100,9 @@ class TkTagViewer(metapho.Tagger):
                                             name=f"entry{upletter}")
             self.entries[row+self.num_rows].grid(row=row, column=3,
                                       padx=self.PADDING, pady=self.PADDING)
-            self.root_bindings[f'<Key-{upletter}>'] = callback
+            self.entries[row+self.num_rows].bind('<Control-Key-u>', self.entryerase)
+            self.entries[row+self.num_rows].bind("<FocusIn>", self.on_focus_in)
+            self.entries[row+self.num_rows].bind("<FocusOut>", self.on_focus_out)
 
         # Tell the buttonbox to calculate its size, so we can choose
         # a comparable image viewer size
@@ -261,6 +265,9 @@ class TkTagViewer(metapho.Tagger):
         self.enable_tag(buttonno, not self.tag_enabled(buttonno))
 
         self.changed = True
+
+    def entryerase(self, event):
+        event.widget.delete(0, tk.END)
 
     def search(self, event):
         print("Would Search!")
