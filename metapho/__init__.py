@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # metapho: an image tagger and viewer.
 
@@ -6,12 +6,13 @@
 
 '''metapho: an image tagger and viewer.'''
 
-__version__ = "1.1"
+__version__ = "2.0pre1"
 __author__ = "Akkana Peck <akkana@shallowsky.com>"
 __license__ = "GPL v2+"
 __all__ = [ 'Image', 'Tagger' ]
 
 from .metapho import *
+from .tagger import *
 
 # Don't import gtkpho classes automatically;
 # users may not want or need the GUI parts.
