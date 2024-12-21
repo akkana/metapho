@@ -70,7 +70,9 @@ setup(name='metapho',
           # On Linux they're the same.
           'gui_scripts': [
               'metapho=metapho.gtkpho.main:main',
-              'mpiv=metapho.gtkpho.ImageViewer:main'   # MetaPho Image Viewer
+              'mpiv=metapho.gtkpho.ImageViewer:main',   # MetaPho Image Viewer
+              'tkmetapho=metapho.tkpho.tkTagViewer:main',
+              'tkpho=metapho.tkpho:main'
           ],
           'console_scripts': [
               'notags=metapho:main',

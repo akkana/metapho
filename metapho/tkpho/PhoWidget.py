@@ -66,7 +66,7 @@ class PhoImage (MetaphoImage):
             extra += ' orig %dx%d' % self.orig_img.size
         if self.display_img:
             extra += ' displayed %dx%d' % self.display_img.size
-        return f'<PhoImage {self.filename}{extra}>'
+        return f'<PhoImage {self.relpath}{extra}>'
 
     # Properties
     def get_size(self):
@@ -84,25 +84,15 @@ class PhoImage (MetaphoImage):
         # Don't reload if self.orig_img is already there
         if self.orig_img:
             return
+        VERBOSE = True
         try:
-            self.orig_img = PILImage.open(self.filename)
+            self.orig_img = PILImage.open(self.relpath)
             self.rot = self.get_exif_rotation()
             self.display_img = None
 
-        except FileNotFoundError as e:
+        except Exception as e:
             self.orig_img = None
             self.display_img = None
-            errstr = f"{self.filename}: file not found"
-            if VERBOSE:
-                print(errstr, file=sys.stderr)
-            raise e
-
-        except UnidentifiedImageError as e:
-            self.orig_img = None
-            self.display_img = None
-            errstr = f"{self.filename}: not a recognized image type"
-            if VERBOSE:
-                print(errstr, file=sys.stderr)
             raise e
 
     def rotate(self, degrees):
@@ -468,8 +458,17 @@ class PhoWidget:
             # Is the current image valid?
             try:
                 g_image_list[self.imgno].load()
-            except (FileNotFoundError, UnidentifiedImageError) as e:
-                print("Skipping", g_image_list[self.imgno], e)
+
+            except (FileNotFoundError, UnidentifiedImageError,
+                    IsADirectoryError) as e:
+                print("Skipping", g_image_list[self.imgno].relpath,
+                      "because:", e)
+                # PIL prints its errors with full paths, even if it was
+                # a relative path passed in. I wish I could shorten them.
+                del g_image_list[self.imgno]
+                continue
+            except Exception as e:
+                print("Skipping an image for an unexpected reason:", type(e))
                 del g_image_list[self.imgno]
                 continue
 

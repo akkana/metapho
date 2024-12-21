@@ -3,7 +3,7 @@
 # from . import ImageViewer
 # from metapho.ImageViewer import PhoWidget
 
-from PhoWidget import PhoImage, PhoWidget, VERBOSE
+from .PhoWidget import PhoImage, PhoWidget, VERBOSE
 
 import tkinter as tk
 # You can't just use tk.messagebox, apparently
@@ -242,7 +242,7 @@ class PhoWindow:
         sys.exit(0)
 
 
-if __name__ == '__main__':
+def main():
     import argparse
     import re
 
@@ -326,3 +326,5 @@ PHO_CMD : command to run when pressing g (default: gimp).
     pwin.run()
 
 
+if __name__ == '__main__':
+    main()

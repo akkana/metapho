@@ -10,4 +10,3 @@
 '''metapho.tkpho: TkInter-based display functions for metapho.'''
 
 from .tkpho import *
-from .ImageViewer import *

@@ -9,7 +9,7 @@ GTK UI classes for metapho: an image tagger and viewer.
 import metapho
 from metapho import MetaphoImage, g_image_list
 
-from PhoWidget import PhoWidget, PhoImage, VERBOSE
+from .PhoWidget import PhoWidget, PhoImage, VERBOSE
 
 import tkinter as tk
 from tkinter import messagebox
@@ -275,7 +275,6 @@ class TkTagViewer(metapho.Tagger):
     def quit(self, event=None):
         # Write tags to disk, if they changed
         self.write_tag_file()
-        print("Bye")
         root.destroy()
         # People say to quit by calling root.destroy(), but doing so leads to
         # _tkinter.TclError: can't invoke "wm" command:
@@ -370,7 +369,11 @@ class TkTagViewer(metapho.Tagger):
                      if self.tag_enabled(b) ]
 
 
-if __name__ == '__main__':
+def main():
     tagger = TkTagViewer(img_list=sys.argv[1:])
     root.mainloop()
+
+
+if __name__ == '__main__':
+    main()
 

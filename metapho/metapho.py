@@ -74,6 +74,9 @@ class MetaphoImage:
         # filename is an absolute path
         self.filename = os.path.abspath(filename)
 
+        # But it's useful to remember relative path too
+        self.relpath = filename
+
         self.tags = []
 
         self.displayed = displayed
@@ -96,7 +99,7 @@ class MetaphoImage:
         self.rot = None
 
     def __repr__(self):
-        str = "MetaphoImage '%s'" % self.filename
+        str = "MetaphoImage '%s'" % self.relpath
 
         if self.rot:
             str += " (rotation %s)" % self.rot
