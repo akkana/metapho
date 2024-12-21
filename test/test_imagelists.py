@@ -22,7 +22,7 @@ class ImgListTests(unittest.TestCase):
 
     def test_image_lists(self):
         for filename in os.listdir("test/files"):
-            metapho.g_image_list.append(metapho.Image(filename))
+            metapho.g_image_list.append(metapho.MetaphoImage(filename))
 
         # print(metapho.g_image_list)
 

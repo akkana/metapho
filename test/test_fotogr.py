@@ -5,7 +5,7 @@ import unittest
 import shutil
 import os
 
-from scripts import fotogr
+from metapho.scripts import fotogr
 
 TMPDIR = '/tmp/test-fotogr'
 
