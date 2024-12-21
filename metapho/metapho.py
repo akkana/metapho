@@ -9,9 +9,9 @@ Programs with better UI can inherit from these classes.
 
 """
 
-# Image and Tagger classes have to be defined here in order for
-# other files to be able to use them as metapho.Image rather than
-# metapho.Image.Image. I haven't found any way that lets me split
+# MetaphoImage and Tagger classes have to be defined here in order for
+# other files to be able to use them as metapho.MetaphoImage rather than
+# metapho.MetaphoImage.MetaphoImage. I haven't found any way that lets me split
 # the classes into separate files. Sigh!
 
 import sys, os
@@ -61,7 +61,7 @@ def commonprefix(paths):
                                                     bydirectorylevels))
 
 
-class Image:
+class MetaphoImage:
     """An image, with additional info such as rotation and tags.
     """
 
@@ -73,6 +73,9 @@ class Image:
         """
         # filename is an absolute path
         self.filename = os.path.abspath(filename)
+
+        # But it's useful to remember relative path too
+        self.relpath = filename
 
         self.tags = []
 
@@ -96,7 +99,7 @@ class Image:
         self.rot = None
 
     def __repr__(self):
-        str = "Image '%s'" % self.filename
+        str = "MetaphoImage '%s'" % self.relpath
 
         if self.rot:
             str += " (rotation %s)" % self.rot
@@ -197,11 +200,14 @@ class Image:
 
 class Tagger(object):
     """Manages tags for images.
+
+       Uses g_image_list.
     """
 
     # Extensions we explicitly don't handle that might nevertheless
     # be in the same directory as images:
     try:
+        # You can set up your own personal list of extensions to skip
         SKIP_EXTENSIONS = os.getenv("NOTAGS_SKIP_EXTENSIONS").split()
     except:
         SKIP_EXTENSIONS =  [
@@ -218,7 +224,7 @@ class Tagger(object):
     def __init__(self):
         """tagger: an object to manage metapho image tags"""
 
-        # The actual per-image lists of tags live in the Image class.
+        # The actual per-image lists of tags live in the MetaphoImage class.
         # Each image has img.tags, which is a list of tag indices.
 
         # The category list is an OrderedDict
@@ -241,7 +247,7 @@ class Tagger(object):
         self.changed = False
 
         # What category are we currently processing? Default is Tags.
-        self.current_category = None
+        self.current_category = ''
 
         # All the Tags files we read to initialize.
         # We don't necessarily use this, but callers might want to know.
@@ -343,7 +349,7 @@ class Tagger(object):
         for d in dirs:
             self.read_tags(d, recursive=False)
 
-        Image.clean_up_nonexistent_files(self.commondir)
+        MetaphoImage.clean_up_nonexistent_files(self.commondir)
 
     def read_tags(self, dirname, recursive=True):
         """Read in tags from files named in the given directory,
@@ -352,7 +358,6 @@ class Tagger(object):
            If recursive is True, we'll also look for
            Tags files in subdirectories.
         """
-        # print("read_tags", dirname, "recursive", recursive)
         dirname = os.path.abspath(dirname)
         self.check_commondir(dirname)
 
@@ -425,7 +430,7 @@ tag Bruny Island: img 008.jpg
                 continue    # If there's no colon, it's not a legal tag line
 
             # Now we know we have tagname, typename or photoname.
-            # Get the list of objects after the colon.
+            # Get the list of objects (filenames) after the colon.
             # Use shlex to handle quoted and backslashed
             # filenames with embedded spaces.
             try:
@@ -488,16 +493,17 @@ tag Bruny Island: img 008.jpg
                     img.tags.append(tagindex)
                     tagged = True
                     break
+
             # Did we find an image matching fil?
             # If not, add it as a non-displayed image.
             if not tagged:
-                newim = Image(fil, displayed=False)
+                newim = MetaphoImage(fil, displayed=False)
                 newim.tags.append(tagindex)
                 g_image_list.append(newim)
 
     def add_tag(self, tag, img):
         """Add a tag to the given image.
-           img is a metapho.Image.
+           img is a metapho.MetaphoImage.
            tag may be a string, which can be a new string or an existing one,
            or an integer index into the tag list.
            Return the index (in the global tags list) of the tag just added,
@@ -538,6 +544,43 @@ tag Bruny Island: img 008.jpg
         except:
             pass
 
+    def change_tag(self, entryno, newstr):
+        """Update a tag: called on focus_out from one of the text entries"""
+
+        # Number of tags in this category:
+        numtags = len(self.categories[self.current_category])
+
+        newstr = newstr.strip()
+        cur_img = g_image_list[self.pho_widget.imgno]
+
+        # If the string is now empty, and it's the last tag
+        # in both this category and the overall tag list,
+        # remove it from the tag list, the category and the current image.
+        # XXX Note that other images may still refer to this
+        # nonexistent tag. Possibly we should consider looping through
+        # the whole image list.
+        if not newstr:
+            if entryno == numtags-1:
+                tag_list_no = self.categories[self.current_category][entryno]
+                if entryno == numtags - 1 and tag_list_no == len(self.tag_list) - 1:
+                    tagno = self.categories[self.current_category].pop(-1)
+                    self.tag_list.pop(-1)
+                    try:
+                        index = cur_img.tags.index(tagno)
+                        cur_img.tags.pop(index)
+                    except ValueError:
+                        pass
+
+        # If it's changing an existing tag, just do it.
+        elif entryno < numtags:
+            self.tag_list[self.categories[self.current_category][entryno]] \
+                = newstr
+
+        # The string is nonempty and doesn't change an existing tag,
+        # so add a new tag.
+        else:
+            self.add_tag(newstr, cur_img)
+
     def clear_tags(self, img):
         img.tags = []
 
@@ -558,6 +601,11 @@ tag Bruny Island: img 008.jpg
     def match_tag(self, pattern):
         """Return a list of tags matching the pattern."""
         return None
+
+    def img_has_tags_in(self, img, cat):
+        for tag in img.tags:
+            if tag in self.categories[cat]:
+                return True
 
     def find_untagged_files(self, topdir):
         """Return a list of untagged files and a list of directories
@@ -722,7 +770,7 @@ def main():
     # print "Found Tags files in:", ' '.join(tagger.all_tags_files)
     # print
 
-    nef = Image.find_nonexistent_files()
+    nef = MetaphoImage.find_nonexistent_files()
     if nef:
         print("Tagged files that don't exist on disk:", ' '.join(rel_dirs(nef)))
         print()

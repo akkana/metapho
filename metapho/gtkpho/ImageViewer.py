@@ -11,7 +11,7 @@ from gi.repository import Pango
 import cairo
 import gc
 
-from metapho import Image
+from metapho import MetaphoImage
 
 DEBUG = False
 
@@ -42,7 +42,7 @@ class ImageViewer(Gtk.DrawingArea):
         # Function to call when we want to resize the window
         self.resize_fn = None
 
-        # Current image is a Image.
+        # Current image is a MetaphoImage.
         self.cur_img = None
 
 
@@ -103,7 +103,7 @@ class ImageViewer(Gtk.DrawingArea):
     # uses it in practice.
 
     def load_image(self, img):
-        """Load an image from a filename or metaphe.Image.
+        """Load an image from a filename or metaphe.MetaphoImage.
            Return 1 for success, 0 for valid image but not ready,
            -1 for invalid image or other error.
         """
@@ -115,10 +115,10 @@ class ImageViewer(Gtk.DrawingArea):
                 print("load_image with no window size")
                 return
 
-        if isinstance(img, Image):
+        if isinstance(img, MetaphoImage):
             self.cur_img = img
         else:
-            self.cur_img = Image(img)
+            self.cur_img = MetaphoImage(img)
 
         self.label_text = None
 
@@ -324,19 +324,20 @@ class ImageViewer(Gtk.DrawingArea):
 
 class ImageViewerWindow(Gtk.Window):
     """Bring up a window that can view images.
-       Pass in a list of Images, or a list of filenames,
-       or just one Image or filename.
+       Pass in a list of MetaphoImages, or a list of filenames,
+       or just one MetaphoImage or filename.
     """
 
     def __init__(self, img_list=None, width=1024, height=768, exit_on_q=True):
         super(ImageViewerWindow, self).__init__()
 
         if type(img_list) is str:
-            self.img_list = [ Image(img_list) ]
-        elif isinstance(img_list, Image):
+            self.img_list = [ MetaphoImage(img_list) ]
+        elif isinstance(img_list, MetaphoImage):
             self.img_list = [ img_list ]
         elif hasattr(img_list, "__getitem__"):
-            self.img_list = [ f if isinstance(f, Image) else Image(f)
+            self.img_list = [ f if isinstance(f, MetaphoImage)
+                                else MetaphoImage(f)
                               for f in img_list ]
         else:
             self.img_list = None
@@ -386,8 +387,8 @@ class ImageViewerWindow(Gtk.Window):
         Gtk.main()
 
     def add_image(self, img):
-        if not isinstance(img, Image):
-            img = Image(img)
+        if not isinstance(img, MetaphoImage):
+            img = MetaphoImage(img)
 
         try:
             self.imgno = self.img_list.index(img)

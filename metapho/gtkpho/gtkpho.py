@@ -467,11 +467,6 @@ class TagViewer(metapho.Tagger, gtk.Table):
                 self.highlight_entry(ent, "matched")
                 return
 
-    def img_has_tags_in(self, img, cat):
-        for tag in img.tags:
-            if tag in self.categories[cat]:
-                return True
-
     def set_image(self, img):
         self.cur_img = img
 

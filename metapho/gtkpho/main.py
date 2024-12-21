@@ -30,7 +30,7 @@ class MetaPhoWindow(object):
 
     def __init__(self, file_list):
         for filename in file_list:
-            metapho.g_image_list.append(metapho.Image(filename))
+            metapho.g_image_list.append(metapho.MetaphoImage(filename))
 
         self.imgno = -1
 
