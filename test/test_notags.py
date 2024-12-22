@@ -58,6 +58,41 @@ class NotagsTests(unittest.TestCase):
         afile = self.testdir / "dir2/imgc.jpg"
         afile.touch()
 
+    def setUpMultilevel(self):
+        adir = self.testdir / "dir3"
+        adir.mkdir()
+        adir = self.testdir / "dir3/subdir1"
+        adir.mkdir()
+        adir = self.testdir / "dir3/subdir2"
+        adir.mkdir()
+        afile = self.testdir / "dir3/subdir1/imga.jpg"
+        afile.touch()
+        afile = self.testdir / "dir3/subdir1/imgb.jpg"
+        afile.touch()
+        afile = self.testdir / "dir3/subdir2/imga.jpg"
+        afile.touch()
+        afile = self.testdir / "dir3/subdir2/imgb.jpg"
+        afile.touch()
+        afile = self.testdir / "dir3/Tags"
+        afile.write_text('tag tagged file: subdir1/imga.jpg')
+
+
+    def test_multilevel(self):
+        """Test that tags from a parent dir are seen as applying to subdirs
+        """
+        self.setUpMultilevel()
+        tagger = Tagger()
+        tagger.read_tags(self.testdir)
+
+        abstestdir = os.path.abspath(self.testdir)
+
+        utf, utd = tagger.find_untagged_files(self.testdir)
+        self.assertTrue(os.path.join(abstestdir, 'dir3/subdir2') in utd)
+        self.assertTrue(os.path.join(abstestdir, 'dir3/subdir1/imga.jpg')
+                        not in utf)
+        self.assertTrue(os.path.join(abstestdir, 'dir3/subdir1/imgb.jpg')
+                        in utf)
+
 
     # executed after each test
     def tearDown(self):

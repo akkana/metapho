@@ -63,6 +63,9 @@ class PhoWindow:
         # self.root.bind("<ButtonRelease-2>", lambda x: print("2 RELEASE"))
         # self.root.bind("<B2-Motion>", lambda x: print("2 MOTION"))
 
+        for i in range(10):
+            self.root.bind('<Key-%d>' % i, self.digit_handler)
+
         # p (presentation) toggles fullscreen mode;
         # ESC always exits it.
         self.root.bind('<Key-p>', self.fullscreen_handler)
@@ -124,6 +127,9 @@ class PhoWindow:
             # This will be true if the user said yes, quit
             if ans:
                 sys.exit(0)
+
+    def digit_handler(self, event):
+        self.pho_widget.current_image().add_tag(event.keysym)
 
     def rotate_handler(self, event, rotation):
         self.pho_widget.rotate(rotation)
@@ -239,6 +245,13 @@ class PhoWindow:
     def quit_handler(self, event):
         if VERBOSE:
             print("Bye")
+
+        # Print any tags that were set
+        tagged = PhoImage.tagged_images()
+        for tag in tagged:
+            print("%s: %s" % (tag, ' '.join([img.relpath
+                                             for img in tagged[tag]])))
+
         sys.exit(0)
 
 

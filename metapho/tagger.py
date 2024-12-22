@@ -229,7 +229,7 @@ tag Bruny Island: img 008.jpg
                 return
 
         pathname = os.path.normpath(pathname)
-        # print "Reading tags from", pathname
+        # print("Reading tags from", pathname)
         self.all_tags_files.append(pathname)
 
         for line in fp:

@@ -57,9 +57,6 @@ class PhoImage (MetaphoImage):
         # If the image couldn't be loaded, an error string is here:
         errstr = None
 
-        # flags, to be set by the user
-        flags = []
-
     def __repr__(self):
         extra = ''
         if self.orig_img:
@@ -222,8 +219,11 @@ class PhoWidget:
            If size is omitted, the widget will be free to resize itself,
            otherwise it will try to fit itself in the space available.
         """
-        global g_image_list
-        g_image_list = [ PhoImage(f) for f in img_list ]
+        # Trying to treat metapho.g_image_list like a global
+        # doesn't work; need to make sure the g_image_list used is
+        # the one from base metapho, not a new one created here.
+        g_image_list.extend([ PhoImage(f) for f in img_list ])
+
         self.imgno = -1
 
         self.root = parent    # Needed for queries like screen size
@@ -257,6 +257,10 @@ class PhoWidget:
             self.lwidget.pack(fill="both", expand=True, padx=0, pady=0)
 
         self.lwidget.configure(background='black')
+
+    def current_image(self):
+        """Returns a PhoImage"""
+        return g_image_list[self.imgno]
 
     def add_image(self, imgpath):
         """Add an image to the image list.

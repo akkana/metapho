@@ -14,6 +14,7 @@ Programs with better UI can inherit from these classes.
 # metapho.MetaphoImage.MetaphoImage. I haven't found any way that lets me split
 # the classes into separate files. Sigh!
 
+from collections import defaultdict
 import sys, os
 
 
@@ -119,6 +120,27 @@ class MetaphoImage:
         print("Deleting", self.filename)
         os.unlink(self.filename)
         g_image_list.remove(self)
+
+    def add_tag(self, newtag):
+        if newtag in self.tags:
+            return
+        self.tags.append(newtag)
+
+    def remove_tag(self, newtag):
+        try:
+            self.tags.remove(newtag)
+        except ValueError:
+            pass
+
+    @classmethod
+    def tagged_images(cls):
+        """Return a dictionary of { tag: [list of tagged images] }
+        """
+        alltagged = defaultdict(list)
+        for img in g_image_list:
+            for tag in img.tags:
+                alltagged[tag].append(img)
+        return alltagged
 
     @classmethod
     def image_index(cls, filename):
