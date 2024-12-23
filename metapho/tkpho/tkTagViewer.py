@@ -27,9 +27,6 @@ class TkTagViewer(metapho.Tagger):
     PADDING = 1
 
     def __init__(self, img_list):
-        for filename in img_list:
-            g_image_list.append(PhoImage(filename))
-
         metapho.Tagger.__init__(self)
 
         self.num_rows = 26
@@ -371,7 +368,11 @@ class TkTagViewer(metapho.Tagger):
 
 def main():
     tagger = TkTagViewer(img_list=sys.argv[1:])
-    root.mainloop()
+    try:
+        root.mainloop()
+    except KeyboardInterrupt:
+        print("Keyboard interrupt")
+        sys.exit(0)
 
 
 if __name__ == '__main__':

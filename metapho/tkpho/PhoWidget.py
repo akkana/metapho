@@ -464,7 +464,7 @@ class PhoWidget:
                 g_image_list[self.imgno].load()
 
             except (FileNotFoundError, UnidentifiedImageError,
-                    IsADirectoryError) as e:
+                    IsADirectoryError, AttributeError) as e:
                 print("Skipping", g_image_list[self.imgno].relpath,
                       "because:", e)
                 # PIL prints its errors with full paths, even if it was
@@ -472,7 +472,8 @@ class PhoWidget:
                 del g_image_list[self.imgno]
                 continue
             except Exception as e:
-                print("Skipping an image for an unexpected reason:", type(e))
+                print("Skipping an image for an unexpected reason:", type(e),
+                      g_image_list[self.imgno])
                 del g_image_list[self.imgno]
                 continue
 

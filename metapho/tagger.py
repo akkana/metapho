@@ -291,6 +291,8 @@ tag Bruny Island: img 008.jpg
         """After reading a tag from a tags file, add it to the global
            tags list if it isn't there already, and add the given filenames
            to it.
+           filenames are absolute normpaths in atual practice,
+           though relpaths aren't prohibited.
         """
         try:
             tagindex = self.tag_list.index(tagname)
@@ -305,15 +307,14 @@ tag Bruny Island: img 008.jpg
             except KeyError:
                 self.categories[self.current_category] = [tagindex]
 
-        # Search for images matching the names in filenames
-        # XXX pathname issue here: filenames in tag files generally don't
-        # have absolute pathnames, so we're only matching basenames and
-        # there could be collisions.
+        # Search for images matching the names in filenames.
         for fil in filenames:
             tagged = False
             for img in g_image_list:
-                if img.filename.endswith(fil) and tagindex not in img.tags:
-                    img.tags.append(tagindex)
+                # if img.filename.endswith(fil) and tagindex not in img.tags:
+                if fil.endswith(img.relpath):
+                    if tagindex not in img.tags:
+                        img.tags.append(tagindex)
                     tagged = True
                     break
 
