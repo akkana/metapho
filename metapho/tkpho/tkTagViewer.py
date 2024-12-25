@@ -201,7 +201,7 @@ class TkTagViewer(metapho.Tagger):
         if letter.islower():
             return ord(letter) - ord('a')
         elif letter.isupper():
-            return ord(letter) - ord('A') + self.num_rows
+            return ord(letter) - ord('A') + 26
         return -1
 
     def on_focus_in(self, event):

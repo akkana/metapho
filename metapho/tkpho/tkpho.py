@@ -85,8 +85,8 @@ class PhoWindow:
             self.root.bind("<Configure>", self.resize_handler)
 
         # Exit on either q or Ctrl-q
-        self.root.bind('<Key-q>', self.quit_handler)
-        self.root.bind('<Control-Key-q>', self.quit_handler)
+        self.root.bind('<Key-q>', self.quit)
+        self.root.bind('<Control-Key-q>', self.quit)
 
     def run(self):
         try:
@@ -246,7 +246,7 @@ class PhoWindow:
         if ans:
             self.pho_widget.delete_current()
 
-    def quit_handler(self, event=None):
+    def quit(self, event=None):
         if VERBOSE:
             print("Bye")
 

@@ -466,12 +466,24 @@ class PhoWidget:
                 g_image_list[self.imgno].load()
 
             except (FileNotFoundError, UnidentifiedImageError,
-                    IsADirectoryError, AttributeError) as e:
+                    IsADirectoryError) as e:
+                print(type(e))
                 print("Skipping", g_image_list[self.imgno].relpath,
                       "because:", e)
                 # PIL prints its errors with full paths, even if it was
                 # a relative path passed in. I wish I could shorten them.
                 del g_image_list[self.imgno]
+                continue
+            except AttributeError as e:
+                # Attribute error generally means
+                # MetaphoImage' object has no attribute 'load'
+                # meaning that we have a MetaphoImage in g_image_list
+                # because the tagger read its tags from an existing Tags
+                # file, but no GUI PhoImage was created for it because
+                # it wasn't in the argument list.
+                # In that case, skip it in the GUI, but don't delete it from
+                # g_image_list because its tags still need to be preserved.
+                self.imgno += 1
                 continue
             except Exception as e:
                 print("Skipping an image for an unexpected reason:", type(e),
