@@ -214,11 +214,13 @@ class PhoWidget:
        plus a few other functions like deleting the image file.
     """
 
-    def __init__(self, parent, img_list=[], size=None):
+    def __init__(self, parent, img_list=None, size=None):
         """img_list is a list of image path strings.
            If size is omitted, the widget will be free to resize itself,
            otherwise it will try to fit itself in the space available.
         """
+        if not img_list:
+            img_list = []
         # Trying to treat metapho.g_image_list like a global
         # doesn't work; need to make sure the g_image_list used is
         # the one from base metapho, not a new one created here.

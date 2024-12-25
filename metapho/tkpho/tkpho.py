@@ -8,6 +8,8 @@ from .PhoWidget import PhoImage, PhoWidget, VERBOSE
 import tkinter as tk
 # You can't just use tk.messagebox, apparently
 from tkinter import messagebox
+
+import random
 import sys
 
 
@@ -89,6 +91,7 @@ class PhoWindow:
     def run(self):
         try:
             self.pho_widget.next_image()
+            self.update_title()
         except Exception as e:
             print(e)
             sys.exit(1)
@@ -105,28 +108,29 @@ class PhoWindow:
         try:
             if event.keysym == 'space' or event.keysym == 'Next':
                 self.pho_widget.next_image()
-                return
             if event.keysym == 'BackSpace' or event.keysym == 'Prior':
                 self.pho_widget.prev_image()
-                return
             if event.keysym == 'Home':
                 self.pho_widget.goto_imageno(0)
-                return
             if event.keysym == 'End':
                 self.pho_widget.goto_imageno(-1)
-                return
         except FileNotFoundError as e:
             print(e)
             # FileNotFoundError only happens if none of the specified
             # images are viewable.
-            sys.exit(1)
+            self.quit()
         except IndexError as e:
             # Can't go beyond last image.
             ans = messagebox.askyesno("Last Image",
                                       "Last image: quit?")
             # This will be true if the user said yes, quit
             if ans:
-                sys.exit(0)
+                self.quit()
+
+        self.update_title()
+
+    def update_title(self):
+        self.root.title(f"Pho: {self.pho_widget.current_image().relpath}")
 
     def digit_handler(self, event):
         self.pho_widget.current_image().add_tag(event.keysym)
@@ -242,7 +246,7 @@ class PhoWindow:
         if ans:
             self.pho_widget.delete_current()
 
-    def quit_handler(self, event):
+    def quit_handler(self, event=None):
         if VERBOSE:
             print("Bye")
 
@@ -323,7 +327,7 @@ PHO_CMD : command to run when pressing g (default: gimp).
 
     if args.randomize:
         random.seed()
-        args.images = random.shuffle(args.images)
+        random.shuffle(args.images)
 
     # The geometry argument is mostly for testing, to make sure
     # fixed size spaces like in metapho still work.
