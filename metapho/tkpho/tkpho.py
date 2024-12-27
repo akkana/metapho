@@ -19,7 +19,7 @@ class PhoWindow:
        through the image list, rotate, zoom, delete, etc.
     """
 
-    def __init__(self, img_list=[], fixed_size=None):
+    def __init__(self, img_list=[], fixed_size=None, fullscreen=False):
         self.full_size = False
 
         self.root = tk.Tk()
@@ -88,6 +88,9 @@ class PhoWindow:
         self.root.bind('<Key-q>', self.quit)
         self.root.bind('<Control-Key-q>', self.quit)
 
+        if fullscreen:
+            self.go_fullscreen(True)
+
     def run(self):
         try:
             self.pho_widget.next_image()
@@ -152,23 +155,25 @@ class PhoWindow:
                print("Resize event, but who cares?")
 
     def fullscreen_handler(self, event):
-        """f toggles, ESC gets out of fullscreen"""
+        """f toggles, ESC gets out of fullscreen.
+        """
         # Escape should always exit fullscreen
-        if (event.keysym == 'Escape' or
-            self.root.attributes('-fullscreen')):  # already fullscreen
-            self.root.attributes("-fullscreen", False)
-            # Sadly, the viewer widget can't just check the root attributes
-            # before set_size(), because the root attribute won't actually
-            # change until later, so now, it will still show as True.
-            self.pho_widget.set_fullscreen(False)
-            if VERBOSE:
-                print("Out of fullscreen, fixed_size is", self.fixed_size)
+        if event.keysym == 'Escape':
+            return self.go_fullscreen(False)
 
-            # disable middlemouse dragging
-            # self.root.bind("<B2-Motion>", None)
-            self.root.unbind("<B2-Motion>")
+        # Else toggle
+        if (self.root.attributes('-fullscreen')):  # already fullscreen
+            return self.go_fullscreen(False)
 
         else:
+            return self.go_fullscreen(True)
+
+    def go_fullscreen(self, fullscreen_on):
+        """fullscreen_on==True -> go to fullscreen
+           fullscreen_on==False -> out of fullscreen
+           fullscreen_on==None -> toggle
+        """
+        if fullscreen_on:
             # Into fullscreen
             self.root.attributes("-fullscreen", True)
             if VERBOSE:
@@ -185,6 +190,18 @@ class PhoWindow:
             self.root.bind("ButtonPress-2", self.start_drag)
             self.root.bind("<B2-Motion>", self.drag)
             self.root.bind("ButtonRelease-2", self.end_drag)
+        else:
+            self.root.attributes("-fullscreen", False)
+            # Sadly, the viewer widget can't just check the root attributes
+            # before set_size(), because the root attribute won't actually
+            # change until later, so now, it will still show as True.
+            self.pho_widget.set_fullscreen(False)
+            if VERBOSE:
+                print("Out of fullscreen, fixed_size is", self.fixed_size)
+
+            # disable middlemouse dragging
+            # self.root.bind("<B2-Motion>", None)
+            self.root.unbind("<B2-Motion>")
 
         # viewer.set_size() should redraw as necessary
 
@@ -306,8 +323,12 @@ PHO_CMD : command to run when pressing g (default: gimp).
 
     parser = argparse.ArgumentParser(
         description="Pho, an image viewer and tagger")
-    parser.add_argument('-d', "--debug", dest="debug", default=False,
-                        action="store_true", help="Print debugging messages")
+    parser.add_argument('-p', "--presentation", dest="presentation",
+                        default=False, action="store_true",
+                        help="Presentation mode (full screen, centered)")
+    parser.add_argument('-P', "--nopresentation", dest="nopresentation",
+                        default=False, action="store_true",
+                        help="NOT presentation mode")
     parser.add_argument('-R', "--randomize", dest="randomize", default=False,
                         action="store_true",
                         help="Present images in random order")
@@ -317,6 +338,8 @@ PHO_CMD : command to run when pressing g (default: gimp).
     parser.add_argument("--geometry", dest="geometry", action="store",
                         help="A geometry size string, WIDTHxHEIGHT "
                              "(sorry, no x and y position)")
+    parser.add_argument('-d', "--debug", dest="debug", default=False,
+                        action="store_true", help="Print debugging messages")
     parser.add_argument('images', nargs='+', help="Images to show")
     args = parser.parse_args(sys.argv[1:])
 
@@ -324,6 +347,9 @@ PHO_CMD : command to run when pressing g (default: gimp).
     # changing the one imported from PhoWidget
     if args.debug:
         VERBOSE = True
+
+    if args.nopresentation:
+        args.presentation = False
 
     if args.randomize:
         random.seed()
@@ -339,7 +365,8 @@ PHO_CMD : command to run when pressing g (default: gimp).
         except RuntimeError as e:
             print("Couldn't parse geometry string '%s'" % args.geometry)
 
-    pwin = PhoWindow(args.images, fixed_size=win_size)
+    pwin = PhoWindow(args.images, fixed_size=win_size,
+                     fullscreen=args.presentation)
     pwin.run()
 
 
