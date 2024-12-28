@@ -10,7 +10,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 import random
-import sys
+import sys, os
 
 
 class PhoWindow:
@@ -341,7 +341,15 @@ PHO_CMD : command to run when pressing g (default: gimp).
     parser.add_argument('-d', "--debug", dest="debug", default=False,
                         action="store_true", help="Print debugging messages")
     parser.add_argument('images', nargs='+', help="Images to show")
-    args = parser.parse_args(sys.argv[1:])
+
+    # Also look at PHO_ARGS environment variable
+    try:
+        envargs = os.getenv('PHO_ARGS').split()
+        argv = envargs + sys.argv[1:]
+    except:
+        argv = sys.argv[1:]
+
+    args = parser.parse_args(argv)
 
     # This doesn't work: it sets a file-local VERBOSE rather than
     # changing the one imported from PhoWidget
