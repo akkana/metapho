@@ -9,7 +9,7 @@ GTK UI classes for metapho: an image tagger and viewer.
 import metapho
 from metapho import MetaphoImage, g_image_list
 
-from .PhoWidget import PhoWidget, PhoImage, VERBOSE
+from .tkPhoWidget import tkPhoWidget, VERBOSE
 
 import tkinter as tk
 from tkinter import messagebox
@@ -120,8 +120,8 @@ class TkTagViewer(metapho.Tagger):
                             buttonbox.winfo_height())
         # print("viewer size is", self.viewer_size)
         # viewer_frame.resize(*self.viewer_`size)
-        self.pho_widget = PhoWidget(viewer_frame, img_list=img_list,
-                                    size=self.viewer_size)
+        self.pho_widget = tkPhoWidget(viewer_frame, img_list=img_list,
+                                      size=self.viewer_size)
 
         root.bind('<Key-Return>', self.new_tag)
         root.bind('<Control-Key-space>', self.next_image)

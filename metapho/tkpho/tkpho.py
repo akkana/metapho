@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-# from . import ImageViewer
-# from metapho.ImageViewer import PhoWidget
-
-from .PhoWidget import PhoImage, PhoWidget, VERBOSE
+from .tkPhoWidget import tkPhoImage, tkPhoWidget, VERBOSE
 
 import tkinter as tk
 # You can't just use tk.messagebox, apparently
@@ -13,7 +10,7 @@ import random
 import sys, os
 
 
-class PhoWindow:
+class tkPhoWindow:
     """The main window for Pho.
        Shows a PhoWidget and has bindings to let the user move
        through the image list, rotate, zoom, delete, etc.
@@ -31,7 +28,7 @@ class PhoWindow:
             self.fixed_size = fixed_size
         else:
             self.fixed_size = None
-        self.pho_widget = PhoWidget(self.root, img_list, size=self.fixed_size)
+        self.pho_widget = tkPhoWidget(self.root, img_list, size=self.fixed_size)
 
         # Middlemouse drag is only needed when fullscreen AND fullsize
         self.dragging_from = None
@@ -352,7 +349,7 @@ PHO_CMD : command to run when pressing g (default: gimp).
     args = parser.parse_args(argv)
 
     # This doesn't work: it sets a file-local VERBOSE rather than
-    # changing the one imported from PhoWidget
+    # changing the one imported from tkPhoWidget
     if args.debug:
         VERBOSE = True
 
@@ -373,8 +370,8 @@ PHO_CMD : command to run when pressing g (default: gimp).
         except RuntimeError as e:
             print("Couldn't parse geometry string '%s'" % args.geometry)
 
-    pwin = PhoWindow(args.images, fixed_size=win_size,
-                     fullscreen=args.presentation)
+    pwin = tkPhoWindow(args.images, fixed_size=win_size,
+                       fullscreen=args.presentation)
     pwin.run()
 
 

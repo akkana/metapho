@@ -29,7 +29,7 @@ def get_screen_size(root):
     return root.winfo_screenwidth(), root.winfo_screenheight()
 
 
-class PhoImage (MetaphoImage):
+class tkPhoImage (MetaphoImage):
     """An image object that saves an original PILImage object
        read in from disk, some state such as rotation,
        possibly a scaled and rotated display PILImage.
@@ -63,7 +63,7 @@ class PhoImage (MetaphoImage):
             extra += ' orig %dx%d' % self.orig_img.size
         if self.display_img:
             extra += ' displayed %dx%d' % self.display_img.size
-        return f'<PhoImage {self.relpath}{extra}>'
+        return f'<tkPhoImage {self.relpath}{extra}>'
 
     # Properties
     def get_size(self):
@@ -206,7 +206,7 @@ class PhoImage (MetaphoImage):
         return self.display_img
 
 
-class PhoWidget:
+class tkPhoWidget:
     """An object that can be displayed inside a window
        and holds an image list.
        It can move forward (next) and back (previous) through the list,
@@ -224,7 +224,7 @@ class PhoWidget:
         # Trying to treat metapho.g_image_list like a global
         # doesn't work; need to make sure the g_image_list used is
         # the one from base metapho, not a new one created here.
-        g_image_list.extend([ PhoImage(f) for f in img_list ])
+        g_image_list.extend([ tkPhoImage(f) for f in img_list ])
 
         self.imgno = -1
 
@@ -261,13 +261,13 @@ class PhoWidget:
         self.lwidget.configure(background='black')
 
     def current_image(self):
-        """Returns a PhoImage"""
+        """Returns a tkPhoImage"""
         return g_image_list[self.imgno]
 
     def add_image(self, imgpath):
         """Add an image to the image list.
         """
-        g_image_list.append(PhoImage(imgpath))
+        g_image_list.append(tkPhoImage(imgpath))
 
     def get_widget_size(self):
         return (self.lwidget.winfo_width(),
@@ -288,7 +288,7 @@ class PhoWidget:
            allow it to override self.fixed_size.
         """
         if VERBOSE:
-            print("PhoWidget set_size", newsize)
+            print("tkPhoWidget set_size", newsize)
 
         if not newsize and not self.widget_size:
             self.widget_size = self.get_widget_size()
@@ -310,7 +310,7 @@ class PhoWidget:
            -1 for invalid image or other error.
         """
         if VERBOSE:
-            print("PhoWidget.show_image, widget size is", self.widget_size)
+            print("tkPhoWidget.show_image, widget size is", self.widget_size)
 
         try:
             pil_img = self.resize_to_fit()
@@ -396,7 +396,7 @@ class PhoWidget:
         return cur_img.resize_to_fit(target_size)
 
     def translate(self, dx, dy):
-        # print("PhoWidget.translate", dx, dy, "->",
+        # print("tkPhoWidget.translate", dx, dy, "->",
         #       self.fullsize_offset, end='')
         self.fullsize_offset = (self.fullsize_offset[0] + dx,
                                 self.fullsize_offset[1] + dy)
@@ -478,7 +478,7 @@ class PhoWidget:
                 # MetaphoImage' object has no attribute 'load'
                 # meaning that we have a MetaphoImage in g_image_list
                 # because the tagger read its tags from an existing Tags
-                # file, but no GUI PhoImage was created for it because
+                # file, but no GUI tkPhoImage was created for it because
                 # it wasn't in the argument list.
                 # In that case, skip it in the GUI, but don't delete it from
                 # g_image_list because its tags still need to be preserved.
@@ -544,7 +544,8 @@ class PhoWidget:
 
 
 class SimpleImageViewerWindow:
-    """A simple example of how to use PhoWidget
+    """A simple example of how to use tkPhoWidget.
+       For something more elaborate, see tkpho.py.
     """
     def __init__(self, img_list=[], fixed_size=None):
 
@@ -557,8 +558,8 @@ class SimpleImageViewerWindow:
             self.fixed_size = fixed_size
         else:
             self.fixed_size = None
-        self.viewer = PhoWidget(self.root, img_list,
-                                size=self.fixed_size)
+        self.viewer = tkPhoWidget(self.root, img_list,
+                                  size=self.fixed_size)
         self.root.bind('<Key-space>', self.image_nav_handler)
         self.root.bind('<Key-BackSpace>', self.image_nav_handler)
         self.root.bind('<Key-Home>', self.image_nav_handler)
