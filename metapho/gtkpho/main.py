@@ -12,6 +12,7 @@ for viewing images and tagging them.
 import metapho
 from metapho import __version__    # See comment in main()
 import metapho.gtkpho as gtkpho
+from metapho import imagelist
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -30,7 +31,7 @@ class MetaPhoWindow(object):
 
     def __init__(self, file_list):
         for filename in file_list:
-            metapho.g_image_list.append(metapho.MetaphoImage(filename))
+            imagelist.add_images(metapho.MetaphoImage(filename))
 
         self.imgno = -1
 
@@ -97,7 +98,7 @@ class MetaPhoWindow(object):
         self.next_image()
 
     def lastImage(self):
-        self.imgno = len(metapho.g_image_list)
+        self.imgno = imagelist.num_images()
         self.prev_image()
 
     def next_image(self):
@@ -111,15 +112,15 @@ class MetaPhoWindow(object):
         self.tagger.sync()
         oldtags = None
         try:
-            if self.imgno >= 0 and metapho.g_image_list[self.imgno].tags:
-                oldtags = metapho.g_image_list[self.imgno].tags
+            if self.imgno >= 0 and imagelist.image_list()[self.imgno].tags:
+                oldtags = imagelist.image_list()[self.imgno].tags
         except:
             print("Couldn't load image #", self.imgno)
             pass
 
-        while self.imgno < len(metapho.g_image_list)-1 and not loaded:
+        while self.imgno < imagelist.num_images()-1 and not loaded:
             self.imgno += 1
-            img = metapho.g_image_list[self.imgno]
+            img = imagelist.image_list()[self.imgno]
             if img.displayed:
                 loaded = self.viewer.load_image(img)
                 if loaded:
@@ -145,11 +146,11 @@ class MetaPhoWindow(object):
         if loaded:
             # If we have an image, and it has no tags set yet,
             # clone the tags from the previous image:
-            if oldtags and not metapho.g_image_list[self.imgno].tags:
-                metapho.g_image_list[self.imgno].tags = oldtags[:]
+            if oldtags and not imagelist.image_list()[self.imgno].tags:
+                imagelist.image_list()[self.imgno].tags = oldtags[:]
                 self.tagger.changed = True
 
-            self.tagger.set_image(metapho.g_image_list[self.imgno])
+            self.tagger.set_image(imagelist.image_list()[self.imgno])
 
         else :           # couldn't load anything in the list
             dialog = gtk.MessageDialog(self.win,
@@ -167,7 +168,7 @@ class MetaPhoWindow(object):
         loaded = False
         while self.imgno >= 1 and not loaded:
             self.imgno -= 1
-            img = metapho.g_image_list[self.imgno]
+            img = imagelist.image_list()[self.imgno]
             if img.displayed:
                 loaded = self.viewer.load_image(img)
                 if loaded:
@@ -179,7 +180,7 @@ class MetaPhoWindow(object):
                     #del(metapho.g_image_list[self.imgno])
 
         if loaded:
-            self.tagger.set_image(metapho.g_image_list[self.imgno])
+            self.tagger.set_image(imagelist.image_list()[self.imgno])
         else :          # couldn't load anything in the list
             print("Can't go before first image")
 
@@ -195,7 +196,7 @@ class MetaPhoWindow(object):
                                    #gtk.BUTTONS_YES_NO,
                                    gtk.BUTTONS_CANCEL,
                                    "Delete %s ?" % \
-                                     metapho.g_image_list[self.imgno])
+                                     imagelist.image_list()[self.imgno])
         delete_btn = dialog.add_button("Delete", gtk.RESPONSE_YES)
 
         # Handle key events on the dialog,
@@ -260,7 +261,7 @@ class MetaPhoWindow(object):
         if event.keyval == gtk.keysyms.d and \
                 event.state & gtk.gdk.CONTROL_MASK:
             if self.delete_confirm():
-                metapho.g_image_list[self.imgno].delete()
+                imagelist.image_list()[self.imgno].delete()
                 self.imgno -= 1
                 self.next_image()
             return True
@@ -268,7 +269,7 @@ class MetaPhoWindow(object):
         # Ctrl-U: clear tags, then leave focus in the first empty tag field.
         if event.keyval == gtk.keysyms.u and \
                 event.state & gtk.gdk.CONTROL_MASK:
-            self.tagger.clear_tags(metapho.g_image_list[self.imgno])
+            self.tagger.clear_tags(imagelist.image_list()[self.imgno])
             # Turns out auto-focusing the next entry is annoying,
             # so don't do it:
             # self.tagger.focus_next_entry()
@@ -285,10 +286,10 @@ class MetaPhoWindow(object):
                 event.state & gtk.gdk.CONTROL_MASK:
             if not self.zoomview:
                 self.zoomview = gtkpho.ImageViewerWindow(
-                    metapho.g_image_list[self.imgno],
+                    imagelist.image_list()[self.imgno],
                     exit_on_q=False)
             else:
-                self.zoomview.add_image(metapho.g_image_list[self.imgno])
+                self.zoomview.add_image(imagelist.image_list()[self.imgno])
             self.zoomview.run()
             return True
 
@@ -317,7 +318,7 @@ class MetaPhoWindow(object):
         # Alpha: it's a tag
         if event.string.isalpha():
             self.tagger.toggle_tag_by_letter(event.string,
-                                    metapho.g_image_list[self.imgno])
+                                    imagelist.image_list()[self.imgno])
             return True
 
         # Digits: go to a specific tag category
@@ -350,7 +351,7 @@ class MetaPhoWindow(object):
     def update_image_title(self):
         self.tagger.title.set_text("%s (%d of %d)" % (
                     os.path.basename(
-                        metapho.g_image_list[self.imgno].filename),
+                        imagelist.image_list()[self.imgno].filename),
                     self.imgno + 1,
                     metapho.num_displayed_images()))
 

@@ -6,7 +6,8 @@ from itertools import takewhile
 import re
 import sys, os
 
-from .metapho import g_image_list, MetaphoImage
+from . import imagelist
+from .metapho import MetaphoImage
 
 
 # commonprefix is buggy, doesn't restrict itself to path components, see
@@ -23,8 +24,6 @@ def commonprefix(paths):
 
 class Tagger(object):
     """Manages tags for images.
-
-       Uses g_image_list.
     """
 
     # Extensions we explicitly don't handle that might nevertheless
@@ -98,7 +97,7 @@ class Tagger(object):
 
                 imgstr = ''
                 imglist = []
-                for img in g_image_list:
+                for img in imagelist.image_list():
                     if tagno in img.tags:
                         imglist.append(img)
 
@@ -157,7 +156,7 @@ class Tagger(object):
         """
         dirs = set()
 
-        for img in g_image_list:
+        for img in imagelist.image_list():
             dirname = os.path.abspath(os.path.dirname(img.filename))
             dirs.add(dirname)
 
@@ -310,7 +309,7 @@ tag Bruny Island: img 008.jpg
         # Search for images matching the names in filenames.
         for fil in filenames:
             tagged = False
-            for img in g_image_list:
+            for img in imagelist.image_list():
                 # if img.filename.endswith(fil) and tagindex not in img.tags:
                 if fil.endswith(img.relpath):
                     if tagindex not in img.tags:
@@ -323,7 +322,7 @@ tag Bruny Island: img 008.jpg
             if not tagged:
                 newim = MetaphoImage(fil, displayed=False)
                 newim.tags.append(tagindex)
-                g_image_list.append(newim)
+                imagelist.add_images(newim)
 
     def add_tag(self, tag, img):
         """Add a tag to the given image.
@@ -375,7 +374,7 @@ tag Bruny Island: img 008.jpg
         numtags = len(self.categories[self.current_category])
 
         newstr = newstr.strip()
-        cur_img = g_image_list[self.pho_widget.imgno]
+        cur_img = imagelist.current_image()
 
         # If the string is now empty, and it's the last tag
         # in both this category and the overall tag list,
@@ -466,7 +465,7 @@ tag Bruny Island: img 008.jpg
                 # Now we have a file that should be tagged. Is it?
                 nfiles += 1
                 filepath = os.path.abspath(os.path.join(root, f))
-                if filepath not in g_image_list:
+                if filepath not in imagelist.image_list():
                     local_untagged.append(filepath)
                 elif not some_local_tags:
                     some_local_tags = True

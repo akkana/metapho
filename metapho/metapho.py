@@ -1,25 +1,18 @@
 #!/usr/bin/env python
 
-# Copyright 2013,2016,2019 by Akkana Peck:
+# Copyright 2013,2016,2019,2024 by Akkana Peck:
 # share and enjoy under the GPL v2 or later.
 
 """
-These are the base class for metapho images and taggers.
-Programs with better UI can inherit from these classes.
-
+The base class for metapho images.
+Programs with a GUI can inherit from MetaphoImage.
 """
-
-# MetaphoImage and Tagger classes have to be defined here in order for
-# other files to be able to use them as metapho.MetaphoImage rather than
-# metapho.MetaphoImage.MetaphoImage. I haven't found any way that lets me split
-# the classes into separate files. Sigh!
 
 from collections import defaultdict
 import sys, os
 
+from . import imagelist
 
-# A list of all the filenames the program knows about.
-g_image_list = []
 
 # The image list has both displayed and nondisplayed images,
 # because it's possible to run metapho on a subset of images in a directory,
@@ -28,7 +21,8 @@ g_image_list = []
 # want to forget their tags.
 # XXX would this be any faster as a generator comprehension?
 def displayed_images():
-    return [ im for im in g_image_list if im.displayed and not im.invalid ]
+    return [ im for im in imagelist.image_list()
+             if im.displayed and not im.invalid ]
 
 def num_displayed_images():
     return len(displayed_images())
@@ -39,10 +33,10 @@ def find_in_displayed_images():
     return index, len(imgs)
 
 def num_hidden_images():
-    return len(( i for i in g_image_list if not i.displayed ))
+    return len(( i for i in imagelist.image_list() if not i.displayed ))
 
 def num_total_images():
-    return len(g_image_list)
+    return imagelist.num_images()
 
 
 class MetaphoImage:
@@ -61,6 +55,8 @@ class MetaphoImage:
         # But it's useful to remember relative path too
         self.relpath = filename
 
+        basename = os.path.basename(filename)
+
         self.tags = []
 
         self.displayed = displayed
@@ -68,10 +64,10 @@ class MetaphoImage:
         # Some filenames, like Tags, are known not to be images.
         # In other cases, an image that can't be opened also
         # shouldn't be considered as an image since it will never
-        # be shown to the user. Start out by assuming everything's valid
-        # except Tags*.
-        if ((filename.startswith("Tags") or filename.startswith("Keywords"))
-            and ("." not in filename or filename.endswith(".bak"))):
+        # be shown to the user.
+        # Start out by assuming everything's valid except Tags*.
+        if ((basename.startswith("Tags") or basename.startswith("Keywords"))
+            and ("." not in basename or basename.endswith(".bak"))):
             self.invalid = True
         else:
             # For anything else, start out assuming it's okay
@@ -119,7 +115,7 @@ class MetaphoImage:
         """
         print("Deleting", self.filename)
         os.unlink(self.filename)
-        g_image_list.remove(self)
+        imagelist.remove_image(self)
 
     def add_tag(self, newtag):
         if newtag in self.tags:
@@ -137,7 +133,7 @@ class MetaphoImage:
         """Return a dictionary of { tag: [list of tagged images] }
         """
         alltagged = defaultdict(list)
-        for img in g_image_list:
+        for img in imagelist.image_list():
             for tag in img.tags:
                 alltagged[tag].append(img)
         return alltagged
@@ -147,7 +143,7 @@ class MetaphoImage:
         """Find a name in the global image list. Return index, or None."""
         if not self.invalid:
             return None
-        for i, img in enumerate(g_image_list):
+        for i, img in enumerate(imagelist.image_list()):
             if img.filename == filename:
                 return i
         return None
@@ -157,7 +153,7 @@ class MetaphoImage:
         """Returns a list of images in the imagelist that don't exist on disk.
         """
         not_on_disk = set()
-        for im in g_image_list:
+        for im in imagelist.image_list():
             if not os.path.exists(im.filename):
                 not_on_disk.add(im.filename)
         not_on_disk = list(not_on_disk)
@@ -186,7 +182,7 @@ class MetaphoImage:
                 if f in nefbases:
                     try:
                         i = cls.image_index(nefdict[f])
-                        g_image_list[i].filename = os.path.join(root, f)
+                        imagelist.get_image(i).filename = os.path.join(root, f)
                     except ValueError:
                         print("Eek!", nefdict[f], \
                             "has vanished from the global image list")
@@ -200,7 +196,7 @@ class MetaphoImage:
             # print("Removing missing files from Tags file:", \
             #     ' '.join([nefdict[f] for f in nefbases]))
             for f in nefbases:
-                g_image_list.remove(nefdict[f])
+                imagelist.remove_image(nefdict[f])
 
 if __name__ == '__main__':
     main()

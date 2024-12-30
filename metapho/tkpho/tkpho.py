@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
 
-from .tkPhoWidget import tkPhoImage, tkPhoWidget, VERBOSE
+from .tkPhoImage import tkPhoImage
+from .tkPhoWidget import tkPhoWidget, VERBOSE
 
 import tkinter as tk
 # You can't just use tk.messagebox, apparently
-from tkinter import messagebox
+from tkinter import messagebox, Toplevel
 
 import random
 import sys, os
 
 
-class tkPhoWindow:
-    """The main window for Pho.
-       Shows a PhoWidget and has bindings to let the user move
+class tkPhoWindow (Toplevel):
+    """The main window for tkPho.
+       Shows a tkPhoWidget and has bindings to let the user move
        through the image list, rotate, zoom, delete, etc.
     """
 
-    def __init__(self, img_list=[], fixed_size=None, fullscreen=False):
+    def __init__(self, img_list=[], fixed_size=None, fullscreen=None):
+        if fullscreen is None:
+            fullscreen = False
+
         self.full_size = False
 
         self.root = tk.Tk()
@@ -265,7 +269,7 @@ class tkPhoWindow:
             print("Bye")
 
         # Print any tags that were set
-        tagged = PhoImage.tagged_images()
+        tagged = tkPhoImage.tagged_images()
         for tag in tagged:
             print("%s: %s" % (tag, ' '.join([img.relpath
                                              for img in tagged[tag]])))

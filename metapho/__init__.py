@@ -2,7 +2,7 @@
 
 # metapho: an image tagger and viewer.
 
-# Copyright 2013-2021 by Akkana Peck: share and enjoy under the GPL v2 or later.
+# Copyright 2013-2024 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
 '''metapho: an image tagger and viewer.'''
 

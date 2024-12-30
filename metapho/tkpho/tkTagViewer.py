@@ -2,14 +2,17 @@
 
 """
 GTK UI classes for metapho: an image tagger and viewer.
+This also contains main() for the Tk version of metapho.
 """
 
 # Copyright 2024 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
 import metapho
-from metapho import MetaphoImage, g_image_list
+from metapho import MetaphoImage
+from metapho import imagelist
 
 from .tkPhoWidget import tkPhoWidget, VERBOSE
+from .tkpho import tkPhoWindow
 
 import tkinter as tk
 from tkinter import messagebox
@@ -23,6 +26,7 @@ from functools import partial
 root = tk.Tk()
 
 class TkTagViewer(metapho.Tagger):
+    """The main tk metapho window, working as a metapho Tagger"""
 
     PADDING = 1
 
@@ -30,6 +34,9 @@ class TkTagViewer(metapho.Tagger):
         metapho.Tagger.__init__(self)
 
         self.num_rows = 26
+
+        # A separate window to allow zooming or fullsize viewing
+        self.pho_win = None
 
         # default bg color, which we'll read once the window is up.
         # As I test it initially, it's #d9d9d9
@@ -62,7 +69,8 @@ class TkTagViewer(metapho.Tagger):
             '<Key-Home>':          partial(self.goto_image, 0),
             '<Key-End>':           partial(self.goto_image, -1),
             '<Control-Key-u>':     self.clear_tags,
-            '<Key-slash>':         self.search
+            '<Key-slash>':         self.search,
+            '<Control-Key-z>':     self.popup_pho_window,
         }
 
         for row, letter in enumerate(ascii_lowercase):
@@ -190,10 +198,10 @@ class TkTagViewer(metapho.Tagger):
         self.update_window_from_image()
 
     def set_title(self):
-        img = g_image_list[self.pho_widget.imgno]
+        img = imagelist.current_image()
         root.title("%s (%d of %d)" % (
             os.path.basename(img.filename),
-            self.pho_widget.imgno + 1,
+            imagelist.current_imageno() + 1,
             metapho.num_displayed_images()))
 
     @staticmethod
@@ -331,7 +339,7 @@ class TkTagViewer(metapho.Tagger):
            image. If the current image has no tags yet, then leave the
            settings from the previous image.
         """
-        img = g_image_list[self.pho_widget.imgno]
+        img = imagelist.current_image()
         # if VERBOSE:
         #     print("Current image:", img)
         #     print("Current category:", self.current_category)
@@ -361,9 +369,21 @@ class TkTagViewer(metapho.Tagger):
                 self.enable_tag(tagno, True)
 
     def update_image_from_window(self):
-        img = g_image_list[self.pho_widget.imgno]
+        img = imagelist.current_image()
         img.tags = [ i for i, b in enumerate(self.buttons)
                      if self.tag_enabled(b) ]
+
+    def popup_pho_window(self, event=None):
+        print("popup_pho_window, imgno=", imagelist.current_imageno())
+        print("  current image is", imagelist.current_image())
+        if not self.pho_win:
+            print("Creating a new pho window")
+            self.pho_win = tkPhoWindow(fixed_size=(800,600), fullscreen=False)
+        else:
+            print("deiconifying old pho window")
+            self.pho_win.deiconify()
+        # self.pho_win.pho_widget.goto_imageno(g_cur_imgno)
+        self.pho_win.pho_widget.show_image()
 
 
 def main():
