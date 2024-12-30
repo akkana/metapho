@@ -80,8 +80,6 @@ class tkPhoWidget:
 
     def current_image(self):
         """Returns a tkPhoImage"""
-        print("tkPhoWidget.current_image (", imagelist.current_imageno(),
-              ") =", imagelist.current_image())
         return imagelist.current_image()
 
     def add_image(self, imgpath):
@@ -137,9 +135,10 @@ class tkPhoWidget:
         except (FileNotFoundError, UnidentifiedImageError) as e:
             # Any exception means it's not a valid image and should
             # be removed from the list.
-            print("Eek, don't know how to handle an exception in show_image",
-                  file=sys.stderr)
-            print("Exception was:", e)
+            if not imagelist.current_image().invalid:
+                print("Eek, exception in show_image",
+                      file=sys.stderr)
+                print("Exception was:", e)
             return
         if not pil_img:
             print("Eek, resize_to_fit didn't return an image!", file=sys.stderr)
@@ -240,7 +239,7 @@ class tkPhoWidget:
                   int((iw - self.root.winfo_screenwidth())/2),
                   int((ih - self.root.winfo_screenheight())/2))
 
-        return pil_img.transform(pil_img.size, Image.AFFINE,
+        return pil_img.transform(pil_img.size, PILImage.AFFINE,
                                  (1, 0,
                                   int((iw - self.root.winfo_screenwidth())/2)
                                   - self.fullsize_offset[0],
@@ -253,7 +252,7 @@ class tkPhoWidget:
         # new_size = (g_image_list[g_cur_imgno].display_img.size[0] - dx,
         #             g_image_list[g_cur_imgno].display_img.size[1] - dy)
         # return cur_img.display_img.transform(
-        #         new_size, Image.EXTENT, (0, 0, new_size[0], new_size[1]))
+        #         new_size, PILImage.EXTENT, (0, 0, new_size[0], new_size[1]))
 
     def rotate(self, rotation):
         imagelist.current_image().rotate(rotation)
