@@ -4,13 +4,14 @@
    Suitable for embedding in larger apps, or use it by itself
    as a standalone image viewer.
 
-   Copyright 2024 by Akkana -- Share and enjoy under the GPLv2 or later.
+   Copyright 2024,2025 by Akkana -- Share and enjoy under the GPLv2 or later.
 """
 
 
-from metapho import MetaphoImage
+from metapho import MetaphoImage, imagelist
+
+# This works when running the installed app, but not when running ./tkPhoWidget
 from .tkPhoImage import tkPhoImage
-from metapho import imagelist
 
 import tkinter as tk
 from PIL import Image as PILImage
@@ -27,7 +28,7 @@ def get_screen_size(root):
     return root.winfo_screenwidth(), root.winfo_screenheight()
 
 
-class tkPhoWidget:
+class tkPhoWidget (tk.Label):
     """An object that can be displayed inside a window
        and holds an image list.
        It can move forward (next) and back (previous) through the list,
@@ -40,12 +41,6 @@ class tkPhoWidget:
            If size is omitted, the widget will be free to resize itself,
            otherwise it will try to fit itself in the space available.
         """
-        # Trying to treat metapho.g_image_list like a global
-        # doesn't work; need to make sure the g_image_list used is
-        # the one from base metapho, not a new one created here.
-        if img_list:
-            imagelist.add_images([ tkPhoImage(f) for f in img_list ])
-
         self.root = parent    # Needed for queries like screen size
 
         self.fixed_size = size
@@ -68,15 +63,22 @@ class tkPhoWidget:
         # no way to specify size in pixels.
         # (You can specify pixel size for ImageTk.PhotoImage.resize()
         # but for that, you have to have an image ready to show.)
-        if size:
-            self.lwidget = tk.Label(parent, width=size[0], height=size[1],
-                                    padx=0, pady=0)
-            self.lwidget.pack(fill="both", expand=False, padx=0, pady=0)
-        else:
-            self.lwidget = tk.Label(parent)
-            self.lwidget.pack(fill="both", expand=True, padx=0, pady=0)
 
-        self.lwidget.configure(background='black')
+        if size:
+            super().__init__(parent, width=size[0], height=size[1],
+                             padx=0, pady=0)
+            self.pack(fill="both", expand=False, padx=0, pady=0)
+        else:
+            super().__init__(parent)
+            self.pack(fill="both", expand=True, padx=0, pady=0)
+
+        self.configure(background='black')
+
+        # Trying to treat metapho.g_image_list like a global
+        # doesn't work; need to make sure the g_image_list used is
+        # the one from base metapho, not a new one created here.
+        if img_list:
+            imagelist.add_images([ tkPhoImage(f) for f in img_list ])
 
     def current_image(self):
         """Returns a tkPhoImage"""
@@ -88,8 +90,8 @@ class tkPhoWidget:
         imagelist.add_images(tkPhoImage(imgpath))
 
     def get_widget_size(self):
-        return (self.lwidget.winfo_width(),
-                self.lwidget.winfo_height())
+        return (self.winfo_width(),
+                self.winfo_height())
 
     def set_fullscreen(self, state):
         self.fullscreen = state
@@ -145,14 +147,15 @@ class tkPhoWidget:
             return
 
         tkimg = ImageTk.PhotoImage(pil_img)
-        self.lwidget.config(image=tkimg)
-        self.lwidget.photo = tkimg
+        self.config(image=tkimg)
+        # self.image = tkimg
+        self.photo = tkimg
 
         # At this point,
-        # self.lwidget.winfo_reqwidth(), self.lwidget.winfo_reqheight()
+        # self.winfo_reqwidth(), self.winfo_reqheight()
         # should be the size of the image,
         # though in practice it adds 2 pixels to both height and width.
-        # self.lwidget.winfo_width(), self.lwidget.winfo_height()
+        # self.winfo_width(), self.winfo_height()
         # is the size of the previous image, i.e. the current widget size,
         # except at the beginning where it's 1, 1
 
@@ -352,7 +355,6 @@ class tkPhoWidget:
             return
 
     def goto_imageno(self, imagenum):
-        print("tkPhoWidget.goto_imageno", imagenum)
         num_images = imagelist.num_images()
         if imagenum >= num_images:
             imagelist.set_current_imageno(num_images)

@@ -4,35 +4,37 @@ from .tkPhoImage import tkPhoImage
 from .tkPhoWidget import tkPhoWidget, VERBOSE
 
 import tkinter as tk
-# You can't just use tk.messagebox, apparently
-from tkinter import messagebox, Toplevel
 
 import random
 import sys, os
 
 
-class tkPhoWindow (Toplevel):
-    """The main window for tkPho.
+class tkPhoWindow:
+    """The main window for tk pho, which can also be used as
+       a popup window from other apps such as metapho.
        Shows a tkPhoWidget and has bindings to let the user move
        through the image list, rotate, zoom, delete, etc.
     """
 
-    def __init__(self, img_list=[], fixed_size=None, fullscreen=None):
+    def __init__(self, parent=None,
+                 img_list=[], fixed_size=None, fullscreen=None):
+        # Run either as main window or as a Toplevel secondary window
+        if parent:
+            self.root = tk.Toplevel(parent)
+        else:
+            self.root = tk.Tk()
+
         if fullscreen is None:
             fullscreen = False
 
         self.full_size = False
 
-        self.root = tk.Tk()
-
         self.root.title("Pho Image Viewer")
 
         # To allow resizing, set self.fixed_size to None
-        if fixed_size:
-            self.fixed_size = fixed_size
-        else:
-            self.fixed_size = None
-        self.pho_widget = tkPhoWidget(self.root, img_list, size=self.fixed_size)
+        self.fixed_size = fixed_size
+        self.pho_widget = tkPhoWidget(self.root,
+                                      img_list, size=self.fixed_size)
 
         # Middlemouse drag is only needed when fullscreen AND fullsize
         self.dragging_from = None
@@ -85,9 +87,8 @@ class tkPhoWindow (Toplevel):
             # fixed size. Otherwise, it will change with image size.
             self.root.bind("<Configure>", self.resize_handler)
 
-        # Exit on either q or Ctrl-q
+        # Exit on either q or Ctrl-q. tkPhoWidget sets the ctrl-q binding.
         self.root.bind('<Key-q>', self.quit)
-        self.root.bind('<Control-Key-q>', self.quit)
 
         if fullscreen:
             self.go_fullscreen(True)
@@ -101,14 +102,10 @@ class tkPhoWindow (Toplevel):
             sys.exit(1)
         self.root.mainloop()
 
-    def add_image(img):
+    def add_image(self, img):
         self.pho_widget.add_image(img)
 
     def image_nav_handler(self, event):
-        # print("geometry now is %dx%d+%d+%d" % (self.root.winfo_x(),
-        #                                        self.root.winfo_y(),
-        #                                        self.root.winfo_width(),
-        #                                        self.root.winfo_height()))
         try:
             if event.keysym == 'space' or event.keysym == 'Next':
                 self.pho_widget.next_image()
@@ -125,12 +122,16 @@ class tkPhoWindow (Toplevel):
             self.quit()
         except IndexError as e:
             # Can't go beyond last image.
-            ans = messagebox.askyesno("Last Image",
-                                      "Last image: quit?")
+            ans = tk.messagebox.askyesno("Last Image",
+                                         "Last image: quit?")
             # This will be true if the user said yes, quit
             if ans:
                 self.quit()
 
+        self.update_title()
+
+    def goto_imageno(self, imgno):
+        self.pho_widget.goto_imageno(imgno)
         self.update_title()
 
     def update_title(self):
@@ -259,13 +260,13 @@ class tkPhoWindow (Toplevel):
         # messagebox with a custom dialog, like
         # https://stackoverflow.com/a/48324446
         # https://stackoverflow.com/a/10065345
-        ans = messagebox.askyesno("Delete", "Really delete?")
+        ans = tk.messagebox.askyesno("Delete", "Really delete?")
         # XXX how to intercept a typed 'd' in this dialog?
         if ans:
             self.pho_widget.delete_current()
 
     def quit(self, event=None):
-        if VERBOSE:
+        if VERBOSE or True:
             print("Bye")
 
         # Print any tags that were set
@@ -374,7 +375,8 @@ PHO_CMD : command to run when pressing g (default: gimp).
         except RuntimeError as e:
             print("Couldn't parse geometry string '%s'" % args.geometry)
 
-    pwin = tkPhoWindow(args.images, fixed_size=win_size,
+    pwin = tkPhoWindow(parent=None, img_list=args.images,
+                       fixed_size=win_size,
                        fullscreen=args.presentation)
     pwin.run()
 

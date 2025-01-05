@@ -5,7 +5,7 @@ GTK UI classes for metapho: an image tagger and viewer.
 This also contains main() for the Tk version of metapho.
 """
 
-# Copyright 2024 by Akkana Peck: share and enjoy under the GPL v2 or later.
+# Copyright 2024,2025 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
 import metapho
 from metapho import MetaphoImage
@@ -23,15 +23,16 @@ from string import ascii_lowercase, ascii_uppercase
 from functools import partial
 
 
-root = tk.Tk()
-
 class TkTagViewer(metapho.Tagger):
     """The main tk metapho window, working as a metapho Tagger"""
 
     PADDING = 1
 
     def __init__(self, img_list):
+
         metapho.Tagger.__init__(self)
+
+        self.root = tk.Tk()
 
         self.num_rows = 26
 
@@ -45,13 +46,13 @@ class TkTagViewer(metapho.Tagger):
         self.active_bg_color = "#f7ffff"
 
         # Now one to hold the button box
-        buttonbox = tk.Frame(root)
+        buttonbox = tk.Frame(self.root)
         # buttonbox.pack(side=tk.RIGHT)
         buttonbox.grid(row=0, column=1)
 
         # Configure columns to have equal width
-        root.columnconfigure(0, weight=1)
-        root.columnconfigure(1, weight=1)
+        self.root.columnconfigure(0, weight=1)
+        self.root.columnconfigure(1, weight=1)
 
         # Image name at the top.
         self.img_name_label = tk.Label(buttonbox)
@@ -63,19 +64,31 @@ class TkTagViewer(metapho.Tagger):
         self.buttons = [None] * 52
         self.entries = [None] * 52
 
-        self.root_bindings = {
+        # Bindings that we want always to be active.
+        self.global_bindings = {
+            '<Control-Key-q>':     self.quit,
+
+            '<Control-Key-space>': self.next_image,
+            '<Key-Escape>':        self.focus_none,
+
+            '<Control-Key-z>':     self.popup_pho_window,
+            '<Key-Return>':        self.new_tag,
+        }
+
+        # Bindings that will be disabled when focus is in a text field
+        # Letter keys will be added to this
+        self.win_bindings = {
             '<Key-space>':         self.next_image,
             '<Key-BackSpace>':     self.prev_image,
+            '<Key-slash>':         self.search,
             '<Key-Home>':          partial(self.goto_image, 0),
             '<Key-End>':           partial(self.goto_image, -1),
             '<Control-Key-u>':     self.clear_tags,
-            '<Key-slash>':         self.search,
-            '<Control-Key-z>':     self.popup_pho_window,
         }
 
         for row, letter in enumerate(ascii_lowercase):
             callback = partial(self.letter_button_press, letter)
-            self.root_bindings[f'<Key-{letter}>'] = callback
+            self.win_bindings[f'<Key-{letter}>'] = callback
             self.buttons[row] = tk.Button(buttonbox, text=letter,
                                           bg=self.bg_color,
                                           name=f'button{letter}',
@@ -93,7 +106,7 @@ class TkTagViewer(metapho.Tagger):
 
             upletter = letter.upper()
             callback = partial(self.letter_button_press, upletter)
-            self.root_bindings[f'<Key-{upletter}>'] = callback
+            self.win_bindings[f'<Key-{upletter}>'] = callback
             self.buttons[row+self.num_rows] = tk.Button(buttonbox,
                                                         text=letter.upper(),
                                              bg=self.bg_color,
@@ -116,7 +129,7 @@ class TkTagViewer(metapho.Tagger):
         #       buttonbox.winfo_width(), buttonbox.winfo_height())
 
         # make a space to hold the image viewer
-        viewer_frame = tk.Frame(root,
+        viewer_frame = tk.Frame(self.root,
                                 width=buttonbox.winfo_width(),
                                 height=buttonbox.winfo_height())
         # viewer_frame.pack(side=tk.LEFT)
@@ -131,14 +144,7 @@ class TkTagViewer(metapho.Tagger):
         self.pho_widget = tkPhoWidget(viewer_frame, img_list=img_list,
                                       size=self.viewer_size)
 
-        root.bind('<Key-Return>', self.new_tag)
-        root.bind('<Control-Key-space>', self.next_image)
-        root.bind('<Key-Escape>', self.focus_none)
-
-        self.global_key_bindings(True)
-
-        # Exit on Ctrl-q
-        root.bind('<Control-Key-q>', self.quit)
+        self.set_bindings(True, self.root)
 
         self.read_all_tags_for_images()
 
@@ -153,19 +159,27 @@ class TkTagViewer(metapho.Tagger):
         self.update_window_from_image()
 
 
-    def global_key_bindings(self, enable):
+    def set_bindings(self, enable, widget=None):
         """TkInter doesn't have a way to override window-wide key bindings
            when focus goes to a widget that needs input, like an Entry.
            Therefore, when focus goes to an entry, call
-           global_key_bindings(False) to temporarily disable
+           set_bindings(False) to temporarily disable
            all the other key bindings that might be typed in an entry.
-           On focus out, call global_key_bindings(True) to restore them.
+           On focus out, call set_bindings(True) to restore them.
+
+           This is also used to enable bindings in the child Pho window.
         """
-        for key in self.root_bindings:
-            if enable:
-                root.bind(key, self.root_bindings[key])
-            else:
-                root.unbind(key, None)
+        if not widget:
+            widget = self.root
+
+        if enable:
+            for key in self.global_bindings:
+                widget.bind(key, self.global_bindings[key])
+            for key in self.win_bindings:
+                widget.bind(key, self.win_bindings[key])
+        else:
+            for key in self.win_bindings:
+                widget.unbind(key, None)
 
     def next_image(self, event=None):
         self.focus_none()
@@ -188,7 +202,7 @@ class TkTagViewer(metapho.Tagger):
 
         self.update_window_from_image()
 
-    def goto_image(self, imageno, event):
+    def goto_image(self, imageno, event=None):
         self.focus_none()
         self.update_image_from_window()
 
@@ -199,7 +213,7 @@ class TkTagViewer(metapho.Tagger):
 
     def set_title(self):
         img = imagelist.current_image()
-        root.title("%s (%d of %d)" % (
+        self.root.title("%s (%d of %d)" % (
             os.path.basename(img.filename),
             imagelist.current_imageno() + 1,
             metapho.num_displayed_images()))
@@ -216,7 +230,7 @@ class TkTagViewer(metapho.Tagger):
         if VERBOSE:
             print("Focus in", event.widget)
         if type(event.widget) is tk.Entry:
-            self.global_key_bindings(False)
+            self.set_bindings(False)
 
     def on_focus_out(self, event):
         if type(event.widget) is not tk.Entry:
@@ -238,12 +252,12 @@ class TkTagViewer(metapho.Tagger):
         self.change_tag(entryno, newstr)
 
         # Enable global key bindings
-        self.global_key_bindings(True)
+        self.set_bindings(True)
 
     def focus_none(self, event=None):
         # Called on Escape.
         # Find the currently focused widget:
-        w = root.focus_get()
+        w = self.root.focus_get()
         if type(w) is tk.Entry:
             if not w.get():
                 # Nothing was typed in, so un-highlight the row
@@ -252,7 +266,7 @@ class TkTagViewer(metapho.Tagger):
                 self.enable_tag(index, False)
 
         # Set focus to none
-        root.focus()
+        self.root.focus()
 
     def letter_button_press(self, letter, event=None):
         # Tk doesn't have actual toggle buttons; you have to handle
@@ -280,11 +294,11 @@ class TkTagViewer(metapho.Tagger):
     def quit(self, event=None):
         # Write tags to disk, if they changed
         self.write_tag_file()
-        root.destroy()
-        # People say to quit by calling root.destroy(), but doing so leads to
+        self.root.destroy()
+        # People say to quit by calling self.root.destroy(), but doing so leads to
         # _tkinter.TclError: can't invoke "wm" command:
         #     application has been destroyed
-        # so call sys.exit too:
+        # so call sys.exit instead:
         sys.exit(0)
 
     def new_tag(self, event=None):
@@ -368,28 +382,35 @@ class TkTagViewer(metapho.Tagger):
             for tagno in img.tags:
                 self.enable_tag(tagno, True)
 
+        if self.pho_win:
+            self.pho_win.goto_imageno(imagelist.current_imageno())
+
     def update_image_from_window(self):
         img = imagelist.current_image()
         img.tags = [ i for i, b in enumerate(self.buttons)
                      if self.tag_enabled(b) ]
 
     def popup_pho_window(self, event=None):
-        print("popup_pho_window, imgno=", imagelist.current_imageno())
-        print("  current image is", imagelist.current_image())
         if not self.pho_win:
-            print("Creating a new pho window")
-            self.pho_win = tkPhoWindow(fixed_size=(800,600), fullscreen=False)
+            self.pho_win = tkPhoWindow(parent=self.root,
+                                       fixed_size=None, fullscreen=False)
+            self.pho_win.root.protocol("WM_DELETE_WINDOW",
+                                  lambda ev: pho_win.withdraw())
+            # self.pho_win.root.bind('<Key-q>', lambda ev: pho_win.withdraw())
+            # self.pho_win.root.bind('<Key-q>', lambda ev: print("Ding!"))
         else:
-            print("deiconifying old pho window")
-            self.pho_win.deiconify()
+            self.pho_win.root.deiconify()
+
         # self.pho_win.pho_widget.goto_imageno(g_cur_imgno)
         self.pho_win.pho_widget.show_image()
+
+        self.set_bindings(True, widget=self.pho_win.root)
 
 
 def main():
     tagger = TkTagViewer(img_list=sys.argv[1:])
     try:
-        root.mainloop()
+        tagger.root.mainloop()
     except KeyboardInterrupt:
         print("Keyboard interrupt")
         sys.exit(0)
