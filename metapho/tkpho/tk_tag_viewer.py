@@ -136,11 +136,18 @@ class TkTagViewer(metapho.Tagger):
         viewer_frame.grid_propagate(False)
         viewer_frame.grid(row=0, column=0)
 
-        # Image viewer on the left
-        self.viewer_size = (int(buttonbox.winfo_width() * .9),
-                            buttonbox.winfo_height())
-        # print("viewer size is", self.viewer_size)
+        # Pho Image viewer on the left. Calculate a good width for it.
+        # Height will be the same as the buttonbox.
+        screenwidth = self.root.winfo_screenwidth()
+        bboxwidth = buttonbox.winfo_width()
+        viewerwidth = bboxwidth * 1.2
+        EXTRA = 25
+        if viewerwidth + bboxwidth > screenwidth + EXTRA:
+            viewerwidth = (screenwidth - bboxwidth - EXTRA,
+                           buttonbox.winfo_height())
+        self.viewer_size = (int(viewerwidth), buttonbox.winfo_height())
         # viewer_frame.resize(*self.viewer_`size)
+
         self.pho_widget = tkPhoWidget(viewer_frame, img_list=img_list,
                                       size=self.viewer_size)
 

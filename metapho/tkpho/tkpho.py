@@ -4,6 +4,7 @@ from .tk_pho_image import tkPhoImage
 from .tk_pho_widget import tkPhoWidget, VERBOSE
 
 import tkinter as tk
+from tkinter import messagebox    # doesn't automatically import
 
 import random
 import sys, os
@@ -122,8 +123,8 @@ class tkPhoWindow:
             self.quit()
         except IndexError as e:
             # Can't go beyond last image.
-            ans = tk.messagebox.askyesno("Last Image",
-                                         "Last image: quit?")
+            ans = messagebox.askyesno("Last Image",
+                                      "Last image: quit?")
             # This will be true if the user said yes, quit
             if ans:
                 self.quit()
@@ -260,7 +261,7 @@ class tkPhoWindow:
         # messagebox with a custom dialog, like
         # https://stackoverflow.com/a/48324446
         # https://stackoverflow.com/a/10065345
-        ans = tk.messagebox.askyesno("Delete", "Really delete?")
+        ans = messagebox.askyesno("Delete", "Really delete?")
         # XXX how to intercept a typed 'd' in this dialog?
         if ans:
             self.pho_widget.delete_current()
