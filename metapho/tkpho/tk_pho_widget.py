@@ -11,7 +11,7 @@
 from metapho import MetaphoImage, imagelist
 
 # This works when running the installed app, but not when running ./tkPhoWidget
-from .tkPhoImage import tkPhoImage
+from .tk_pho_image import tkPhoImage
 
 import tkinter as tk
 from PIL import Image as PILImage

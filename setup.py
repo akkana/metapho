@@ -49,7 +49,7 @@ setup(name='metapho',
       author='Akkana Peck',
       author_email='akkana@shallowsky.com',
       url='https://github.com/akkana/metapho',
-      download_url='https://github.com/akkana/metapho/tarball/1.0',
+      # download_url='https://github.com/akkana/metapho/tarball/1.0',
 
       install_requires=["PyGObject", "pycairo"],
       license="GPLv2+",
@@ -69,10 +69,17 @@ setup(name='metapho',
           # on Windows, console_scripts bring up a terminal, gui_scripts don't.
           # On Linux they're the same.
           'gui_scripts': [
+              'gmetapho=metapho.gtkpho.main:main',
+              'tkmetapho=metapho.gtkpho.main:main',
+              # MetaPho Image Viewer is unmaintained
+              # 'gmpiv=metapho.gtkpho.imageviewer:main',
+
+              # For now, make gmetapho the default:
               'metapho=metapho.gtkpho.main:main',
-              'mpiv=metapho.gtkpho.ImageViewer:main',   # MetaPho Image Viewer
-              'tkmetapho=metapho.tkpho.tkTagViewer:main',
-              'tkpho=metapho.tkpho:main'
+
+              # but soon it will be time to switch to tk:
+              # 'metapho=metapho.tkpho.tk_tag_viewer:main',
+              # 'pho=metapho.tkpho.tkpho:main',
           ],
           'console_scripts': [
               'notags=metapho:main',

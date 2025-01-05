@@ -11,7 +11,7 @@ import metapho
 from metapho import MetaphoImage
 from metapho import imagelist
 
-from .tkPhoWidget import tkPhoWidget, VERBOSE
+from .tk_pho_widget import tkPhoWidget, VERBOSE
 from .tkpho import tkPhoWindow
 
 import tkinter as tk

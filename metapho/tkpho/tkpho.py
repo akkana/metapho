@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from .tkPhoImage import tkPhoImage
-from .tkPhoWidget import tkPhoWidget, VERBOSE
+from .tk_pho_image import tkPhoImage
+from .tk_pho_widget import tkPhoWidget, VERBOSE
 
 import tkinter as tk
 
