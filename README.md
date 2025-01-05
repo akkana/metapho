@@ -38,10 +38,10 @@ So metapho 2.0 will be Tk based, without a GTK dependency.
 Currently (January 2025) the default metapho is still GTK3-based,
 but it also installs a new Tk-based version. So you'll get:
 
-| metapho | GTK3-based metapho tagging app |
-| gmetapho | GTK3-based metapho tagging app |
-| tkmetapho | TkInter-based metapho tagging app |
-| tkpho | TkInter-based pho image viewer |
+- metapho: GTK3-based metapho tagging app
+- gmetapho: GTK3-based metapho tagging app
+- tkmetapho: TkInter-based metapho tagging app
+- tkpho: TkInter-based pho image viewer
 
 When 2.0 is released,  metapho and pho will become the TkInter versions,
 though gmetapho will still work if you have GTK3 libraries installed.
