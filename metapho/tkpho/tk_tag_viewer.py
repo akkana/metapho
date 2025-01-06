@@ -402,9 +402,7 @@ class TkTagViewer(metapho.Tagger):
             self.pho_win = tkPhoWindow(parent=self.root,
                                        fixed_size=None, fullscreen=False)
             self.pho_win.root.protocol("WM_DELETE_WINDOW",
-                                  lambda ev: pho_win.withdraw())
-            # self.pho_win.root.bind('<Key-q>', lambda ev: pho_win.withdraw())
-            # self.pho_win.root.bind('<Key-q>', lambda ev: print("Ding!"))
+                                       lambda: self.pho_win.root.withdraw())
         else:
             self.pho_win.root.deiconify()
 
