@@ -263,6 +263,8 @@ class TkTagViewer(metapho.Tagger):
 
     def focus_none(self, event=None):
         # Called on Escape.
+        # Actually focuses the root, not nothing.
+
         # Find the currently focused widget:
         w = self.root.focus_get()
         if type(w) is tk.Entry:
@@ -274,6 +276,9 @@ class TkTagViewer(metapho.Tagger):
 
         # Set focus to none
         self.root.focus()
+        # and ensure we have all the expected key bindings,
+        # since we might have been in a text entry previously
+        self.set_bindings(True, self.root)
 
     def letter_button_press(self, letter, event=None):
         # Tk doesn't have actual toggle buttons; you have to handle
