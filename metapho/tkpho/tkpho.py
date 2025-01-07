@@ -10,6 +10,28 @@ import random
 import sys, os
 
 
+WANTED_EXIF_TAGS = [
+    'Make', 'Model', 'Software',
+    'LensMake', 'LensModel',
+    'Orientation',
+    'DateTime',
+    'FocalLength', 'FNumber', 'ExposureTime',
+    'ShutterSpeedValue', 'ApertureValue', 'BrightnessValue',
+
+    'GPSLatitude', 'GPSLatitudeRef', 'GPSLongitude', 'GPSLongitudeRef',
+
+    'WhiteBalance', 'ExposureBiasValue', 'MaxApertureValue',
+    'FocalLengthIn35mmFilm',
+    'SubjectDistance',
+    'MeteringMode', 'Flash',
+    'DigitalZoomRatio',
+    # 'ColorSpace',
+    # 'SceneCaptureType', 'SensingMethod', 'ExposureProgram', 'ExposureMode',
+    # 'Contrast', 'Saturation', 'Sharpness', 'SubjectDistanceRange',
+    # 'CompositeImage'
+]
+
+
 class tkPhoWindow:
     """The main window for tk pho, which can also be used as
        a popup window from other apps such as metapho.
@@ -24,6 +46,8 @@ class tkPhoWindow:
             self.root = tk.Toplevel(parent)
         else:
             self.root = tk.Tk()
+
+        self.root.option_add('*Dialog.msg.font', 'Helvetica 12')
 
         if fullscreen is None:
             fullscreen = False
@@ -51,6 +75,8 @@ class tkPhoWindow:
         # "Prior" and "Next" are Tk-ese for page up/down
         self.root.bind('<Key-Prior>', self.image_nav_handler)
         self.root.bind('<Key-Next>', self.image_nav_handler)
+
+        self.root.bind('<Key-i>', self.show_info)
 
         self.root.bind('<Key-Right>',
                        lambda e: self.rotate_handler(e, -90))
@@ -140,6 +166,26 @@ class tkPhoWindow:
 
     def digit_handler(self, event):
         self.pho_widget.current_image().add_tag(event.keysym)
+
+    def show_info(self, event):
+        cur_im = self.pho_widget.current_image()
+        message = cur_im.relpath
+        if cur_im.orig_img:
+            message += f'\nActual size: {cur_im.orig_img.size}'
+        if cur_im.display_img:
+            message += f'\nDisplayed size: {cur_im.display_img.size}'
+        message += f'\nRotation: {cur_im.rot}'
+        message += f'\nEXIF Rotation: {cur_im.exif_rotation}'
+
+        exif = cur_im.get_exif()
+        message += '\n'
+        for key in WANTED_EXIF_TAGS:
+            if key in exif:
+                message += f'\n{key}: {exif[key]}'
+
+        messagebox.showinfo(
+            title=f'Info: {self.pho_widget.current_image().relpath}',
+            message=message)
 
     def rotate_handler(self, event, rotation):
         self.pho_widget.rotate(rotation)

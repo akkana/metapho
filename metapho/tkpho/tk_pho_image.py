@@ -31,6 +31,9 @@ class tkPhoImage (MetaphoImage):
     def __init__(self, filename):
         MetaphoImage.__init__(self, filename)
 
+        # Rotation of the image as displayed
+        self.rot = 0
+
         # self.rot is initialized by MetaphoImage,
         # but it doesn't handle EXIF
         self.exif_rotation = 0
@@ -99,6 +102,28 @@ class tkPhoImage (MetaphoImage):
             if self.display_img:
                 self.display_img = self.display_img.rotate(180)
             # self.display_img = None
+
+    def get_exif(self):
+        try:
+            if not self.orig_img:
+                self.load()
+            items = self.orig_img._getexif().items()
+            exif = {
+                ExifTags.TAGS[k]: v
+                for k, v in items
+                if k in ExifTags.TAGS
+            }
+            # Decode the GPS info, if any
+            gpsinfo = {}
+            for key in exif['GPSInfo'].keys():
+                decode = ExifTags.GPSTAGS.get(key,key)
+                exif[decode] = exif['GPSInfo'][key]
+            return exif
+        except Exception as e:
+            if VERBOSE:
+                print("Exception getting exif for", self.relpath,
+                      ":", e, file=sys.stderr)
+            return {}
 
     def get_exif_rotation(self):
         global EXIF_ORIENTATION_KEY

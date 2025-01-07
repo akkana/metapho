@@ -126,13 +126,9 @@ class TkTagViewer(metapho.Tagger):
         # Tell the buttonbox to calculate its size, so we can choose
         # a comparable image viewer size
         buttonbox.update()
-        # print("buttonbox size:",
-        #       buttonbox.winfo_width(), buttonbox.winfo_height())
 
         # make a space to hold the image viewer
-        viewer_frame = tk.Frame(self.root,
-                                width=buttonbox.winfo_width(),
-                                height=buttonbox.winfo_height())
+        viewer_frame = tk.Frame(self.root)
         # viewer_frame.pack(side=tk.LEFT)
         viewer_frame.grid_propagate(False)
         viewer_frame.grid(row=0, column=0)

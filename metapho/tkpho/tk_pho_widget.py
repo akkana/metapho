@@ -286,6 +286,10 @@ class tkPhoWidget (tk.Label):
                 raise IndexError("Can't go beyond last image")
 
             # Is the current image valid?
+            if imagelist.current_image().invalid:
+                imagelist.remove_image()
+                continue
+
             try:
                 imagelist.current_image().load()
 
@@ -295,6 +299,7 @@ class tkPhoWidget (tk.Label):
                       "because:", e)
                 # PIL prints its errors with full paths, even if it was
                 # a relative path passed in. I wish I could shorten them.
+                imagelist.current_image().invalid = True
                 imagelist.remove_image()
                 continue
             except AttributeError as e:
