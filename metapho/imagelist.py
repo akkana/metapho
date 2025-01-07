@@ -35,6 +35,13 @@ def get_image(imgno):
 def num_images():
     return len(img_list)
 
+def clear_images():
+    # As usual, global doesn't work. But this should:
+    img_list.clear()
+
+def num_valid_images():
+    return len ([ im for im in img_list if not im.invalid ])
+
 def advance():
     """Increment cur_imgno by 1"""
     global cur_imgno

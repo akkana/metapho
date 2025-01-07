@@ -11,7 +11,7 @@ import os
 import sys
 sys.path.insert(0, '..')
 
-from metapho import MetaphoImage, Tagger, g_image_list
+from metapho import MetaphoImage, Tagger, imagelist
 
 
 def sortlines(filecontents):
@@ -27,10 +27,10 @@ class NotagsTests(unittest.TestCase):
     # executed prior to each test
     def setUp(self):
 
-        # XXX MetaphoImage has a class variable, g_image_list,
+        # XXX The imagelist is global,
         # holding all the images it knows about.
-        # Re-using that between tests messes up the tests.
-        g_image_list.clear()
+        # Re-using that between tests would mess up the tests.
+        imagelist.clear_images()
 
         self.testdir = Path('test/testdir')
         self.testdir.mkdir()
@@ -149,20 +149,20 @@ tag tagged file : dir1/img1.jpg dir1/img2.jpg dir1/img5.jpg dir1/img6.jpg""")
 
         abstestdir = os.path.abspath(self.testdir)
 
-        g_image_list.append(MetaphoImage(os.path.join(abstestdir,
+        imagelist.add_images(MetaphoImage(os.path.join(abstestdir,
                                                       "dir1/img1.jpg")))
-        g_image_list.append(MetaphoImage(os.path.join(abstestdir,
+        imagelist.add_images(MetaphoImage(os.path.join(abstestdir,
                                                       "dir1/img2.jpg")))
-        g_image_list.append(MetaphoImage(os.path.join(abstestdir,
+        imagelist.add_images(MetaphoImage(os.path.join(abstestdir,
                                                       "dir1/img3.jpg")))
-        g_image_list.append(MetaphoImage(os.path.join(abstestdir,
+        imagelist.add_images(MetaphoImage(os.path.join(abstestdir,
                                                       "dir1/img4.jpg")))
 
-        g_image_list.append(MetaphoImage(os.path.join(abstestdir,
+        imagelist.add_images(MetaphoImage(os.path.join(abstestdir,
                                                       "dir2/imga.jpg")))
-        g_image_list.append(MetaphoImage(os.path.join(abstestdir,
+        imagelist.add_images(MetaphoImage(os.path.join(abstestdir,
                                                       "dir2/imgb.jpg")))
-        g_image_list.append(MetaphoImage(os.path.join(abstestdir,
+        imagelist.add_images(MetaphoImage(os.path.join(abstestdir,
                                                       "dir2/imgc.jpg")))
 
         tagfile = self.testdir / "dir2/Tags"

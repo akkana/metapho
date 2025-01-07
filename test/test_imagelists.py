@@ -7,7 +7,7 @@ import unittest
 
 import os
 
-import metapho
+from metapho import imagelist, MetaphoImage
 
 
 class ImgListTests(unittest.TestCase):
@@ -21,15 +21,15 @@ class ImgListTests(unittest.TestCase):
         pass
 
     def test_image_lists(self):
-        for filename in os.listdir("test/files"):
-            metapho.g_image_list.append(metapho.MetaphoImage(filename))
+        imagelist.add_images([ MetaphoImage(f)
+                               for f in os.listdir("test/files") ])
 
         # print(metapho.g_image_list)
 
         # There are 4 image files plus Tags and Tags.bak
-        self.assertEqual(len(metapho.g_image_list), 6)
+        self.assertEqual(imagelist.num_images(), 6)
 
         # Admittedly we haven't tested this by actually trying to open them,
         # but metapho should at least know that Tags and Tags.bak
         # aren't images.
-        self.assertEqual(metapho.num_displayed_images(), 4)
+        self.assertEqual(imagelist.num_valid_images(), 4)

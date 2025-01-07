@@ -84,6 +84,9 @@ class MetaphoImage:
         if self.rot:
             str += " (rotation %s)" % self.rot
 
+        if self.invalid:
+            str += " (invalid)"
+
         if self.tags:
             str += ": Tags: " + self.tags.__repr__()
 
@@ -141,10 +144,8 @@ class MetaphoImage:
     @classmethod
     def image_index(cls, filename):
         """Find a name in the global image list. Return index, or None."""
-        if not self.invalid:
-            return None
         for i, img in enumerate(imagelist.image_list()):
-            if img.filename == filename:
+            if img.filename == filename and not img.invalid:
                 return i
         return None
 
