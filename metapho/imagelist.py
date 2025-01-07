@@ -73,4 +73,4 @@ def remove_image(img=None):
 def pop_image(imgno=None):
     if imgno is None:
         imgno = current_imageno()
-    img_list.pop(imgno)
+    return img_list.pop(imgno)

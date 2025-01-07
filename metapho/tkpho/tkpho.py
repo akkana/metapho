@@ -262,12 +262,12 @@ class tkPhoWindow:
         # https://stackoverflow.com/a/48324446
         # https://stackoverflow.com/a/10065345
         ans = messagebox.askyesno("Delete", "Really delete?")
-        # XXX how to intercept a typed 'd' in this dialog?
+
         if ans:
             self.pho_widget.delete_current()
 
     def quit(self, event=None):
-        if VERBOSE or True:
+        if VERBOSE:
             print("Bye")
 
         # Print any tags that were set

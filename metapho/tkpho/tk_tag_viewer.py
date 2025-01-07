@@ -83,6 +83,7 @@ class TkTagViewer(metapho.Tagger):
             '<Key-slash>':         self.search,
             '<Key-Home>':          partial(self.goto_image, 0),
             '<Key-End>':           partial(self.goto_image, -1),
+            '<Control-Key-d>':     self.delete_image,
             '<Control-Key-u>':     self.clear_tags,
         }
 
@@ -359,6 +360,12 @@ class TkTagViewer(metapho.Tagger):
         # metapho.Tagger.clear_tags(self, img)
         for i, button in enumerate(self.buttons):
             self.enable_tag(i, False)
+
+    def delete_image(self, event=None):
+        ans = messagebox.askyesno("Delete", "Really delete?")
+
+        if ans:
+            self.pho_widget.delete_current()
 
     def update_window_from_image(self):
         """Set the buttons and entries to reflect the tags in the current
