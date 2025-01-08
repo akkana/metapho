@@ -271,7 +271,7 @@ class TkTagViewer(metapho.Tagger):
                 index = self.letter2index(letter)
                 self.enable_tag(index, False)
 
-        # Set focus to none
+        # Set focus to the root window
         self.root.focus()
         # and ensure we have all the expected key bindings,
         # since we might have been in a text entry previously

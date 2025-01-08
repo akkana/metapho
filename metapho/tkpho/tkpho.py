@@ -4,7 +4,7 @@ from .tk_pho_image import tkPhoImage
 from .tk_pho_widget import tkPhoWidget, VERBOSE
 
 import tkinter as tk
-from tkinter import messagebox    # doesn't automatically import
+from .tkdialogs import InfoDialog, askyesno_with_bindings
 
 import random
 import sys, os
@@ -18,7 +18,7 @@ WANTED_EXIF_TAGS = [
     'FocalLength', 'FNumber', 'ExposureTime',
     'ShutterSpeedValue', 'ApertureValue', 'BrightnessValue',
 
-    'GPSLatitude', 'GPSLatitudeRef', 'GPSLongitude', 'GPSLongitudeRef',
+    'GPS coordinates',    # As decoded by TkPhoImage
 
     'WhiteBalance', 'ExposureBiasValue', 'MaxApertureValue',
     'FocalLengthIn35mmFilm',
@@ -48,6 +48,7 @@ class tkPhoWindow:
             self.root = tk.Tk()
 
         self.root.option_add('*Dialog.msg.font', 'Helvetica 12')
+        self.root.option_add("*Dialog.msg.wrapLength", "10i")
 
         if fullscreen is None:
             fullscreen = False
@@ -55,6 +56,9 @@ class tkPhoWindow:
         self.full_size = False
 
         self.root.title("Pho Image Viewer")
+
+        # The Info dialog
+        self.infobox = None
 
         # To allow resizing, set self.fixed_size to None
         self.fixed_size = fixed_size
@@ -149,13 +153,17 @@ class tkPhoWindow:
             self.quit()
         except IndexError as e:
             # Can't go beyond last image.
-            ans = messagebox.askyesno("Last Image",
-                                      "Last image: quit?")
+            ans = askyesno_with_bindings("Last Image", "Last image: quit?",
+                                         yes_bindings=['<Key-space>'])
             # This will be true if the user said yes, quit
             if ans:
                 self.quit()
 
         self.update_title()
+
+        # State may be normal, withdrawn or iconic
+        if self.infobox and self.infobox.state() == 'normal':
+            self.set_infobox_msg()
 
     def goto_imageno(self, imgno):
         self.pho_widget.goto_imageno(imgno)
@@ -168,7 +176,18 @@ class tkPhoWindow:
         self.pho_widget.current_image().add_tag(event.keysym)
 
     def show_info(self, event):
+        if self.infobox:
+            self.infobox.deiconify()
+        else:
+            self.infobox = InfoDialog()
+
+        self.set_infobox_msg()
+
+    def set_infobox_msg(self):
         cur_im = self.pho_widget.current_image()
+        self.infobox.title(cur_im.relpath)
+        print("Updating infobox for", cur_im.relpath)
+
         message = cur_im.relpath
         if cur_im.orig_img:
             message += f'\nActual size: {cur_im.orig_img.size}'
@@ -183,9 +202,9 @@ class tkPhoWindow:
             if key in exif:
                 message += f'\n{key}: {exif[key]}'
 
-        messagebox.showinfo(
-            title=f'Info: {self.pho_widget.current_image().relpath}',
-            message=message)
+        # The message is now ready to show
+        # print("Setting infobox text to", message)
+        self.infobox.set_text(message)
 
     def rotate_handler(self, event, rotation):
         self.pho_widget.rotate(rotation)
@@ -286,13 +305,6 @@ class tkPhoWindow:
         # event.x is relative to the window.
         # Sure would be nice if TkInter had documentation somewhere.
 
-        # print("ddddddddddddddrag",
-        #       "    dragging_from:", self.dragging_from,
-        #       "    xy_root:", event.x_root, event.y_root,
-        #       "    xy:", event.x, event.y,
-        #       "    -->", event.x_root - self.dragging_from[0],
-        #       event.y_root - self.dragging_from[1])
-
         self.pho_widget.translate(event.x_root - self.dragging_from[0],
                                   event.y_root - self.dragging_from[1])
         self.dragging_from = (event.x_root, event.y_root)
@@ -303,14 +315,23 @@ class tkPhoWindow:
         self.dragging_from = None
 
     def delete_handler(self, event):
-        # To bind 'd' in the dialog, we'll probably need to replace the
-        # messagebox with a custom dialog, like
-        # https://stackoverflow.com/a/48324446
-        # https://stackoverflow.com/a/10065345
-        ans = messagebox.askyesno("Delete", "Really delete?")
-
+        ans = askyesno_with_bindings("Delete", "Really delete?",
+                                     yes_bindings=['<Key-d>'])
         if ans:
-            self.pho_widget.delete_current()
+            try:
+                self.pho_widget.delete_current()
+            except IndexError:
+                ans = askyesno_with_bindings("Last Image", "Last image: quit?",
+                                             yes_bindings=['<Key-space>'])
+                if ans:
+                    self.quit()
+                # If not, though, we can't do much without an imagelist.
+
+        # Focus the main window
+        # focus() and focus_set don't work here, but focus_force does.
+        self.root.focus_force()
+        # If that stops working, focus_force after a delay might be more robust
+        # self.root.after(150, self.root.focus_force)
 
     def quit(self, event=None):
         if VERBOSE:
@@ -359,7 +380,7 @@ o	Change the working file set (add files or make a new list)
 g	Run gimp on the current image
 	(or set PHO_CMD to an alternate command)
 q	Quit
-<esc>	Quit (or hide a dialog, if one is showing)
+<esc>	Cancel/hide, if a dialog is currently focused
 
 Pho mouse bindings:
 In presentation mode: drag with middlemouse to pan/move.

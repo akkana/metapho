@@ -117,7 +117,23 @@ class tkPhoImage (MetaphoImage):
             gpsinfo = {}
             for key in exif['GPSInfo'].keys():
                 decode = ExifTags.GPSTAGS.get(key,key)
-                exif[decode] = exif['GPSInfo'][key]
+                gpsinfo[decode] = exif['GPSInfo'][key]
+            if gpsinfo:
+                # Now should have 'GPSLatitude', 'GPSLatitudeRef',
+                # 'GPSLongitude', 'GPSLongitudeRef'
+                # lat/lon are triples like (36.0, 16.0, 12.97)
+                # Turn those into more easily read decimal degrees.
+                latitude = (float(gpsinfo['GPSLatitude'][0])
+                            + float(gpsinfo['GPSLatitude'][1]) / 60.
+                            + float(gpsinfo['GPSLatitude'][2]) / 3600.)
+                if gpsinfo['GPSLatitudeRef'] == 'S':
+                    latitude = -latitude
+                longitude = (float(gpsinfo['GPSLongitude'][0])
+                    + float(gpsinfo['GPSLongitude'][1]) / 60.
+                    + float(gpsinfo['GPSLongitude'][2]) / 3600.)
+                if gpsinfo['GPSLongitudeRef'] == 'W':
+                    longitude = -longitude
+                exif['GPS coordinates'] = '%.6f, %.6f' % (latitude, longitude)
             return exif
         except Exception as e:
             if VERBOSE:

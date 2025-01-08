@@ -143,7 +143,12 @@ class tkPhoWidget (tk.Label):
                 print("Exception was:", e)
             return
         if not pil_img:
-            print("Eek, resize_to_fit didn't return an image!", file=sys.stderr)
+            # This probably means that we are out of images.
+            # But just in case that's not it:
+            if not imagelist.image_list():
+                raise IndexError("Imagelist is now empty")
+            print("Eek, resize_to_fit didn't return an image!",
+                  file=sys.stderr)
             return
 
         tkimg = ImageTk.PhotoImage(pil_img)
@@ -171,6 +176,8 @@ class tkPhoWidget (tk.Label):
             print("TkPhoWidget.resize_to_fit, imgno =",
                   imagelist.current_imageno())
         cur_img = imagelist.current_image()
+        if not cur_img:
+            return None
         if self.fullsize and self.fullscreen:
             if cur_img.display_img and (self.fullsize_offset[0]
                                         or self.fullsize_offset[1]):
