@@ -13,6 +13,7 @@ from metapho import imagelist
 
 from .tk_pho_widget import tkPhoWidget, VERBOSE
 from .tkpho import tkPhoWindow
+from .tkdialogs import InfoDialog, askyesno_with_bindings
 
 import tkinter as tk
 from tkinter import messagebox
@@ -39,6 +40,9 @@ class TkTagViewer(metapho.Tagger):
         # A separate window to allow zooming or fullsize viewing
         self.pho_win = None
 
+        # The Info dialog
+        self.infobox = None
+
         # default bg color, which we'll read once the window is up.
         # As I test it initially, it's #d9d9d9
         self.bg_color = "#bbbbbb"
@@ -64,7 +68,7 @@ class TkTagViewer(metapho.Tagger):
         self.buttons = [None] * 52
         self.entries = [None] * 52
 
-        # Bindings that we want always to be active.
+        # Bindings that should always be active.
         self.global_bindings = {
             '<Control-Key-q>':     self.quit,
 
@@ -85,6 +89,7 @@ class TkTagViewer(metapho.Tagger):
             '<Key-End>':           partial(self.goto_image, -1),
             '<Control-Key-d>':     self.delete_image,
             '<Control-Key-u>':     self.clear_tags,
+            '<Control-Key-i>':     self.show_info,
         }
 
         for row, letter in enumerate(ascii_lowercase):
@@ -192,7 +197,9 @@ class TkTagViewer(metapho.Tagger):
         try:
             self.pho_widget.next_image()
         except IndexError:
-            if messagebox.askyesno("Last image", "Last image. Quit?"):
+            if messagebox.askyesno_with_bindings("Last image",
+                                                 "Last image. Quit?",
+                                                 yes_bindings=['<Key-space>']):
                 self.quit()
 
         self.update_window_from_image()
@@ -400,6 +407,10 @@ class TkTagViewer(metapho.Tagger):
         if self.pho_win:
             self.pho_win.goto_imageno(imagelist.current_imageno())
 
+        # State may be normal, withdrawn or iconic
+        if self.infobox and self.infobox.state() == 'normal':
+            self.infobox.update_msg(self.pho_widget.current_image())
+
     def update_image_from_window(self):
         img = imagelist.current_image()
         img.tags = [ i for i, b in enumerate(self.buttons)
@@ -418,6 +429,19 @@ class TkTagViewer(metapho.Tagger):
         self.pho_win.pho_widget.show_image()
 
         self.set_bindings(True, widget=self.pho_win.root)
+
+    def show_info(self, event=None):
+        """Pop up the infobox (creating it if needed) and update its contents
+        """
+        # If this seems like it duplicates code in tkpho.py,
+        # that's because it does. Both apps, pho and metapho,
+        # need to be able to manage info window.
+        if self.infobox:
+            self.infobox.deiconify()
+        else:
+            self.infobox = InfoDialog()
+
+        self.infobox.update_msg(self.pho_widget.current_image())
 
 
 def main():

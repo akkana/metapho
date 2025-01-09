@@ -11,6 +11,29 @@ import tkinter as tk
 
 from tkinter.simpledialog import Dialog
 
+
+WANTED_EXIF_TAGS = [
+    'Make', 'Model', 'Software',
+    'LensMake', 'LensModel',
+    'Orientation',
+    'DateTime',
+    'FocalLength', 'FNumber', 'ExposureTime',
+    'ShutterSpeedValue', 'ApertureValue', 'BrightnessValue',
+
+    'GPS coordinates',    # As decoded by TkPhoImage
+
+    'WhiteBalance', 'ExposureBiasValue', 'MaxApertureValue',
+    'FocalLengthIn35mmFilm',
+    'SubjectDistance',
+    'MeteringMode', 'Flash',
+    'DigitalZoomRatio',
+    # 'ColorSpace',
+    # 'SceneCaptureType', 'SensingMethod', 'ExposureProgram', 'ExposureMode',
+    # 'Contrast', 'Saturation', 'Sharpness', 'SubjectDistanceRange',
+    # 'CompositeImage'
+]
+
+
 #
 # InfoDialog window
 #
@@ -19,6 +42,7 @@ class InfoDialog(tk.Toplevel):
     """The InfoDialog is non-modal, and shows details about the
        current image, like EXIF. It should be possible to keep it up
        and have it change as the image changes.
+       Typically it will be used as a singleton.
     """
     def __init__(self, *args, **kwargs):
         tk.Toplevel.__init__(self, *args, **kwargs)
@@ -33,6 +57,26 @@ class InfoDialog(tk.Toplevel):
         # self.focus_set()
         self.bind("<Return>", self.popdown)
         self.bind("<Escape>", self.popdown)
+
+    def update_msg(self, cur_im):
+        self.title(cur_im.relpath)
+
+        message = cur_im.relpath
+        if cur_im.orig_img:
+            message += f'\nActual size: {cur_im.orig_img.size}'
+        if cur_im.display_img:
+            message += f'\nDisplayed size: {cur_im.display_img.size}'
+        message += f'\nRotation: {cur_im.rot}'
+        message += f'\nEXIF Rotation: {cur_im.exif_rotation}'
+
+        exif = cur_im.get_exif()
+        message += '\n'
+        for key in WANTED_EXIF_TAGS:
+            if key in exif:
+                message += f'\n{key}: {exif[key]}'
+
+        # The message is now ready to show
+        self.set_text(message)
 
     def set_text(self, text):
         self.__text.set(text)

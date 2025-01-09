@@ -10,28 +10,6 @@ import random
 import sys, os
 
 
-WANTED_EXIF_TAGS = [
-    'Make', 'Model', 'Software',
-    'LensMake', 'LensModel',
-    'Orientation',
-    'DateTime',
-    'FocalLength', 'FNumber', 'ExposureTime',
-    'ShutterSpeedValue', 'ApertureValue', 'BrightnessValue',
-
-    'GPS coordinates',    # As decoded by TkPhoImage
-
-    'WhiteBalance', 'ExposureBiasValue', 'MaxApertureValue',
-    'FocalLengthIn35mmFilm',
-    'SubjectDistance',
-    'MeteringMode', 'Flash',
-    'DigitalZoomRatio',
-    # 'ColorSpace',
-    # 'SceneCaptureType', 'SensingMethod', 'ExposureProgram', 'ExposureMode',
-    # 'Contrast', 'Saturation', 'Sharpness', 'SubjectDistanceRange',
-    # 'CompositeImage'
-]
-
-
 class tkPhoWindow:
     """The main window for tk pho, which can also be used as
        a popup window from other apps such as metapho.
@@ -163,7 +141,7 @@ class tkPhoWindow:
 
         # State may be normal, withdrawn or iconic
         if self.infobox and self.infobox.state() == 'normal':
-            self.set_infobox_msg()
+            self.infobox.update_msg(self.pho_widget.current_image())
 
     def goto_imageno(self, imgno):
         self.pho_widget.goto_imageno(imgno)
@@ -175,36 +153,15 @@ class tkPhoWindow:
     def digit_handler(self, event):
         self.pho_widget.current_image().add_tag(event.keysym)
 
-    def show_info(self, event):
+    def show_info(self, event=None):
+        """Pop up the infobox (creating it if needed) and update its contents
+        """
         if self.infobox:
             self.infobox.deiconify()
         else:
             self.infobox = InfoDialog()
 
-        self.set_infobox_msg()
-
-    def set_infobox_msg(self):
-        cur_im = self.pho_widget.current_image()
-        self.infobox.title(cur_im.relpath)
-        print("Updating infobox for", cur_im.relpath)
-
-        message = cur_im.relpath
-        if cur_im.orig_img:
-            message += f'\nActual size: {cur_im.orig_img.size}'
-        if cur_im.display_img:
-            message += f'\nDisplayed size: {cur_im.display_img.size}'
-        message += f'\nRotation: {cur_im.rot}'
-        message += f'\nEXIF Rotation: {cur_im.exif_rotation}'
-
-        exif = cur_im.get_exif()
-        message += '\n'
-        for key in WANTED_EXIF_TAGS:
-            if key in exif:
-                message += f'\n{key}: {exif[key]}'
-
-        # The message is now ready to show
-        # print("Setting infobox text to", message)
-        self.infobox.set_text(message)
+        self.infobox.update_msg(self.pho_widget.current_image())
 
     def rotate_handler(self, event, rotation):
         self.pho_widget.rotate(rotation)
