@@ -274,6 +274,24 @@ class tkPhoWidget (tk.Label):
         # delete the file on disk
         os.unlink(deleted.filename)
 
+        # After removing, we'll be positioned on the next position in the list
+        # or maybe nowhere, if the last image was just deleted.
+        # Try to go forward to the next valid image,
+        # and if that doesn't work, try to go back.
+        try:
+            while type(imagelist.current_image()) is not tkPhoImage:
+                imagelist.advance()
+        except IndexError:
+            # Nothing after the deleted image is a tkPhoImage.
+            # Try going backward.
+            try:
+                while type(imagelist.current_image()) is not tkPhoImage:
+                    imagelist.retreat()
+            except IndexError:
+                if VERBOSE:
+                    print("No more viewable images")
+                return
+
         self.show_image()
 
     def next_image(self):

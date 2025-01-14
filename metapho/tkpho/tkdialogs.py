@@ -95,12 +95,15 @@ class InfoDialog(tk.Toplevel):
 #
 
 class CustomDialog(Dialog):
-    def __init__(self, title, message, icon, master=None, yes_bindings=[]):
+    def __init__(self, title, message, icon, buttons,
+                 master=None, yes_bindings=[]):
         """
         icon can be "information", "warning", "error" or "question"
+        buttons can be e.g. ["Yes", "No"], affirmative first
         """
         self.message = message
         self.icon = icon
+        self.buttons = buttons
         self.yes_bindings = yes_bindings
         super().__init__(master, title)
 
@@ -115,14 +118,32 @@ class CustomDialog(Dialog):
     def buttonbox(self):
         box = tk.Frame(self)
         state = tk.NORMAL
-        self.ok_btn = tk.Button(box, text="OK", width=20, command=self.ok,
+
+        if not self.buttons:
+            self.buttons = ["OK", "Cancel"]
+
+        # The first button is equivalent to OK
+        self.ok_btn = tk.Button(box, text=self.buttons[0],
+                                width=20, command=self.ok,
                                 default=tk.ACTIVE, state=state)
         self.ok_btn.pack(side=tk.LEFT, padx=5, pady=5)
-        self.cancel_btn = tk.Button(box, text="Cancel", width=20,
-                                    command=self.cancel, state=state)
-        self.cancel_btn.pack(side=tk.LEFT, padx=5, pady=5)
+        for btn_txt in self.buttons[1:-1]:
+            btn = TkButton(box, text=btn_txt, width=20, command=button_callback,
+                           default=tk.ACTIVE, state=state)
+            btn.pack(side=tk.LEFT, padx=5, pady=5)
+
+        # The last button is equivalent to Cancel, if more than one
+        if len(self.buttons) > 1:
+            self.cancel_btn = tk.Button(box, text=self.buttons[-1],
+                                        width=20, state=state,
+                                        command=self.cancel)
+            self.cancel_btn.pack(side=tk.LEFT, padx=5, pady=5)
+
         box.pack()
         self._bindings()
+
+    def button_callback(self, event):
+        print("Unknown button pressed:", event)
 
     def _bindings(self):
         self.bind("<Return>", self.ok)
@@ -133,13 +154,20 @@ class CustomDialog(Dialog):
     def apply(self, event=None):
         self.result = True
 
-    def cancel(self, event=None):
-        super().cancel(event)
+    # def cancel(self, event=None):
+    #     super().cancel(event)
 
 
 def askyesno_with_bindings(title=None, message=None, yes_bindings=[]):
     dlg = CustomDialog(title=title, message=message, icon="question",
+                       buttons=["Yes", "No"],
                        yes_bindings=yes_bindings)
+    return dlg.result
+
+
+def message_dialog(title=None, message=None, yes_bindings=[]):
+    dlg = CustomDialog(title=title, message=message, icon="question",
+                       buttons=["OK"], yes_bindings=yes_bindings)
     return dlg.result
 
 

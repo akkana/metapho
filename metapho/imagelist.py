@@ -45,11 +45,19 @@ def num_valid_images():
 def advance():
     """Increment cur_imgno by 1"""
     global cur_imgno
+    if cur_imgno >= len(img_list) - 1:
+        # print("Couldn't advance past", cur_imgno, "=", img_list[cur_imgno],
+        #       file=sys.stderr)
+        raise IndexError
     cur_imgno += 1
 
 def retreat():
     """Decrement cur_imgno by 1"""
     global cur_imgno
+    if cur_imgno <= 0:
+        # print("Couldn't retreat past", cur_imgno, "=", img_list[cur_imgno],
+        #       file=sys.stderr)
+        raise IndexError
     cur_imgno -= 1
 
 def set_imageno(val):

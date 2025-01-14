@@ -12,8 +12,9 @@ from metapho import MetaphoImage
 from metapho import imagelist
 
 from .tk_pho_widget import tkPhoWidget, VERBOSE
+from .tk_pho_image import tkPhoImage
 from .tkpho import tkPhoWindow
-from .tkdialogs import InfoDialog, askyesno_with_bindings
+from .tkdialogs import InfoDialog, message_dialog, askyesno_with_bindings
 
 import tkinter as tk
 from tkinter import messagebox
@@ -197,9 +198,9 @@ class TkTagViewer(metapho.Tagger):
         try:
             self.pho_widget.next_image()
         except IndexError:
-            if messagebox.askyesno_with_bindings("Last image",
-                                                 "Last image. Quit?",
-                                                 yes_bindings=['<Key-space>']):
+            if askyesno_with_bindings("Last image",
+                                      "Last image. Quit?",
+                                      yes_bindings=['<Key-space>']):
                 self.quit()
 
         self.update_window_from_image()
@@ -365,10 +366,18 @@ class TkTagViewer(metapho.Tagger):
             self.enable_tag(i, False)
 
     def delete_image(self, event=None):
-        ans = messagebox.askyesno("Delete", "Really delete?")
-
+        ans = askyesno_with_bindings("Delete", "Really delete?",
+                                     yes_bindings=['<Key-d>',
+                                                   '<Control-Key-d>'])
         if ans:
             self.pho_widget.delete_current()
+
+            # Was that the last viewable image?
+            if (not imagelist.current_image() or
+                type(imagelist.current_image()) is not tkPhoImage):
+                message_dialog(title="No Images", message="No images left",
+                               yes_bindings=['<Key-space>'])
+                self.quit()
 
     def update_window_from_image(self):
         """Set the buttons and entries to reflect the tags in the current
