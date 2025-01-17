@@ -148,7 +148,11 @@ class tkPhoWindow:
         self.update_title()
 
     def update_title(self):
-        self.root.title(f"Pho: {self.pho_widget.current_image().relpath}")
+        title = f"Pho: {self.pho_widget.current_image().relpath}"
+        if self.pho_widget.current_image().orig_img:
+            dw, dh = self.pho_widget.current_image().orig_img.size
+            title += " (%d x %d)" % (dw, dh)
+        self.root.title(title)
 
     def digit_handler(self, event):
         self.pho_widget.current_image().add_tag(event.keysym)
