@@ -191,7 +191,7 @@ class tkPhoWidget (tk.Label):
                 cur_img.display_img = \
                     cur_img.orig_img.rotate(cur_img.rot)
                 cur_img.display_img = \
-                    self.center_fullsize(cur_img.orif_img)
+                    self.center_fullsize(cur_img.orig_img)
             else:
                 cur_img.display_img = \
                     self.center_fullsize(cur_img.orig_img)

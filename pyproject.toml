@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+dynamic = ["version"]
+name = 'metapho'
+description = 'Image viewer and tagger'
+authors = [ { name = 'Akkana Peck', email = 'akkana@shallowsky.com' } ]
+maintainers = [ { name = 'Akkana Peck', email = 'akkana@shallowsky.com' } ]
+readme = "README.md"
+license = { text="GPL-2.0-or-later" }
+# version = "1.9.1"
+keywords = [ 'image', 'viewer', 'tagger' ]
+classifiers = [
+    'Programming Language :: Python :: 3',
+    'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
+    'Intended Audience :: End Users/Desktop',
+    'Topic :: Multimedia :: Graphics',
+    'Topic :: Multimedia :: Graphics :: Viewers',
+    'Topic :: Utilities'
+]
+dependencies = [
+]
+requires-python = ">= 3.8"
+
+[tool.setuptools.dynamic]
+version = {attr = "metapho.__version__"}
+
+[project.optional-dependencies]
+gtk = [ "PyGObject", "pycairo" ]
+
+[project.scripts]
+notags = 'metapho:main'
+fotogr = 'metapho.scripts.fotogr:main'
+photoshare = 'metapho.scripts.photoshare:main'
+
+[project.gui-scripts]
+metapho = 'metapho.tkpho.tk_tag_viewer:main'
+pho = 'metapho.tkpho.tkpho:main'
+gmetapho = 'metapho.gtkpho.main:main'
+tkmetapho = 'metapho.tkpho.tk_tag_viewer:main'
+gmpiv = 'metapho.gtkpho.ImageViewer:main'   # GTK MetaPho Image Viewer
+
+[project.urls]
+Repository = 'https://github.com/akkana/metapho'
+Issues = 'https://github.com/akkana/metapho/issues'
+Changelog = 'https://github.com/akkana/metapho/blob/master/CHANGELOG'
+# Fix this when I figure out the regression in Sphinx
+# Documentation =
