@@ -69,6 +69,10 @@ class tkPhoWindow:
         self.root.bind('<Key-Down>',
                        lambda e: self.rotate_handler(e, 180))
 
+        self.root.bind('<Key-minus>', lambda e: self.scale_handler(e, .5))
+        self.root.bind('<Key-plus>', lambda e: self.scale_handler(e, 2))
+        self.root.bind('<Key-equal>', lambda e: self.scale_handler(e, 2))
+
         self.root.bind("<ButtonPress-2>",   self.start_drag)
         self.root.bind("<B2-Motion>",       self.drag)
         self.root.bind("<ButtonRelease-2>", self.end_drag)
@@ -169,6 +173,10 @@ class tkPhoWindow:
 
     def rotate_handler(self, event, rotation):
         self.pho_widget.rotate(rotation)
+        self.pho_widget.show_image()
+
+    def scale_handler(self, event, scale):
+        self.pho_widget.rescale(scale)
         self.pho_widget.show_image()
 
     def resize_handler(self, event):

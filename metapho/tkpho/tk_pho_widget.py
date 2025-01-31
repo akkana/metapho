@@ -47,6 +47,8 @@ class tkPhoWidget (tk.Label):
         self.widget_size = size
         self.fullscreen = False
 
+        self.scale_factor = 1.0
+
         # In fullsize mode, the whole image will be displayed
         # even if it's too big to fit on screen.
         self.fullsize = False
@@ -164,6 +166,9 @@ class tkPhoWidget (tk.Label):
         # is the size of the previous image, i.e. the current widget size,
         # except at the beginning where it's 1, 1
 
+    def rescale(self, factor):
+        self.scale_factor *= factor
+
     def resize_to_fit(self):
         """Resize the current image to fit in the current widget.
            but no larger than the bbox (width, height)
@@ -223,6 +228,8 @@ class tkPhoWidget (tk.Label):
 
         if VERBOSE:
             print("Target space:", target_size)
+
+        target_size = [ x * self.scale_factor for x in target_size ]
 
         return cur_img.resize_to_fit(target_size)
 
