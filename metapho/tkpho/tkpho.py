@@ -4,7 +4,7 @@ from .tk_pho_image import tkPhoImage
 from .tk_pho_widget import tkPhoWidget, VERBOSE
 
 import tkinter as tk
-from .tkdialogs import InfoDialog, askyesno_with_bindings
+from .tkdialogs import InfoDialog, message_dialog, askyesno_with_bindings
 
 import random
 import sys, os
@@ -282,11 +282,11 @@ class tkPhoWindow:
             try:
                 self.pho_widget.delete_current()
             except IndexError:
-                ans = askyesno_with_bindings("Last Image", "Last image: quit?",
-                                             yes_bindings=['<Key-space>'])
-                if ans:
-                    self.quit()
-                # If not, though, we can't do much without an imagelist.
+                # Just deleted the last image
+                message_dialog("Last Image", "Last image. Quit?",
+                               yes_bindings=['<Key-space>', '<Key-Return>',
+                                             '<Key-q>', '<Key-y>'])
+                self.quit()
 
         # Focus the main window
         # focus() and focus_set don't work here, but focus_force does.

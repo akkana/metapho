@@ -268,6 +268,10 @@ class tkPhoWidget (tk.Label):
         imagelist.current_image().rotate(rotation)
 
     def delete_current(self):
+        """Remove the current image from the image list, and move the
+           current_image pointer accordingly.
+           Raises IndexError if there are no images left.
+        """
         # Remove from the img_list
         deleted = imagelist.pop_image(imagelist.current_imageno())
 
@@ -276,6 +280,10 @@ class tkPhoWidget (tk.Label):
 
         # After removing, we'll be positioned on the next position in the list
         # or maybe nowhere, if the last image was just deleted.
+        # First check if there are any images left:
+        if not imagelist.current_image():
+            raise IndexError
+
         # Try to go forward to the next valid image,
         # and if that doesn't work, try to go back.
         try:
@@ -284,13 +292,10 @@ class tkPhoWidget (tk.Label):
         except IndexError:
             # Nothing after the deleted image is a tkPhoImage.
             # Try going backward.
-            try:
-                while type(imagelist.current_image()) is not tkPhoImage:
-                    imagelist.retreat()
-            except IndexError:
-                if VERBOSE:
-                    print("No more viewable images")
-                return
+            # This might raise IndexError if there are no more images,
+            # though we should have caught that in the explicit check.
+            while type(imagelist.current_image()) is not tkPhoImage:
+                imagelist.retreat()
 
         self.show_image()
 
