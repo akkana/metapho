@@ -11,6 +11,8 @@ import tkinter as tk
 
 from tkinter.simpledialog import Dialog
 
+import sys
+
 
 WANTED_EXIF_TAGS = [
     'Make', 'Model', 'Software',
@@ -68,6 +70,9 @@ class InfoDialog(tk.Toplevel):
             message += f'\nDisplayed size: {cur_im.display_img.size}'
         message += f'\nRotation: {cur_im.rot}'
         message += f'\nEXIF Rotation: {cur_im.exif_rotation}'
+
+        # What tags are set?
+        message += "\n\nTags: " + ' '.join(cur_im.tags)
 
         exif = cur_im.get_exif()
         message += '\n'
@@ -169,6 +174,15 @@ def message_dialog(title=None, message=None, yes_bindings=[]):
     dlg = CustomDialog(title=title, message=message, icon="question",
                        buttons=["OK"], yes_bindings=yes_bindings)
     return dlg.result
+
+
+# Flash a temporary message
+def flash_message(msg, root):
+    print(msg, file=sys.stderr)
+    flashlbl = tk.Label(root, text=msg,
+                        font=('',14), bg='yellow', relief=tk.SUNKEN)
+    flashlbl.place(relx=.5, rely=.5, anchor=tk.CENTER)
+    root.after(3000, flashlbl.destroy)
 
 
 if __name__ == '__main__':

@@ -14,7 +14,8 @@ from metapho import imagelist
 from .tk_pho_widget import tkPhoWidget, VERBOSE
 from .tk_pho_image import tkPhoImage
 from .tkpho import tkPhoWindow
-from .tkdialogs import InfoDialog, message_dialog, askyesno_with_bindings
+from .tkdialogs import InfoDialog, message_dialog, askyesno_with_bindings, \
+                       flash_message
 
 import tkinter as tk
 from tkinter import messagebox
@@ -161,10 +162,17 @@ class TkTagViewer(metapho.Tagger):
         self.pho_widget.next_image()
 
         # After next_image, now we should have all the tags.
-        # So populate the tag entries.
+        # So populate the entry widgets that map letters to tags.
+        omitted = []
         for i, tag in enumerate(self.tag_list):
-            self.entries[i].delete(0, tk.END)
-            self.entries[i].insert(0, tag)
+            try:
+                self.entries[i].delete(0, tk.END)
+                self.entries[i].insert(0, tag)
+            except IndexError:
+                omitted.append(tag)
+        if omitted:
+            flash_message("Too many tags, omitting %s" %
+                          ', '.join(omitted), self.root)
 
         self.update_window_from_image()
 

@@ -1,3 +1,7 @@
+2025-03-13  Akkana Peck  <akkana@shallowsky.com>
+	pho: show which tags are set in the info dialog.
+	metapho: flash a warning if too many tags are defined to fit in a-zA-Z.
+
 2024-09-22  Akkana Peck  <akkana@shallowsky.com>
 
 	Bump version to 1.1 for release.
