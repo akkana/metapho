@@ -159,7 +159,7 @@ class tkPhoWindow:
         self.root.title(title)
 
     def digit_handler(self, event):
-        self.pho_widget.current_image().add_tag(event.keysym)
+        self.pho_widget.current_image().toggle_tag(event.keysym)
 
     def show_info(self, event=None):
         """Pop up the infobox (creating it if needed) and update its contents

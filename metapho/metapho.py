@@ -120,6 +120,12 @@ class MetaphoImage:
         os.unlink(self.filename)
         imagelist.remove_image(self)
 
+    def toggle_tag(self, newtag):
+        if newtag in self.tags:
+            self.tags.remove(newtag)
+        else:
+            self.tags.append(newtag)
+
     def add_tag(self, newtag):
         if newtag in self.tags:
             return
