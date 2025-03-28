@@ -57,6 +57,7 @@ class Tagger(object):
 
         # The tag list is a list of all tags we know about (strings).
         # A tag may be in several categories.
+        # The index of a tag in this list is the tag number.
         self.tag_list = []
 
         # Files from which we've read tags (named Tags or Keywords)
@@ -206,7 +207,8 @@ tag Bruny Island: img 008.jpg
            (anything that doesn't start with category, tag,
            tagtype or photo is taken to be a specific tag.
            What are tagtype and photo, you ask? Good question;
-           I'm sure there were big plans for them at one time.)
+           I'm sure there were big plans for them at one time
+           but they've never been used.)
         """
         # The default category name is Tags.
         if not self.current_category:
@@ -367,6 +369,8 @@ tag Bruny Island: img 008.jpg
         except:
             pass
 
+        # XXX Need to remove it from self.current_category too?
+
     def change_tag(self, entryno, newstr):
         """Update a tag: called on focus_out from one of the text entries"""
 
@@ -421,8 +425,17 @@ tag Bruny Island: img 008.jpg
 
         img.tags.append(tagno)
 
+    def tagname_to_tagno(self, tagname):
+        """Given a tag name, return its index in the list. -1 if not found.
+        """
+        for i, tag in enumerate(self.tag_list):
+            if tagname == tag:
+                return i
+        return -1
+
     def match_tag(self, pattern):
         """Return a list of tags matching the pattern."""
+        print("*** match_tag isn't implemented yet!", file=sys.stderr)
         return None
 
     def img_has_tags_in(self, img, cat):
@@ -562,7 +575,8 @@ but lack a file named either Tags or Keywords.""")
 
 
 def main():
-    """Read tags and report any inconsistencies:
+    """The script linked as notags:
+       Read tags and report any inconsistencies:
        images in the Tags file that don't exist on disk,
        images on disk that aren't in ./Tags.
     """

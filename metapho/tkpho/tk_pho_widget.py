@@ -132,7 +132,8 @@ class tkPhoWidget (tk.Label):
            -1 for invalid image or other error.
         """
         if VERBOSE:
-            print("tkPhoWidget.show_image, widget size is", self.widget_size)
+            print("tkPhoWidget.show_image, widget size is", self.widget_size,
+                  "rotation", imagelist.current_image().rot)
 
         try:
             pil_img = self.resize_to_fit()
@@ -210,7 +211,8 @@ class tkPhoWidget (tk.Label):
         elif self.fullscreen:
             target_size = get_screen_size(self.root)
             if VERBOSE:
-                print("TkPhoWidget.resize_to_fit, fullscreen,", target_size)
+                print("TkPhoWidget.resize_to_fit, fullscreen, targeting",
+                      target_size)
 
         elif not self.fixed_size:                  # resizable
             if VERBOSE:
