@@ -114,8 +114,10 @@ class CustomDialog(Dialog):
 
     def body(self, parent):
         # get the system icon image
+        # XXX the icons aren't working
         self.photo = tk.PhotoImage(master=parent)
         self.tk.call(self.photo, "copy", f"::tk::icons::{self.icon}")
+
         # create label with the icon image and message
         tk.Label(parent, text=self.message,
                  compound="left").pack(padx=50, pady=20)
@@ -148,7 +150,7 @@ class CustomDialog(Dialog):
         self._bindings()
 
     def button_callback(self, event):
-        print("Unknown button pressed:", event)
+        print("A button was pressed:", event)
 
     def _bindings(self):
         self.bind("<Return>", self.ok)
@@ -199,6 +201,7 @@ if __name__ == '__main__':
             root.quit()
 
     root = tk.Tk()
+
     tk.Button(root, text="push me", command=popup_dialogs).pack()
 
     root.mainloop()

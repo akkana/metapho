@@ -360,7 +360,7 @@ class tkPhoWidget (tk.Label):
 
             # Whew, load() worked okay, the image is valid
             if VERBOSE:
-                print("  tkPhoWidget.next_image, to",
+                print("tkPhoWidget.next_image, to",
                       imagelist.current_imageno(),
                       "->", imagelist.current_image())
 
@@ -375,7 +375,11 @@ class tkPhoWidget (tk.Label):
             raise FileNotFoundError("No image list!")
 
         while True:
-            imagelist.retreat()
+            try:
+                imagelist.retreat()
+            except IndexError:
+                imagelist.set_imageno(-1)
+
             if imagelist.current_imageno() < 0:
                 imagelist.set_imageno(0)
                 if VERBOSE:

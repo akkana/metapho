@@ -43,7 +43,7 @@ def num_valid_images():
     return len ([ im for im in img_list if not im.invalid ])
 
 def advance():
-    """Increment cur_imgno by 1"""
+    """Increment cur_imgno by 1 if possible, else raise IndexError"""
     global cur_imgno
     if cur_imgno >= len(img_list) - 1:
         # print("Couldn't advance past", cur_imgno, "=", img_list[cur_imgno],
@@ -52,7 +52,7 @@ def advance():
     cur_imgno += 1
 
 def retreat():
-    """Decrement cur_imgno by 1"""
+    """Decrement cur_imgno by 1 if possible, else raise IndexError"""
     global cur_imgno
     if cur_imgno <= 0:
         # print("Couldn't retreat past", cur_imgno, "=", img_list[cur_imgno],
@@ -89,3 +89,4 @@ def pop_image(imgno=None):
     if imgno is None:
         imgno = current_imageno()
     return img_list.pop(imgno)
+
