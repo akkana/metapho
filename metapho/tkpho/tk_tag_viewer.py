@@ -194,11 +194,27 @@ class TkTagViewer(metapho.Tagger):
         self.current_category = next(iter(self.categories))
         self.cat_menu_btn.configure(text=self.current_category)
 
-        self.pho_widget.next_image()
+        try:
+            self.pho_widget.next_image()
+        except IndexError:
+            # No viewable images will cause the pho_widget to raise
+            # an IndexError when it tries repeatedly to do next_image().
+            print("No viewable images!")
+            # XXX For some reason, the window in this case resizes to
+            # more than fill the screen, which is annoying.
+            # But its winfo_width, height are more reasonable numbers,
+            # they just aren't respected.
+            w = self.root.winfo_width()
+            h = self.root.winfo_height()
+            if h > w:
+                h = w
+            self.root.geometry('%dx%d' % (w, h))
+            message_dialog(title="No Images", message="No viewable images!",
+                           yes_bindings=['<Key-space>'])
+            sys.exit(1)
 
-        # All the tags are read in.
+        # All the tags are read in and we're showing the first image.
         self.update_tag_entries()
-
         self.update_window_from_image(allow_category_change=True)
 
     def update_tag_entries(self):
@@ -598,10 +614,11 @@ class TkTagViewer(metapho.Tagger):
             # What tag does it point to?
             tagno = self.categories[self.current_category][i]
             if self.tag_list[tagno] != tagname:
-                if True or tk_pho_widget.VERBOSE:
-                    print("EEK! tag", i, "=", tagname, "used to be",
-                      self.tag_list[self.categories[self.current_category][i]])
-                    # But continue anyway, at least for now
+                if tk_pho_widget.VERBOSE:
+                    print("Changing tag", i,
+                          self.tag_list[
+                              self.categories[self.current_category][i]],
+                          "->", tagname)
 
             # add or remove the tag, as appropriate
             if self.tag_button_set(b) and tagno not in img.tags:

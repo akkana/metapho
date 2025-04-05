@@ -350,6 +350,8 @@ class tkPhoWidget (tk.Label):
                 # it wasn't in the argument list.
                 # In that case, skip it in the GUI, but don't delete it from
                 # the image list because its tags still need to be preserved.
+                # However, it can also happen when there are no viewable
+                # images in the argument list.
                 imagelist.advance()
                 continue
             except RuntimeError as e:
