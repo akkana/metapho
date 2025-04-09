@@ -113,7 +113,10 @@ class tkPhoWindow:
         except Exception as e:
             print(e)
             sys.exit(1)
-        self.root.mainloop()
+        try:
+            self.root.mainloop()
+        except KeyboardInterrupt:
+            sys.exit(0)
 
     def add_image(self, img):
         self.pho_widget.add_image(img)
