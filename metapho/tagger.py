@@ -36,7 +36,7 @@ class Tagger(object):
             ".cr2", ".arw", ".xcf",
             ".mvi", ".avi", ".mov", ".thm", ".mp4", ".mkv",
             ".pto", ".txt", ".wav", ".mp3",
-            ".xml"
+            ".xml", ".pp3"
         ]
     try:
         IGNORE_DIRNAMES = os.getenv("NOTAGS_IGNORE_DIRNAMES").split()
@@ -331,8 +331,7 @@ tag Bruny Island: img 008.jpg
            img is a metapho.MetaphoImage.
            tag may be a string, which can be a new string or an existing one,
            or an integer index into the tag list.
-           Return the index (in the global tags list) of the tag just added,
-           or None if error.
+           Return the index (in the global tags list) of the tag just added.
         """
         self.changed = True
 
@@ -341,7 +340,7 @@ tag Bruny Island: img 008.jpg
                 img.tags.append(tag)
             return tag
 
-        # Else it's a string. Is it already inthe tag list?
+        # Else it's a string. Is it already in the tag list?
         if tag in self.tag_list:
             tagno = self.tag_list.index(tag)
             if tagno not in self.categories[self.current_category]:
@@ -372,7 +371,10 @@ tag Bruny Island: img 008.jpg
         # XXX Need to remove it from self.current_category too?
 
     def change_tag(self, entryno, newstr):
-        """Update a tag: called on focus_out from one of the text entries"""
+        """Update a tag's string.
+           Called on focus_out from one of the text entries.
+           The entryno should be the same as the index in the current category.
+        """
 
         # Number of tags in this category:
         numtags = len(self.categories[self.current_category])

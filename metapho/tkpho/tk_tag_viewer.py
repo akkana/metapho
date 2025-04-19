@@ -52,6 +52,7 @@ class TkTagViewer(metapho.Tagger):
         self.bg_color = "#bbbbbb"
         # bg color for tags that are set on this image
         self.active_bg_color = "#f7ffff"
+        self.highlight_bg_color = "#fff0f0"
 
         # Now one to hold the button box
         buttonbox = tk.Frame(self.root)
@@ -87,7 +88,7 @@ class TkTagViewer(metapho.Tagger):
         self.buttons = [None] * 52
         self.entries = [None] * 52
 
-        # Bindings that should always be active.
+        # Bindings that should always be active in the main window.
         self.global_bindings = {
             '<Control-Key-q>':     self.quit,
 
@@ -95,6 +96,15 @@ class TkTagViewer(metapho.Tagger):
             '<Key-Escape>':        self.focus_none,
 
             '<Control-Key-z>':     self.popup_pho_window,
+            '<Key-Return>':        self.new_tag,
+        }
+
+        # Bindings for the popup pho window
+        self.pho_bindings = {
+            '<Control-Key-q>':     self.hide_pho_window,
+            '<Control-Key-w>':     self.hide_pho_window,
+            '<Control-Key-z>':     self.hide_pho_window,
+            '<Control-Key-space>': self.next_image,
             '<Key-Return>':        self.new_tag,
         }
 
@@ -267,7 +277,7 @@ class TkTagViewer(metapho.Tagger):
                     command=lambda: self.switch_category(newcatname))
 #                    command=lambda cat=newcatname: self.switch_category(cat))
 
-    def set_bindings(self, enable, widget=None):
+    def set_bindings(self, enable, widget=None, pho_win=False):
         """TkInter doesn't have a way to override window-wide key bindings
            when focus goes to a widget that needs input, like an Entry.
            Therefore, when focus goes to an entry, call
@@ -281,13 +291,20 @@ class TkTagViewer(metapho.Tagger):
             widget = self.root
 
         if enable:
-            for key in self.global_bindings:
-                widget.bind(key, self.global_bindings[key])
             for key in self.win_bindings:
                 widget.bind(key, self.win_bindings[key])
+            if pho_win:
+                for key in self.pho_bindings:
+                    widget.bind(key, self.pho_bindings[key])
+            else:
+                for key in self.global_bindings:
+                    widget.bind(key, self.global_bindings[key])
         else:
             for key in self.win_bindings:
                 widget.unbind(key, None)
+
+        # Also add ^Q and ^Z
+        # self.pho_win.root.bind(key, self.global_bindings[key])
 
     def next_image(self, event=None):
         if tk_pho_widget.VERBOSE:
@@ -362,22 +379,77 @@ class TkTagViewer(metapho.Tagger):
 
         if tk_pho_widget.VERBOSE:
             print("Focus out", event.widget)
+
         # Find the tag number
         entry = event.widget
         entryno = self.letter2index(entry._name[-1])
+        curcat = self.categories[self.current_category]
 
-        newstr = event.widget.get()
-        # has the text been erased, or maybe never been there?
+        # Most tag updating will be done by update_image_from_window().
+        # The only tag-related actions that have to be done here are:
+
+        # 1. guard against an existing tag string being erased
+        newstr = entry.get()
         if not newstr:
-            return
+            if entryno < len(curcat):
+                if curcat[entryno]:
+                    entry.config(text=curcat[entryno])
 
-        self.change_tag(entryno, newstr)
+        # 2. guard against duplicate tags
+        try:
+            tagindex = self.tag_list.index(newstr)
+            # It's already in the tag list
+            if tk_pho_widget.VERBOSE:
+                print("tagindex:", tagindex)
+            try:
+                catindex = curcat.index(tagindex)
+                if tk_pho_widget.VERBOSE:
+                    print("index in current category:", catindex,
+                          "(entryno is", entryno, ")")
+                if catindex != entryno:
+                    if tk_pho_widget.VERBOSE:
+                        print("Duplicate tag, previously at position",
+                              catindex, "now duped at",
+                              entryno, file=sys.stderr)
+                    self.enable_entry(catindex, True)
+                    self.entries[catindex].config(bg=self.highlight_bg_color)
+                    if entryno >= len(curcat):
+                        entry.delete(0, tk.END)
+                        self.enable_entry(entryno, False)
+                        self.focus_none()
+                    else:
+                        entry.config(text='EEK ' + newstr)
+            except ValueError:
+                # It's in the tag list, but not in the current category.
+                if tk_pho_widget.VERBOSE:
+                    print("It's in the tag list, but not "
+                          "in the current category.")
+                # Is it new, or replacing an old tag?
+                if entryno >= len(curcat):
+                    print("appending")
+                    curcat.append(tagindex)
+                else:
+                    # I think this can happen if the user changes a tag
+                    # to a string that already exists as a tag in a
+                    # category other than the current category.
+                    print(newstr, "is already a tag but not in the",
+                          self.current_category, "category. Replacing",
+                          curcat[entryno])
+                    curcat[entryno] = tagindex
+
+        except ValueError:
+            # It's a new tag, update_image_from_window() will deal with it
+            if tk_pho_widget.VERBOSE:
+                print("new tag, doing nothing for now")
+            pass
+
+        # self.change_tag(entryno, newstr)
 
         # Enable global key bindings
         self.set_bindings(True)
 
         if tk_pho_widget.VERBOSE:
-            print("After focus_out:")
+            print("End of on_focus_out:")
             self.print_imagelist()
 
     def focus_none(self, event=None):
@@ -408,8 +480,10 @@ class TkTagViewer(metapho.Tagger):
         # print("button", buttonno, "is currently",
         #       self.buttons[buttonno].config())
 
-        # Is there a blank tag before this one? Then refuse to enable it.
-        if buttonno > 0 and not self.entries[buttonno-1].get().strip():
+        # Is this tag blank, or is there a blank tag before this one?
+        # Then refuse to enable it.
+        if (not self.entries[buttonno].get().strip() or
+            (buttonno > 0 and not self.entries[buttonno-1].get().strip())):
             if tk_pho_widget.VERBOSE:
                 print("Refusing to go to tag", letter)
             return
@@ -425,9 +499,12 @@ class TkTagViewer(metapho.Tagger):
         print("Would Search!")
 
     def quit(self, event=None):
+        print(len(imagelist.image_list()), "images")
         if self.tag_list:
-            print("tags:", self.tag_list)
-        if self.categories:
+            print("tags:", ", ".join(self.tag_list))
+        if (len(self.categories) > 1 or
+            (len(self.categories) == 1 and
+             next(iter(self.categories)) != 'Tags')):
             print("categories:", ' '.join([key for key in self.categories]))
 
         # Write tags to disk, if they changed
@@ -443,6 +520,9 @@ class TkTagViewer(metapho.Tagger):
         sys.exit(0)
 
     def new_tag(self, event=None):
+        """The user hit Return to add a new tag.
+           Find the first blank entry and focus it.
+        """
         # Loop over entries to find the first blank one
         for i, entry in enumerate(self.entries):
             if not entry.get():
@@ -605,9 +685,6 @@ class TkTagViewer(metapho.Tagger):
                 if tk_pho_widget.VERBOSE:
                     print("Adding new tag", tagname)
                 tagno = self.add_tag(tagname, img)
-                if not tagno:
-                    print("EEK, couldn't add tag", tagname)
-                    continue
                 continue
 
             # The current category is long enough to hold this index.
@@ -658,7 +735,10 @@ class TkTagViewer(metapho.Tagger):
         # self.pho_win.pho_widget.goto_imageno(g_cur_imgno)
         self.pho_win.pho_widget.show_image()
 
-        self.set_bindings(True, widget=self.pho_win.root)
+        self.set_bindings(True, widget=self.pho_win.root, pho_win=True)
+
+    def hide_pho_window(self, event=None):
+        self.pho_win.root.iconify()
 
     def show_info(self, event=None):
         """Pop up the infobox (creating it if needed) and update its contents
@@ -675,10 +755,19 @@ class TkTagViewer(metapho.Tagger):
 
 
 def main():
+    def Usage():
+        print("Usage: %s [-v] image1.jpg image2.jpg ..."
+              % os.path.basename(sys.argv[0]))
+        sys.exit(1)
+
     args = sys.argv[1:]
     if args[0] == '-v':
         tk_pho_widget.VERBOSE = True
         args = args[1:]
+    elif args[0] == '-h' or args[0] == '--help':
+        Usage()
+    elif args[0][0] == '-':
+        Usage()
 
     tagger = TkTagViewer(img_list=args)
 
