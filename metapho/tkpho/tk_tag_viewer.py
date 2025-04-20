@@ -54,40 +54,6 @@ class TkTagViewer(metapho.Tagger):
         self.active_bg_color = "#f7ffff"
         self.highlight_bg_color = "#fff0f0"
 
-        # Now one to hold the button box
-        buttonbox = tk.Frame(self.root)
-        # buttonbox.pack(side=tk.RIGHT)
-        buttonbox.grid(row=0, column=1)
-
-        # Configure columns to have equal width
-        self.root.columnconfigure(0, weight=1)
-        self.root.columnconfigure(1, weight=1)
-
-        # Image name at the top.
-        self.img_name_label = tk.Label(buttonbox)
-        self.img_name_label.grid(row=0, column=0, columnspan=4)
-
-        # Add the category selector
-        catsel = tk.Frame(buttonbox)
-        catsel.grid(row=0, column=0, columnspan=2,
-                   padx=self.PADDING, pady=self.PADDING)
-        label = tk.Label(catsel, text="Category:")
-        label.grid(row=0, column=0)
-        self.cat_menu_btn = tk.Menubutton(catsel, text="Category menu",
-                                          relief="raised")
-        self.cat_menu_btn.grid(row=0, column=1)
-        self.cat_menu_btn.menu = tk.Menu(self.cat_menu_btn, tearoff=0)
-        # Is the next line really needed?
-        self.cat_menu_btn["menu"] = self.cat_menu_btn.menu
-
-        b = tk.Button(buttonbox, text="New Category", command=self.new_category)
-        b.grid(row=0, column=3, columnspan=2,
-               padx=self.PADDING, pady=self.PADDING)
-
-        # The buttons, one for each lower and upper case letter
-        self.buttons = [None] * 52
-        self.entries = [None] * 52
-
         # Bindings that should always be active in the main window.
         self.global_bindings = {
             '<Control-Key-q>':     self.quit,
@@ -113,13 +79,80 @@ class TkTagViewer(metapho.Tagger):
         self.win_bindings = {
             '<Key-space>':         self.next_image,
             '<Key-BackSpace>':     self.prev_image,
-            '<Key-slash>':         self.search,
             '<Key-Home>':          partial(self.goto_image, 0),
             '<Key-End>':           partial(self.goto_image, -1),
             '<Control-Key-d>':     self.delete_image,
             '<Control-Key-u>':     self.clear_tag_buttons,
             '<Control-Key-i>':     self.show_info,
+            '<Key-slash>':         self.focus_find,
         }
+
+        # Bindings I want in all entries; I wish Tk had a
+        # more configurable way of getting these
+        self.entry_bindings = {
+            '<Control-Key-u>':     self.entryerase,
+        }
+
+        # The root will be divided into two columns horizontally:
+        # the image on the left, rightpane on the right.
+        # rightpane holds the category selector and the buttonbox.
+        # Above the buttonbox on the right goes the category selector,
+        # which also holds the image name and search bar.
+
+        rightpane = tk.Frame(self.root)
+        rightpane.grid(row=0, column=1, padx=self.PADDING, pady=self.PADDING)
+
+        # The category selector
+        catsel = tk.Frame(rightpane)
+        catsel.pack(side=tk.TOP)
+
+        # Image name at the top of the catsel
+        self.img_name_label = tk.Label(catsel)
+        self.img_name_label.pack(side=tk.TOP)
+
+        # In the next line below the image name, the various
+        # category selection related widgets
+        label = tk.Label(catsel, text="Category:")
+        # label.grid(row=0, column=0)
+        label.pack(side=tk.LEFT)
+
+        # Option menu for changing category
+        self.cat_menu_str = tk.StringVar(self.root)
+        self.cat_option_menu = tk.OptionMenu(catsel, self.cat_menu_str, [])
+        self.cat_option_menu.pack(side=tk.LEFT)
+
+        b = tk.Button(catsel, text="New Category", command=self.new_category)
+        # b.grid(row=0, column=3, columnspan=2,
+        #        padx=self.PADDING, pady=self.PADDING)
+        b.pack(side=tk.LEFT)
+
+        findbox = tk.Frame(catsel)
+        findbox.pack(side=tk.LEFT, expand=True)
+        findlabel = tk.Label(findbox, text="Find:")
+        findlabel.pack(side=tk.LEFT)
+        # Apparently the only way to get notifications during typing
+        # is to tie the entry to a string variable
+        self.findstring = tk.StringVar()
+        self.findentry = tk.Entry(findbox, textvariable=self.findstring)
+        self.findentry.bind("<FocusIn>", self.on_focus_in)
+        self.findentry.bind("<FocusOut>", self.on_find_focus_out)
+        self.findentry.pack(side=tk.LEFT, expand=True)
+        self.findstring.trace_add('write', self.update_find)
+        for key in self.entry_bindings:
+            self.findentry.bind(key, self.entry_bindings[key])
+
+        # The buttonbox holds all the lettered buttons and their entries.
+        buttonbox = tk.Frame(rightpane)
+        buttonbox.pack(side=tk.BOTTOM)
+        # buttonbox.grid(row=1, column=1)
+
+        # Configure columns to have equal width
+        self.root.columnconfigure(0, weight=1)
+        self.root.columnconfigure(1, weight=1)
+
+        # The buttons, one for each lower and upper case letter
+        self.buttons = [None] * 52
+        self.entries = [None] * 52
 
         for row, letter in enumerate(ascii_lowercase):
             callback = partial(self.letter_button_press, letter)
@@ -137,7 +170,8 @@ class TkTagViewer(metapho.Tagger):
                                    padx=self.PADDING, pady=self.PADDING)
             self.entries[row].bind("<FocusIn>", self.on_focus_in)
             self.entries[row].bind("<FocusOut>", self.on_focus_out)
-            self.entries[row].bind('<Control-Key-u>', self.entryerase)
+            for key in self.entry_bindings:
+                self.entries[row].bind(key, self.entry_bindings[key])
 
             upletter = letter.upper()
             callback = partial(self.letter_button_press, upletter)
@@ -187,22 +221,21 @@ class TkTagViewer(metapho.Tagger):
 
         self.read_all_tags_for_images()
 
-        # Now we should have categories and can populate the category menu
-        if self.categories:
-            for cat in self.categories:
-                self.cat_menu_btn.menu.add_command(
-                    label=cat,
-                    command=lambda newcat=cat: self.switch_category(newcat))
-        else:
+        if not self.categories:
             print("No categories after reading Tags file")
             self.categories["Tags"] = list(self.tag_list)
-            self.cat_menu_btn.menu.add_command(
-                label="Tags",
-                command=lambda: self.switch_category("Tags"))
 
+        # Now we should have categories.
         # set current category to the first one
         self.current_category = next(iter(self.categories))
-        self.cat_menu_btn.configure(text=self.current_category)
+        print("Categories:", self.categories)
+
+        # fill the category option menu
+        self.cat_option_menu['menu'].delete(0, 'end')
+        for cat in self.categories:
+            self.cat_option_menu['menu'].add_command(label=cat,
+                command=lambda c=cat: self.switch_category(c))
+        self.cat_menu_str.set(self.current_category)
 
         try:
             self.pho_widget.next_image()
@@ -257,9 +290,10 @@ class TkTagViewer(metapho.Tagger):
            in the new one.
         """
         self.update_image_from_window()
-        print("Change category to:", newcat)
+        if tk_pho_widget.VERBOSE:
+            print("Change category to:", newcat)
         self.current_category = newcat
-        self.cat_menu_btn.configure(text=newcat)
+        self.cat_menu_str.set(newcat)
         self.update_tag_entries()
         self.update_window_from_image(allow_category_change=False)
 
@@ -272,10 +306,9 @@ class TkTagViewer(metapho.Tagger):
             flash_message("You already have a %s category" % newcatname)
             return
         self.categories[newcatname] = []
-        self.cat_menu_btn.menu.add_command(
-                    label=newcatname,
-                    command=lambda: self.switch_category(newcatname))
-#                    command=lambda cat=newcatname: self.switch_category(cat))
+        self.cat_option_menu['menu'].add_command(label=newcatname,
+            command=lambda c=newcatname: self.switch_category(c))
+        self.switch_category(newcatname)
 
     def set_bindings(self, enable, widget=None, pho_win=False):
         """TkInter doesn't have a way to override window-wide key bindings
@@ -495,9 +528,6 @@ class TkTagViewer(metapho.Tagger):
     def entryerase(self, event):
         event.widget.delete(0, tk.END)
 
-    def search(self, event):
-        print("Would Search!")
-
     def quit(self, event=None):
         print(len(imagelist.image_list()), "images")
         if self.tag_list:
@@ -713,6 +743,34 @@ class TkTagViewer(metapho.Tagger):
             print()
             self.print_imagelist()
             print()
+
+    def focus_find(self, event=None):
+        """Open an entry where the user can type search strings,
+           to search for tags.
+        """
+        self.findentry.focus()
+
+        if self.findstring.get():
+            self.update_find(None, None, None)
+
+    def on_find_focus_out(self, event):
+        # self.findentry.delete(0, tk.END)
+        self.set_bindings(True)
+
+    def update_find(self, var, index, mode):
+        # I don't know what any of the arguments are, but it seems
+        # they aren't useful for anything.
+        findstr = self.findstring.get()
+        # print("update_find:", findstr)
+        if len(findstr) < 3:
+            return
+        for i, ent in enumerate(self.entries):
+            if findstr in ent.get():
+                ent.config(bg=self.highlight_bg_color)
+            else:
+                # Set the entry to the same background color as
+                # its corresponding button
+                ent.config(bg=self.buttons[i].cget('bg'))
 
     def print_imagelist(self):
         print("imagelist:")
