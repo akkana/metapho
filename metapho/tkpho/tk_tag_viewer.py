@@ -71,7 +71,6 @@ class TkTagViewer(metapho.Tagger):
             '<Control-Key-w>':     self.hide_pho_window,
             '<Control-Key-z>':     self.hide_pho_window,
             '<Control-Key-space>': self.next_image,
-            '<Key-Return>':        self.new_tag,
         }
 
         # Bindings that will be disabled when focus is in a text field
@@ -228,7 +227,6 @@ class TkTagViewer(metapho.Tagger):
         # Now we should have categories.
         # set current category to the first one
         self.current_category = next(iter(self.categories))
-        print("Categories:", self.categories)
 
         # fill the category option menu
         self.cat_option_menu['menu'].delete(0, 'end')
@@ -410,73 +408,115 @@ class TkTagViewer(metapho.Tagger):
                 print("Focus out of something other than an entry")
             return
 
-        if tk_pho_widget.VERBOSE:
-            print("Focus out", event.widget)
-
         # Find the tag number
         entry = event.widget
         entryno = self.letter2index(entry._name[-1])
         curcat = self.categories[self.current_category]
+        newstr = entry.get().strip()
 
-        # Most tag updating will be done by update_image_from_window().
-        # The only tag-related actions that have to be done here are:
+        if tk_pho_widget.VERBOSE:
+            print("Focus out #%d %s, now '%s'" % (entryno, entry._name[-1],
+                                                  newstr))
+
+        # If nothing has changed, don't worry about it
+        try:
+            if newstr == self.tag_list[curcat[entryno]]:
+                # Enable global key bindings
+                self.set_bindings(True)
+                return
+        except IndexError:
+            if tk_pho_widget.VERBOSE:
+                print("Something changed or it's a new tag")
+            pass
+
+        # Most tag updating will happen in update_image_from_window().
+        # The only tag-related actions that have to be done here,
+        # since they might affect subsequent tags for this image, are:
 
         # 1. guard against an existing tag string being erased
-        newstr = entry.get()
         if not newstr:
+            if tk_pho_widget.VERBOSE:
+                print("Empty entry")
             if entryno < len(curcat):
                 if curcat[entryno]:
-                    entry.config(text=curcat[entryno])
+                    if tk_pho_widget.VERBOSE:
+                        print("entryno > len curcat, setting entry back to",
+                              curcat[entryno])
+                    entry.insert(0, curcat[entryno])
+                else:
+                    print("Category", curcat,
+                          "seems to have a blank entry at", entryno,
+                          ":", curcat)
+            self.set_bindings(True)
+            return
 
+        # It has changed and is not the last entry, so
         # 2. guard against duplicate tags
         try:
+            # Does the tag already exist?
             tagindex = self.tag_list.index(newstr)
-            # It's already in the tag list
-            if tk_pho_widget.VERBOSE:
-                print("tagindex:", tagindex)
-            try:
-                catindex = curcat.index(tagindex)
-                if tk_pho_widget.VERBOSE:
-                    print("index in current category:", catindex,
-                          "(entryno is", entryno, ")")
-                if catindex != entryno:
-                    if tk_pho_widget.VERBOSE:
-                        print("Duplicate tag, previously at position",
-                              catindex, "now duped at",
-                              entryno, file=sys.stderr)
-                    self.enable_entry(catindex, True)
-                    self.entries[catindex].config(bg=self.highlight_bg_color)
-                    if entryno >= len(curcat):
-                        entry.delete(0, tk.END)
-                        self.enable_entry(entryno, False)
-                        self.focus_none()
-                    else:
-                        entry.config(text='EEK ' + newstr)
-            except ValueError:
-                # It's in the tag list, but not in the current category.
-                if tk_pho_widget.VERBOSE:
-                    print("It's in the tag list, but not "
-                          "in the current category.")
-                # Is it new, or replacing an old tag?
-                if entryno >= len(curcat):
-                    print("appending")
-                    curcat.append(tagindex)
-                else:
-                    # I think this can happen if the user changes a tag
-                    # to a string that already exists as a tag in a
-                    # category other than the current category.
-                    print(newstr, "is already a tag but not in the",
-                          self.current_category, "category. Replacing",
-                          curcat[entryno])
-                    curcat[entryno] = tagindex
 
         except ValueError:
             # It's a new tag, update_image_from_window() will deal with it
             if tk_pho_widget.VERBOSE:
                 print("new tag, doing nothing for now")
-            pass
+            self.set_bindings(True)
+            return
 
-        # self.change_tag(entryno, newstr)
+        # It's already in the tag list
+        if tk_pho_widget.VERBOSE:
+            print("Changing an entry %d to an already existing tag %s"
+                  % (tagindex, newstr))
+
+        # Is it already in the current category?
+        try:
+            catindex = curcat.index(tagindex)
+            if tk_pho_widget.VERBOSE:
+                print("index in current category:", catindex,
+                      "(entryno is", entryno, ")")
+            if catindex != entryno:
+                if tk_pho_widget.VERBOSE:
+                    print("Duplicate tag, previously at position",
+                          catindex, "now duped at",
+                          entryno, file=sys.stderr)
+
+                # Enable and highlight the earlier instance of the tag --
+                # but only if it's set for the current image.
+                # It might not be set in the case where the user
+                # entered the duplicate tag, then typed control-Return
+                # to go to the next image, in which case on_focus_out
+                # won't be called until the current image has already changed.
+                if tagindex in imagelist.current_image().tags:
+                    self.enable_entry(catindex, True)
+                    self.entries[catindex].config(bg=self.highlight_bg_color)
+                # Clear the entry where the duplicate was just typed
+                if entryno >= len(curcat):
+                    entry.delete(0, tk.END)
+                    self.enable_entry(entryno, False)
+                    self.focus_none()
+                else:
+                    try:
+                        entry.insert(0, text=curcat[catindex])
+                    except:
+                        entry.insert(0, text='EEK ' + newstr)
+
+        except ValueError:
+            # It's in the tag list, but not in the current category.
+            if tk_pho_widget.VERBOSE:
+                print("It's in the tag list, but not n the current category.")
+            # Is it new?
+            if entryno >= len(curcat):
+                print("appending")
+                curcat.append(tagindex)
+            else:
+                # It's replacing an old tag?
+                # I think this can happen if the user changes a tag
+                # to a string that already exists as a tag in a
+                # category other than the current category.
+                print(newstr, "is already a tag but not in the",
+                      self.current_category, "category. Replacing",
+                      curcat[entryno])
+                curcat[entryno] = tagindex
 
         # Enable global key bindings
         self.set_bindings(True)
@@ -495,7 +535,12 @@ class TkTagViewer(metapho.Tagger):
         w = self.root.focus_get()
         if type(w) is tk.Entry:
             if not w.get():
-                # Nothing was typed in, so un-highlight the row
+                # Nothing was typed in, so un-highlight the row.
+                # Note: this means that erasing an existing tag is
+                # equivalent to un-checking it; the assumption is
+                # that if the user erased the tag, they probably
+                # don't want it set for the current image, even
+                # if the tag is kept for other images.
                 letter = w._name[-1]
                 index = self.letter2index(letter)
                 self.enable_entry(index, False)
@@ -563,6 +608,9 @@ class TkTagViewer(metapho.Tagger):
         # W're full, no room for new entries
         flash_message(self.root, "All entries are full!")
         return
+
+    def is_enabled(self, entryno):
+        return self.buttons[entryno].cget('relief') == 'sunken'
 
     def enable_entry(self, entryno, enabled):
         """Make the given entry and button selected"""
@@ -699,12 +747,12 @@ class TkTagViewer(metapho.Tagger):
                 # But for now, just bail if the entry is empty.
                 continue
 
-            # See if the name is the same as an existing tag
-            # existing_tagno = self.tagname_to_tagno(tagname)
-            # if tk_pho_widget.VERBOSE:
-            #     print(tagname, "already exists")
-            # XXX Check whether it's in this category, or in another
-            # and needs to be added to this one.
+            # Did the tag name change?
+            if tagname != self.categories[self.current_category]:
+                if tk_pho_widget.VERBOSE:
+                    print("Tag", self.categories[self.current_category],
+                          "changing to", tagname)
+                self.change_tag(i, tagname)
 
             # The button index *should* correspond to the index
             # of the tag in the current category. Check that:

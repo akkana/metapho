@@ -372,36 +372,30 @@ tag Bruny Island: img 008.jpg
 
     def change_tag(self, entryno, newstr):
         """Update a tag's string.
-           Called on focus_out from one of the text entries.
+           Called on focus_out from one of the text entries (in GUI metapho).
            The entryno should be the same as the index in the current category.
+           Changes it for all categories, not just the current one.
         """
+        # To change the tag only in the current category,
+        # would have to give it a new tag number and resolve the
+        # question of whether other images with this tag number
+        # want the old or the new string.
 
         # Number of tags in this category:
         numtags = len(self.categories[self.current_category])
 
         newstr = newstr.strip()
+        if not newstr:
+            return
         cur_img = imagelist.current_image()
 
-        # If the string is now empty, and it's the last tag
-        # in both this category and the overall tag list,
-        # remove it from the tag list, the category and the current image.
-        # XXX Note that other images may still refer to this
-        # nonexistent tag. Possibly we should consider looping through
-        # the whole image list.
-        if not newstr:
-            if entryno == numtags-1:
-                tag_list_no = self.categories[self.current_category][entryno]
-                if entryno == numtags - 1 and tag_list_no == len(self.tag_list) - 1:
-                    tagno = self.categories[self.current_category].pop(-1)
-                    self.tag_list.pop(-1)
-                    try:
-                        index = cur_img.tags.index(tagno)
-                        cur_img.tags.pop(index)
-                    except ValueError:
-                        pass
+        try:
+            tag_list_no = self.categories[self.current_category][entryno]
+        except:
+            tag_list_no = None
 
         # If it's changing an existing tag, just do it.
-        elif entryno < numtags:
+        if entryno < numtags:
             self.tag_list[self.categories[self.current_category][entryno]] \
                 = newstr
 
@@ -409,6 +403,8 @@ tag Bruny Island: img 008.jpg
         # so add a new tag.
         else:
             self.add_tag(newstr, cur_img)
+
+        self.changed = True
 
     def clear_tags(self, img):
         img.tags = []
