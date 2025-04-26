@@ -131,6 +131,11 @@ class tkPhoWidget (tk.Label):
            Return 1 for success, 0 for valid image but not ready,
            -1 for invalid image or other error.
         """
+        if type(imagelist.current_image()) is not tkPhoImage:
+            if VERBOSE:
+                print("Eek, no current image for show_image()")
+            return
+
         if VERBOSE:
             print("tkPhoWidget.show_image, widget size is", self.widget_size,
                   "rotation", imagelist.current_image().rot)
@@ -289,9 +294,6 @@ class tkPhoWidget (tk.Label):
 
         # After removing, we'll be positioned on the next position in the list
         # or maybe nowhere, if the last image was just deleted.
-        # First check if there are any images left:
-        if not imagelist.current_image():
-            raise IndexError
 
         # Try to go forward to the next valid image,
         # and if that doesn't work, try to go back.
@@ -305,6 +307,10 @@ class tkPhoWidget (tk.Label):
             # though we should have caught that in the explicit check.
             while type(imagelist.current_image()) is not tkPhoImage:
                 imagelist.retreat()
+
+        # No images either forward or backward?
+        if type(imagelist.current_image()) is not tkPhoImage:
+            raise IndexError
 
         self.show_image()
 
