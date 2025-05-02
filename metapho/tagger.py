@@ -133,6 +133,10 @@ class Tagger(object):
             print("No tags changed; not rewriting Tags file")
             return
 
+        if not self.tag_list:
+            print("Nothing was tagged; not writing Tags file")
+            return
+
         outpath = os.path.join(self.commondir, "Tags")
         print("Saving to", outpath)
         if os.path.exists(outpath):
