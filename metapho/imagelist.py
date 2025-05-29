@@ -26,6 +26,11 @@ def set_current_imageno(val):
     global cur_imgno
     cur_imgno= val
 
+def set_current_image(im):
+    """Can raise ValueError if im isn't in the list"""
+    global cur_imgno
+    cur_imgno = img_list.index(im)
+
 def image_list():
     return img_list
 
@@ -60,10 +65,6 @@ def retreat():
         raise IndexError
     cur_imgno -= 1
 
-def set_imageno(val):
-    global cur_imgno
-    cur_imgno = val
-
 def add_images(newlist_or_img):
     """Pass either a list of MetaphoImage or a single MetaphoImage.
     """
@@ -80,13 +81,30 @@ def add_images(newlist_or_img):
     #                     % type(newlist_or_img))
 
 def remove_image(img=None):
-    """Remove the indicated image. If img is None, remove the current image."""
+    """Remove the indicated image. If img is None, remove the current image.
+       Leave the pointer on the image before the removed one.
+    """
+    global cur_imgno
     if not img:
         img = current_image()
+    index = img_list.index(img)
     img_list.remove(img)
+    if index > 0:
+        cur_imgno = index - 1
 
 def pop_image(imgno=None):
+    # Should this also move the cur_imgno pointer back, like remove_image?
     if imgno is None:
         imgno = current_imageno()
     return img_list.pop(imgno)
 
+
+def print_imagelist():
+    """For debugging"""
+    print("Imagelist:")
+    for im in img_list:
+        if current_image() == im:
+            print(" >>", im)
+        else:
+            print("   ", im)
+    print()

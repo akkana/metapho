@@ -65,6 +65,8 @@ class MetaphoImage:
         # In other cases, an image that can't be opened also
         # shouldn't be considered as an image since it will never
         # be shown to the user.
+        # That also applies to images that were omitted on the commandline,
+        # even if they would otherwise have been valid.
         # Start out by assuming everything's valid except Tags*.
         if ((basename.startswith("Tags") or basename.startswith("Keywords"))
             and ("." not in basename or basename.endswith(".bak"))):

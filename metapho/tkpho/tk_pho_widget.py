@@ -315,27 +315,30 @@ class tkPhoWidget (tk.Label):
         self.show_image()
 
     def next_image(self):
-        imagelist.advance()
+        last_valid_image = imagelist.current_image()
 
         while True:
-            # this logic should probably move to imagelist.py
-            if imagelist.current_imageno() >= imagelist.num_images():
-                imagelist.set_imageno(imagelist.num_images() - 1)
+            try:
+                imagelist.advance()
+            except IndexError as e:
+                # Can't go beyond last image. Re-raise the IndexError,
+                # but only after setting the pointer back to the
+                # last valid image.
                 if VERBOSE:
                     print("Can't go beyond last image")
-                # Special case: if none of the images are viewable,
-                # we'll get here without anything to show.
-                if not imagelist.image_list():
-                    raise FileNotFoundError("Couldn't show any of the images")
-
-                raise IndexError("Can't go beyond last image")
+                imagelist.set_current_image(last_valid_image)
+                if VERBOSE:
+                    print("image list before re-raising IndexError:")
+                    imagelist.print_imagelist()
+                raise(e)
 
             # Is the current image valid?
             if imagelist.current_image().invalid:
-                imagelist.remove_image()
                 continue
 
             try:
+                # Try to load it. This is also a test to make sure it's a
+                # tkPhoImage: the base class MetaphoImage doesn't have load().
                 imagelist.current_image().load()
 
             except (FileNotFoundError, UnidentifiedImageError,
@@ -349,8 +352,9 @@ class tkPhoWidget (tk.Label):
                 continue
             except AttributeError as e:
                 # Attribute error generally means
-                # MetaphoImage object has no attribute 'load'
+                #   MetaphoImage object has no attribute 'load'
                 # meaning that we have a MetaphoImage in the image_list
+                # instead of a tkPhoImage,
                 # because the tagger read its tags from an existing Tags
                 # file, but no GUI tkPhoImage was created for it because
                 # it wasn't in the argument list.
@@ -358,7 +362,10 @@ class tkPhoWidget (tk.Label):
                 # the image list because its tags still need to be preserved.
                 # However, it can also happen when there are no viewable
                 # images in the argument list.
-                imagelist.advance()
+                imagelist.current_image().invalid = True
+                if VERBOSE:
+                    print("AttributeError: Marked", imagelist.current_image(),
+                          "as invalid")
                 continue
             except RuntimeError as e:
                 print("Skipping an image for an unexpected reason:", type(e),
@@ -373,9 +380,9 @@ class tkPhoWidget (tk.Label):
                       "->", imagelist.current_image())
 
             self.fullsize_offset = 0, 0
-            if VERBOSE:
-                print("Calling show_image()")
             self.show_image()
+            if VERBOSE:
+                imagelist.print_imagelist()
             return
 
     def prev_image(self):
@@ -386,13 +393,13 @@ class tkPhoWidget (tk.Label):
             try:
                 imagelist.retreat()
             except IndexError:
-                imagelist.set_imageno(-1)
+                imagelist.set_current_imageno(-1)
 
             if imagelist.current_imageno() < 0:
-                imagelist.set_imageno(0)
+                imagelist.set_current_imageno(0)
                 if VERBOSE:
                     print("Can't look before first image")
-                    return
+                return
 
             # Is the current image valid?
             try:
@@ -400,6 +407,16 @@ class tkPhoWidget (tk.Label):
             except (FileNotFoundError, UnidentifiedImageError) as e:
                 print("Skipping", imagelist.current_image(), e)
                 imagelist.remove_image()
+                continue
+            except AttributeError:
+                if VERBOSE:
+                    print("AttributeError on", imagelist.current_image())
+
+                    if type(imagelist.current_image()) is MetaphoImage:
+                        # If it's a MetaphoImage, either it wasn't in the
+                        # explicit argument list, or it can't
+                        # be loaded by PIL (e.g. Tags)
+                        imagelist.print_imagelist()
                 continue
 
             # Whew, load() worked okay, the image is valid
