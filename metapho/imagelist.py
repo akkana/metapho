@@ -93,11 +93,17 @@ def remove_image(img=None):
         cur_imgno = index - 1
 
 def pop_image(imgno=None):
-    # Should this also move the cur_imgno pointer back, like remove_image?
+    """Remove the indicated image and return it.
+       If img is None, remove the current image.
+       Leave the pointer on the image before the removed one.
+    """
+    global cur_imgno
     if imgno is None:
         imgno = current_imageno()
-    return img_list.pop(imgno)
-
+    ret = img_list.pop(imgno)
+    if imgno > 0:
+        cur_imgno = imgno - 1
+    return ret
 
 def print_imagelist():
     """For debugging"""
