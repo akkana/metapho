@@ -213,7 +213,10 @@ class tkPhoWindow:
            fullscreen_on==False -> out of fullscreen
            fullscreen_on==None -> toggle
         """
-        if fullscreen_on:
+        if fullscreen_on == None:
+            fullscreen_on = not self.root.attributes("-fullscreen")
+
+        if fullscreen_on:    # Turn on fullscreen
             # Into fullscreen
             self.root.attributes("-fullscreen", True)
             if VERBOSE:
@@ -230,7 +233,8 @@ class tkPhoWindow:
             self.root.bind("ButtonPress-2", self.start_drag)
             self.root.bind("<B2-Motion>", self.drag)
             self.root.bind("ButtonRelease-2", self.end_drag)
-        else:
+
+        else:                # Get out of fullscreen
             self.root.attributes("-fullscreen", False)
             # Sadly, the viewer widget can't just check the root attributes
             # before set_size(), because the root attribute won't actually
@@ -245,7 +249,7 @@ class tkPhoWindow:
 
         # viewer.set_size() should redraw as necessary
 
-    def fullsize_handler(self, event):
+    def fullsize_handler(self, event=None):
         if self.fixed_size:
             if VERBOSE:
                 print("full-size mode not supported in a fixed-size window")

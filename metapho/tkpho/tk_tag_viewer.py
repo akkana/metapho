@@ -67,6 +67,8 @@ class TkTagViewer(metapho.Tagger):
 
         # Bindings for the popup pho window
         self.pho_bindings = {
+            '<Control-Key-f>':     self.toggle_pho_fullsize,
+            '<Control-Key-p>':     self.toggle_pho_fullscreen,
             '<Control-Key-q>':     self.hide_pho_window,
             '<Control-Key-w>':     self.hide_pho_window,
             '<Control-Key-z>':     self.hide_pho_window,
@@ -216,7 +218,7 @@ class TkTagViewer(metapho.Tagger):
                                                     img_list=img_list,
                                                     size=self.viewer_size)
 
-        self.set_bindings(True, self.root)
+        self.set_bindings(enable=True, widget=self.root, include_pho_win=False)
 
         self.read_all_tags_for_images()
 
@@ -308,7 +310,7 @@ class TkTagViewer(metapho.Tagger):
             command=lambda c=newcatname: self.switch_category(c))
         self.switch_category(newcatname)
 
-    def set_bindings(self, enable, widget=None, pho_win=False):
+    def set_bindings(self, enable, widget=None, include_pho_win=False):
         """TkInter doesn't have a way to override window-wide key bindings
            when focus goes to a widget that needs input, like an Entry.
            Therefore, when focus goes to an entry, call
@@ -324,9 +326,9 @@ class TkTagViewer(metapho.Tagger):
         if enable:
             for key in self.win_bindings:
                 widget.bind(key, self.win_bindings[key])
-            if pho_win:
+            if include_pho_win and self.pho_win:
                 for key in self.pho_bindings:
-                    widget.bind(key, self.pho_bindings[key])
+                    self.pho_win.root.bind(key, self.pho_bindings[key])
             else:
                 for key in self.global_bindings:
                     widget.bind(key, self.global_bindings[key])
@@ -841,10 +843,44 @@ class TkTagViewer(metapho.Tagger):
         # self.pho_win.pho_widget.goto_imageno(g_cur_imgno)
         self.pho_win.pho_widget.show_image()
 
-        self.set_bindings(True, widget=self.pho_win.root, pho_win=True)
+        self.set_bindings(True, widget=self.pho_win.root, include_pho_win=True)
 
     def hide_pho_window(self, event=None):
         self.pho_win.root.iconify()
+
+    # On Ctrl-F, toggle the pho win between zoom-to-fullsize and fit-on-screen
+    def toggle_pho_fullsize(self, event=None):
+        # Try to verify that this is in the pho_win and it's active,
+        # though hopefully this won't be bound in any other windows.
+        if not self.pho_win:
+            return
+        if self.pho_win.root.state() != 'normal':
+            print("Got a ctrl-p for a pho_win with state",
+                  self.pho_win.root.state(), file=sys.stderr)
+        if event and event.widget:
+            if not event.widget.title().startswith("Pho"):
+                print("Eek, Ctrl-F toggle_pho_fullsize in the wrong window,",
+                      event.widget, event.widget.title(), file=sys.stderr)
+                return
+
+        self.pho_win.fullsize_handler()
+
+    # On Ctrl-p key, toggle between fullscreen mode and not for the pho_window
+    def toggle_pho_fullscreen(self, event=None):
+        # Try to verify that this is in the pho_win and it's active,
+        # though hopefully this won't be bound in any other windows.
+        if not self.pho_win:
+            return
+        if self.pho_win.root.state() != 'normal':
+            print("Got a ctrl-p for a pho_win with state",
+                  self.pho_win.root.state(), file=sys.stderr)
+        if event and event.widget:
+            if not event.widget.title().startswith("Pho"):
+                print("Eek, Ctrl-p toggle_pho_fullscreen in the wrong window,",
+                      event.widget, event.widget.title(), file=sys.stderr)
+                return
+
+        self.pho_win.go_fullscreen(None)
 
     def show_info(self, event=None):
         """Pop up the infobox (creating it if needed) and update its contents
