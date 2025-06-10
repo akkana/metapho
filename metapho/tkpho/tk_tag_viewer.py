@@ -342,6 +342,7 @@ class TkTagViewer(metapho.Tagger):
     def next_image(self, event=None):
         if tk_pho_widget.VERBOSE:
             print("\ntk_tag_viewer.next_image")
+            print("next_image: Current image:", imagelist.current_image())
             # self.print_imagelist()
         self.last_image_shown = imagelist.current_image()
         self.focus_none()
@@ -824,12 +825,18 @@ class TkTagViewer(metapho.Tagger):
 
     def print_imagelist(self):
         print("imagelist:")
-        for img in imagelist.img_list:
-            print("   ", img, "tags:",
-                  '; '.join(["%d, %s" % (t, self.tag_list[t])
-                             for t in img.tags ]))
+        if imagelist.img_list:
+            for img in imagelist.img_list:
+                print("   ", img, "tags:",
+                      '; '.join(["%d, %s" % (t, self.tag_list[t])
+                                 for t in img.tags ]))
+        else:
+            print("    No images in imagelist yet")
         print("All tags:", self.tag_list)
-        print("Current category:", self.categories[self.current_category])
+        if self.current_category:
+            print("Current category:", self.categories[self.current_category])
+        else:
+            print("No category set yet")
 
     def popup_pho_window(self, event=None):
         if not self.pho_win:

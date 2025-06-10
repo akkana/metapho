@@ -82,14 +82,21 @@ def add_images(newlist_or_img):
 
 def remove_image(img=None):
     """Remove the indicated image. If img is None, remove the current image.
-       Leave the pointer on the image before the removed one.
+       If the cur_imgno pointer was pointing to the removed image,
+       leave the pointer on the image before the removed one,
+       otherwise don't disturb the pointer.
     """
     global cur_imgno
     if not img:
         img = current_image()
+        move_pointer = True
+    elif img == current_image():
+        move_pointer = True
+    else:
+        move_pointer = False
     index = img_list.index(img)
     img_list.remove(img)
-    if index > 0:
+    if move_pointer and index > 0:
         cur_imgno = index - 1
 
 def pop_image(imgno=None):
@@ -100,8 +107,13 @@ def pop_image(imgno=None):
     global cur_imgno
     if imgno is None:
         imgno = current_imageno()
+        move_pointer = True
+    elif imgno == cur_imageno:
+        move_pointer = True
+    else:
+        move_pointer = False
     ret = img_list.pop(imgno)
-    if imgno > 0:
+    if move_pointer and imgno > 0:
         cur_imgno = imgno - 1
     return ret
 
