@@ -108,7 +108,7 @@ def pop_image(imgno=None):
     if imgno is None:
         imgno = current_imageno()
         move_pointer = True
-    elif imgno == cur_imageno:
+    elif imgno == cur_imgno:
         move_pointer = True
     else:
         move_pointer = False

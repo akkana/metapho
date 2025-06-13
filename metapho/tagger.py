@@ -531,7 +531,7 @@ tag Bruny Island: img 008.jpg
             # However, it's split over multiple lines and thus hard to
             # paste into a metapho command. Might want to make it an option.
             # print(Tagger.split_by_line_length(' '.join(sorted(dirdic[d])), 74, '    '))
-            print(' '.join(sorted(dirdic[d])))
+            print('   ', ' '.join(sorted(dirdic[d])))
 
     @staticmethod
     def split_by_line_length(s, linelen, prefix=''):
