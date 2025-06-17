@@ -750,7 +750,19 @@ class TkTagViewer(metapho.Tagger):
                 # But for now, just bail if the entry is empty.
                 continue
 
-            # What's the current tag index
+            # The button index *should* correspond to the index
+            # of the tag in the current category. Check that:
+            if i >= len(self.categories[self.current_category]):
+                # Must be a new tag. If the button isn't down, just ignore it
+                if not self.tag_button_set(b):
+                    continue
+                # If the button is down, then add the new tag.
+                if tk_pho_widget.VERBOSE:
+                    print("Adding new tag", tagname)
+                tagindex = self.add_tag(tagname, img)
+                continue
+
+            # What's the current tag index?
             tagindex = self.categories[self.current_category][i]
 
             # Did the tag name change?
@@ -760,24 +772,6 @@ class TkTagViewer(metapho.Tagger):
                     print("Tag", self.tag_list[tagindex],
                           "changing to", tagname)
                 self.change_tag(i, tagname)
-
-            # The button index *should* correspond to the index
-            # of the tag in the current category. Check that:
-            if i >= len(self.categories[self.current_category]):
-                # Must be a new tag. Don't care if the button isn't down"
-                if not self.tag_button_set(b):
-                    continue
-                if tk_pho_widget.VERBOSE:
-                    print("Adding new tag", tagname)
-                tagindex = self.add_tag(tagname, img)
-                continue
-
-            # The current category is long enough to hold this index.
-            # What tag does it point to?
-            if self.tag_list[tagindex] != tagname:
-                if tk_pho_widget.VERBOSE:
-                    print("Changing tag", i, self.tag_list[tagindex],
-                          "->", tagname)
 
             # add or remove the tag, as appropriate
             if self.tag_button_set(b) and tagindex not in img.tags:
