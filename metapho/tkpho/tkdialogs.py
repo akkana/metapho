@@ -39,7 +39,6 @@ WANTED_EXIF_TAGS = [
 #
 # InfoDialog window
 #
-
 class InfoDialog(tk.Toplevel):
     """The InfoDialog is non-modal, and shows details about the
        current image, like EXIF. It should be possible to keep it up
@@ -60,7 +59,11 @@ class InfoDialog(tk.Toplevel):
         self.bind("<Return>", self.popdown)
         self.bind("<Escape>", self.popdown)
 
-    def update_msg(self, cur_im):
+    def update_msg(self, cur_im, tagger=None):
+        """Update the message shown in the info dialog.
+           Needs the Tagger in order to map tag numbers to strings,
+           else it will just show tag numbers.
+        """
         self.title(cur_im.relpath)
 
         message = cur_im.relpath
@@ -72,7 +75,12 @@ class InfoDialog(tk.Toplevel):
         message += f'\nEXIF Rotation: {cur_im.exif_rotation}'
 
         # What tags are set?
-        message += "\n\nTags: " + ' '.join(cur_im.tags)
+        if tagger:
+            message += "\n\nTags: " + ', '.join([ tagger.tag_list[t]
+                                                  for t in cur_im.tags ])
+        else:
+            message += "\n\nTags: " + ', '.join([ str(t)
+                                                  for t in cur_im.tags ])
 
         exif = cur_im.get_exif()
         message += '\n'

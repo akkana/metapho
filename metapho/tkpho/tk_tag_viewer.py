@@ -579,7 +579,7 @@ class TkTagViewer(metapho.Tagger):
     def quit(self, event=None):
         print(len(imagelist.image_list()), "images")
         if self.tag_list:
-            print("tags:", ", ".join(self.tag_list))
+            print(len(self.tag_list), "tags:", ', '.join(self.tag_list))
         if (len(self.categories) > 1 or
             (len(self.categories) == 1 and
              next(iter(self.categories)) != 'Tags')):
@@ -724,7 +724,7 @@ class TkTagViewer(metapho.Tagger):
 
         # State may be normal, withdrawn or iconic
         if self.infobox and self.infobox.state() == 'normal':
-            self.infobox.update_msg(self.pho_widget.current_image())
+            self.infobox.update_msg(self.pho_widget.current_image(), self)
 
     def update_image_from_window(self):
         """Update tags in the current category according to
@@ -750,10 +750,14 @@ class TkTagViewer(metapho.Tagger):
                 # But for now, just bail if the entry is empty.
                 continue
 
+            # What's the current tag index
+            tagindex = self.categories[self.current_category][i]
+
             # Did the tag name change?
-            if tagname != self.categories[self.current_category]:
+            if tagname != self.tag_list[tagindex]:
+                # self.categories[self.current_category][i]:
                 if tk_pho_widget.VERBOSE:
-                    print("Tag", self.categories[self.current_category],
+                    print("Tag", self.tag_list[tagindex],
                           "changing to", tagname)
                 self.change_tag(i, tagname)
 
@@ -765,28 +769,25 @@ class TkTagViewer(metapho.Tagger):
                     continue
                 if tk_pho_widget.VERBOSE:
                     print("Adding new tag", tagname)
-                tagno = self.add_tag(tagname, img)
+                tagindex = self.add_tag(tagname, img)
                 continue
 
             # The current category is long enough to hold this index.
             # What tag does it point to?
-            tagno = self.categories[self.current_category][i]
-            if self.tag_list[tagno] != tagname:
+            if self.tag_list[tagindex] != tagname:
                 if tk_pho_widget.VERBOSE:
-                    print("Changing tag", i,
-                          self.tag_list[
-                              self.categories[self.current_category][i]],
+                    print("Changing tag", i, self.tag_list[tagindex],
                           "->", tagname)
 
             # add or remove the tag, as appropriate
-            if self.tag_button_set(b) and tagno not in img.tags:
-                img.tags.append(tagno)
+            if self.tag_button_set(b) and tagindex not in img.tags:
+                img.tags.append(tagindex)
                 if tk_pho_widget.VERBOSE:
-                    print("Adding tag", i, tagno, "->", tagname)
-            elif not self.tag_button_set(b) and tagno in img.tags:
-                img.tags.remove(tagno)
+                    print("Adding tag", i, tagindex, "->", tagname)
+            elif not self.tag_button_set(b) and tagindex in img.tags:
+                img.tags.remove(tagindex)
                 if tk_pho_widget.VERBOSE:
-                    print("Removing tag", i, tagno, "->", tagname)
+                    print("Removing tag", i, tagindex, "->", tagname)
 
         if tk_pho_widget.VERBOSE:
             print("End of update_image_from_window:")
@@ -900,7 +901,7 @@ class TkTagViewer(metapho.Tagger):
         else:
             self.infobox = InfoDialog()
 
-        self.infobox.update_msg(self.pho_widget.current_image())
+        self.infobox.update_msg(self.pho_widget.current_image(), self)
 
 
 def main():
@@ -910,6 +911,9 @@ def main():
         sys.exit(1)
 
     args = sys.argv[1:]
+    # XXX possibly default to all images recursively under .?
+    if not args:
+        Usage()
     if args[0] == '-v':
         tk_pho_widget.VERBOSE = True
         args = args[1:]

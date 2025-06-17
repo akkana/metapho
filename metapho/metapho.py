@@ -57,6 +57,7 @@ class MetaphoImage:
 
         basename = os.path.basename(filename)
 
+        # A list of tag numbers, indices into the tagger's tag_list.
         self.tags = []
 
         self.displayed = displayed
