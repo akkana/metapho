@@ -98,6 +98,13 @@ class InfoDialog(tk.Toplevel):
     def popdown(self, event=None):
         self.withdraw()       # or iconify()
 
+        # After dismissing the dialog, the focus tends to end up
+        # in some random other window. Try to keep focus within the app:
+        self._root().focus()
+        # This seems like it should do the same thing,
+        # but it doesn't actually focus the main window:
+        # tk._default_root.focus()
+
     def destroy_func(self, event=None):
         # event=None necessary as we also use button binding.
         self.popdown()
