@@ -29,7 +29,10 @@ def set_current_imageno(val):
 def set_current_image(im):
     """Can raise ValueError if im isn't in the list"""
     global cur_imgno
-    cur_imgno = img_list.index(im)
+    if im:
+        cur_imgno = img_list.index(im)
+    else:
+        cur_imgno = -1
 
 def image_list():
     return img_list
