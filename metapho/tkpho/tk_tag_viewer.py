@@ -92,6 +92,7 @@ class TkTagViewer(metapho.Tagger):
         # more configurable way of getting these
         self.entry_bindings = {
             '<Control-Key-u>':     self.entryerase,
+            '<Control-Key-w>':     self.entry_delete_word,
         }
 
         # The root will be divided into two columns horizontally:
@@ -575,6 +576,12 @@ class TkTagViewer(metapho.Tagger):
 
     def entryerase(self, event):
         event.widget.delete(0, tk.END)
+
+    def entry_delete_word(self, event):
+        ent = event.widget
+        end_idx = ent.index(tk.INSERT)
+        start_idx = ent.get().rfind(" ", None, end_idx)
+        ent.selection_range(start_idx, end_idx)
 
     def quit(self, event=None):
         print(len(imagelist.image_list()), "images")
