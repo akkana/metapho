@@ -12,14 +12,14 @@ from metapho import MetaphoImage, imagelist
 
 # This works when running the installed app, but not when running ./tkPhoWidget
 from .tk_pho_image import tkPhoImage
+# But to get VERBOSE, we need to refer to it explicitly as tk_pho_image.VERBOSE
+from . import tk_pho_image
 
 import tkinter as tk
 from PIL import Image as PILImage
 from PIL import ImageTk, ExifTags, UnidentifiedImageError
 
 import sys, os
-
-VERBOSE = False
 
 
 FRAC_OF_SCREEN = .85
@@ -110,12 +110,12 @@ class tkPhoWidget (tk.Label):
            Since this comes from callers outside the widget,
            allow it to override self.fixed_size.
         """
-        if VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("tkPhoWidget set_size", newsize)
 
         if not newsize and not self.widget_size:
             self.widget_size = self.get_widget_size()
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("Actual widget size:", self.widget_size)
 
         # This can be called many times, so don't do anything
@@ -133,11 +133,11 @@ class tkPhoWidget (tk.Label):
            -1 for invalid image or other error.
         """
         if type(imagelist.current_image()) is not tkPhoImage:
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("Eek, no current image for show_image()")
             return
 
-        if VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("tkPhoWidget.show_image, widget size is", self.widget_size,
                   "rotation", imagelist.current_image().rot)
 
@@ -184,64 +184,87 @@ class tkPhoWidget (tk.Label):
 
            Return self.display_img, a PIL Image ready to display.
         """
-        if VERBOSE:
-            print("TkPhoWidget.resize_to_fit, imgno =",
-                  imagelist.current_imageno())
         cur_img = imagelist.current_image()
         if not cur_img:
+            if tk_pho_image.VERBOSE:
+                print("resize_to_fit: no current image")
             return None
+
+        if tk_pho_image.VERBOSE:
+            print("TkPhoWidget.resize_to_fit, imgno =",
+                  imagelist.current_imageno(),
+                  "fullsize=", self.fullsize,
+                  "fullscreen=", self.fullscreen,
+                  "rot=", cur_img.rot)
+
         if self.fullsize and self.fullscreen:
             if cur_img.display_img and (self.fullsize_offset[0]
                                         or self.fullsize_offset[1]):
                 # there's an offset, so don't center.
-                # The user has already dragged, so keep display_img
-                if VERBOSE:
-                    return cur_img.display_img
+                # The user has already dragged, so keep display_img.
+                if tk_pho_image.VERBOSE:
+                    print("Not centering: there's already an offset")
+                return cur_img.display_img
 
-            # in both fullsize and fullscreen mode, initially center the image
+            target_size = cur_img.orig_img.size
+
             if cur_img.rot:
+                if tk_pho_image.VERBOSE:
+                    print("Rotating image to", cur_img.rot)
+                    print("orig image is", cur_img.orig_img.size)
                 cur_img.display_img = \
-                    cur_img.orig_img.rotate(cur_img.rot)
+                    cur_img.orig_img.rotate(cur_img.rot, expand=True)
                 cur_img.display_img = \
-                    self.center_fullsize(cur_img.orig_img)
+                    self.center_fullsize(cur_img.display_img)
+                # Don't need target_size if not calling tkPhoWidget.resize_to_fit
+                # if cur_img.rot % 180:
+                #     target_size = target_size[::-1]
             else:
                 cur_img.display_img = \
                     self.center_fullsize(cur_img.orig_img)
+            if tk_pho_image.VERBOSE:
+                print("cur_img.display_img has size", cur_img.display_img.size)
+
+            # Don't call tkPhoWidget.resize_to_fit, which will mostly
+            # duplicate what's already done here.
             return cur_img.display_img
 
         elif self.fullsize:
             target_size = cur_img.orig_img.size
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("TkPhoWidget.resize_to_fit in fullsize mode", target_size)
 
         elif self.fullscreen:
             target_size = get_screen_size(self.root)
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("TkPhoWidget.resize_to_fit, fullscreen, targeting",
                       target_size)
 
         elif not self.fixed_size:                  # resizable
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("Resizable widget")
             target_size = (self.root.winfo_screenwidth() * FRAC_OF_SCREEN,
                            self.root.winfo_screenheight() * FRAC_OF_SCREEN)
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("TkPhoWidget.resize_to_fit, variable height ->",
                       target_size)
 
         else:                                      # fixed-size window
             target_size = self.widget_size
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("TkPhoWidget.resize_to_fit, fixed at", target_size)
 
-        if VERBOSE:
-            print("Target space:", target_size)
+                target_size = [ x * self.scale_factor for x in target_size ]
 
-        target_size = [ x * self.scale_factor for x in target_size ]
+        if tk_pho_image.VERBOSE:
+            print("Target space:", target_size)
 
         return cur_img.resize_to_fit(target_size)
 
     def translate(self, dx, dy):
+        """Calculate the offset of a fullsize image that has
+           been dragged with the middle mouse.
+        """
         # print("tkPhoWidget.translate", dx, dy, "->",
         #       self.fullsize_offset, end='')
         self.fullsize_offset = (self.fullsize_offset[0] + dx,
@@ -253,13 +276,17 @@ class tkPhoWidget (tk.Label):
         """translate the given pil_img, assumed to be larger than the
            widget size, so that it's centered in the available space.
            Shift it by self.fullsize_offset, set from user mouse drags.
+           This is only used when both fullscreen (display) and fullsize,
+           before any user drags.
 
            Return the translated pil_img.
         """
-        # when in both fullscreen and fullsize, it's best to start
-        # with the center of the image centered on the screen
+        # When in both fullscreen and fullsize, it's best to start
+        # with the center of the image centered on the screen.
+        # But also take into account fullsize_offset, which might
+        # be set because the user dragged a fullscreen image.
         iw, ih = pil_img.size
-        if VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("center_fullsize: transforming",
                   int((iw - self.root.winfo_screenwidth())/2),
                   int((ih - self.root.winfo_screenheight())/2))
@@ -307,10 +334,10 @@ class tkPhoWidget (tk.Label):
                 # Can't go beyond last image. Re-raise the IndexError,
                 # but only after setting the pointer back to the
                 # last valid image.
-                if VERBOSE:
+                if tk_pho_image.VERBOSE:
                     print("Can't go beyond last image")
                 imagelist.set_current_image(last_valid_image)
-                if VERBOSE:
+                if tk_pho_image.VERBOSE:
                     print("image list before re-raising IndexError:")
                     imagelist.print_imagelist()
                 raise(e)
@@ -346,7 +373,7 @@ class tkPhoWidget (tk.Label):
                 # However, it can also happen when there are no viewable
                 # images in the argument list.
                 imagelist.current_image().invalid = True
-                if VERBOSE:
+                if tk_pho_image.VERBOSE:
                     print("AttributeError: Marked", imagelist.current_image(),
                           "as invalid")
                 continue
@@ -357,14 +384,14 @@ class tkPhoWidget (tk.Label):
                 continue
 
             # Whew, load() worked okay, the image is valid
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("tkPhoWidget.next_image, to",
                       imagelist.current_imageno(),
                       "->", imagelist.current_image())
 
             self.fullsize_offset = 0, 0
             self.show_image()
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 imagelist.print_imagelist()
             return
 
@@ -380,7 +407,7 @@ class tkPhoWidget (tk.Label):
 
             if imagelist.current_imageno() < 0:
                 imagelist.set_current_imageno(0)
-                if VERBOSE:
+                if tk_pho_image.VERBOSE:
                     print("Can't look before first image")
                 return
 
@@ -392,7 +419,7 @@ class tkPhoWidget (tk.Label):
                 imagelist.remove_image()
                 continue
             except AttributeError:
-                if VERBOSE:
+                if tk_pho_image.VERBOSE:
                     print("AttributeError on", imagelist.current_image())
 
                     if type(imagelist.current_image()) is MetaphoImage:
@@ -403,7 +430,7 @@ class tkPhoWidget (tk.Label):
                 continue
 
             # Whew, load() worked okay, the image is valid
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("  to", imagelist.current_imageno(),
                       "->", imagelist.current_image())
             self.fullsize_offset = 0, 0
@@ -478,7 +505,7 @@ class SimpleImageViewerWindow:
         self.root.mainloop()
 
     def quit_handler(self, event):
-        if VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("Bye")
         sys.exit(0)
 

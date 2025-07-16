@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 
 from .tk_pho_image import tkPhoImage
-from .tk_pho_widget import tkPhoWidget, VERBOSE
+
+# In order to set VERBOSE: just adding VERBOSE to the previous import
+# doesn't let us change it according to command-line arguments.
+from . import tk_pho_image
+
+from .tk_pho_widget import tkPhoWidget
 
 import tkinter as tk
 from .tkdialogs import InfoDialog, message_dialog, askyesno_with_bindings
@@ -28,9 +33,17 @@ class tkPhoWindow:
         self.root.option_add('*Dialog.msg.font', 'Helvetica 12')
         self.root.option_add("*Dialog.msg.wrapLength", "10i")
 
+        # pho has several display window options:
+        # Default: image is displayed in a window, scaled a little smaller
+        #   than the screen (or smaller, if the image is smaller),
+        #   and the window size will change with the image's aspect ratio.
+        # Fullscreen: the window is maximized, no borders, and the image
+        #   is scaled to fit (if larger than the screen size).
+        # Fixed: images are scaled to fit in a fixed-size window.
         if fullscreen is None:
             fullscreen = False
 
+        # full_size means zoomed in all the way, like 1:1 pixels.
         self.full_size = False
 
         self.root.title("Pho Image Viewer")
@@ -90,7 +103,7 @@ class tkPhoWindow:
         self.root.bind('<Key-Escape>', self.fullscreen_handler)
 
         # f toggles full-size mode
-        self.root.bind('<Key-f>', self.fullsize_handler)
+        self.root.bind('<Key-f>', self.toggle_fullsize)
 
         self.root.bind('<Key-d>', self.delete_handler)
 
@@ -185,13 +198,13 @@ class tkPhoWindow:
     def resize_handler(self, event):
         if (event.width, event.height) != self.fixed_size:
             if self.fixed_size:
-                if VERBOSE:
+                if tk_pho_image.VERBOSE:
                     print("Window resize! New size is",
                           event.width, event.height)
                 self.fixed_size = (event.width, event.height)
                 self.pho_widget.set_size(self.fixed_size)
                 self.pho_widget.show_image()
-            elif VERBOSE:
+            elif tk_pho_image.VERBOSE:
                print("Resize event, but who cares?")
 
     def fullscreen_handler(self, event):
@@ -219,7 +232,7 @@ class tkPhoWindow:
         if fullscreen_on:    # Turn on fullscreen
             # Into fullscreen
             self.root.attributes("-fullscreen", True)
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("Now in fullscreen, size", self.pho_widget.widget_size)
             self.pho_widget.fullscreen = True
             self.pho_widget.set_size((self.root.winfo_screenwidth(),
@@ -240,7 +253,7 @@ class tkPhoWindow:
             # before set_size(), because the root attribute won't actually
             # change until later, so now, it will still show as True.
             self.pho_widget.set_fullscreen(False)
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("Out of fullscreen, fixed_size is", self.fixed_size)
 
             # disable middlemouse dragging
@@ -249,9 +262,13 @@ class tkPhoWindow:
 
         # viewer.set_size() should redraw as necessary
 
-    def fullsize_handler(self, event=None):
+    def toggle_fullsize(self, event=None):
+        if tk_pho_image.VERBOSE:
+            print("toggle_fullsize. Currently, fixed_size=", self.fixed_size,
+                  "fullsize=", self.pho_widget.fullsize,
+                  "rot=", self.pho_widget.current_image().rot)
         if self.fixed_size:
-            if VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("full-size mode not supported in a fixed-size window")
             return
         self.pho_widget.fullsize = not self.pho_widget.fullsize
@@ -310,7 +327,7 @@ class tkPhoWindow:
         # self.root.after(150, self.root.focus_force)
 
     def quit(self, event=None):
-        if VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("Bye")
 
         # Print any tags that were set
@@ -381,9 +398,8 @@ PHO_CMD : command to run when pressing g (default: gimp).
     parser.add_argument('-v', "--verbosehelp", dest="verbosehelp",
                         default=False,
                         action="store_true", help="Print verbose help")
-    parser.add_argument("--geometry", dest="geometry", action="store",
-                        help="A geometry size string, WIDTHxHEIGHT "
-                             "(sorry, no x and y position)")
+    parser.add_argument("--size", dest="size", action="store",
+                        help="Fixed window size, WIDTHxHEIGHT")
     parser.add_argument('-d', "--debug", dest="debug", default=False,
                         action="store_true", help="Print debugging messages")
     parser.add_argument('images', nargs='+', help="Images to show")
@@ -397,10 +413,8 @@ PHO_CMD : command to run when pressing g (default: gimp).
 
     args = parser.parse_args(argv)
 
-    # This doesn't work: it sets a file-local VERBOSE rather than
-    # changing the one imported from tkPhoWidget
     if args.debug:
-        VERBOSE = True
+        tk_pho_image.VERBOSE = True
 
     if args.nopresentation:
         args.presentation = False
@@ -409,15 +423,19 @@ PHO_CMD : command to run when pressing g (default: gimp).
         random.seed()
         random.shuffle(args.images)
 
-    # The geometry argument is mostly for testing, to make sure
-    # fixed size spaces like in metapho still work.
+    # The size argument is useful for things like presentations over Zoom.
     win_size = None
-    if args.geometry:
+    if args.size:
         try:
             win_size = list(map(int, re.match(r'([\d]+)x([\d]+)',
-                                              args.geometry).groups()))
-        except RuntimeError as e:
-            print("Couldn't parse geometry string '%s'" % args.geometry)
+                                              args.size).groups()))
+        except AttributeError as e:
+            print("Couldn't parse --size string '%s': need WIDTHxHEIGHT"
+                  % args.size, file=sys.stderr)
+            if '.' in args.size:
+                print("Guessing size string %s is actually an image" % args.size,
+                      file=sys.stderr)
+                args.images = [args.size] + args.images
 
     pwin = tkPhoWindow(parent=None, img_list=args.images,
                        fixed_size=win_size,

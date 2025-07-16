@@ -14,6 +14,7 @@ from metapho import MetaphoImage
 # -1 means there was an error initializing, so EXIF orientation won't work.
 EXIF_ORIENTATION_KEY = None
 
+# This is where VERBOSE lives, since the PhoImage is used by all other classes.
 VERBOSE = False
 
 
@@ -179,7 +180,7 @@ class tkPhoImage (MetaphoImage):
            Return self.display_img, a PILImage.
         """
         if VERBOSE:
-            print("PhoImage.resize_to_fit", bbox)
+            print("TkPhoImage.resize_to_fit", bbox)
         if not self.orig_img:
             if VERBOSE:
                 print("reloading orig_img")
@@ -213,8 +214,8 @@ class tkPhoImage (MetaphoImage):
                     print("display image is already small enough")
                 return self.display_img
             # Nope. So create a new display_img, possibly rotated
-            if self.rot % 90:
-                self.display_img = self.orig_img.rotate(self.rot)
+            if self.rot % 180:
+                self.display_img = self.orig_img.rotate(self.rot, expand=True)
             else:
                 self.display_img = self.orig_img
             return self.display_img
