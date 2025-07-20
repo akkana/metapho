@@ -11,8 +11,9 @@ import metapho
 from metapho import MetaphoImage
 from metapho import imagelist
 
-from . import tk_pho_widget
+from . import tk_pho_image    # For VERBOSE
 from .tk_pho_image import tkPhoImage
+from . import tk_pho_widget
 from .tkpho import tkPhoWindow
 from .tkdialogs import InfoDialog, message_dialog, askyesno_with_bindings, \
                        flash_message
@@ -272,7 +273,7 @@ class TkTagViewer(metapho.Tagger):
         omitted = []
 
         # Enumerate the tags in the first category in self.categories:
-        if tk_pho_widget.VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("self.categories:", self.categories)
         for i, tagno in enumerate(self.categories[self.current_category]):
             tagname = self.tag_list[tagno]
@@ -291,7 +292,7 @@ class TkTagViewer(metapho.Tagger):
            in the new one.
         """
         self.update_image_from_window()
-        if tk_pho_widget.VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("Change category to:", newcat)
         self.current_category = newcat
         self.cat_menu_str.set(newcat)
@@ -341,7 +342,7 @@ class TkTagViewer(metapho.Tagger):
         # self.pho_win.root.bind(key, self.global_bindings[key])
 
     def next_image(self, event=None):
-        if tk_pho_widget.VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("\ntk_tag_viewer.next_image")
             print("next_image: Current image:", imagelist.current_image())
             # self.print_imagelist()
@@ -363,7 +364,7 @@ class TkTagViewer(metapho.Tagger):
         self.update_window_from_image(allow_category_change=True)
 
     def prev_image(self, event=None):
-        if tk_pho_widget.VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("\ntk_tag_viewer.prev_image")
             # self.print_imagelist()
         self.last_image_shown = imagelist.current_image()
@@ -401,14 +402,14 @@ class TkTagViewer(metapho.Tagger):
         return -1
 
     def on_focus_in(self, event):
-        if tk_pho_widget.VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("Focus in", event.widget)
         if type(event.widget) is tk.Entry:
             self.set_bindings(False)
 
     def on_focus_out(self, event):
         if type(event.widget) is not tk.Entry:
-            if tk_pho_widget.VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("Focus out of something other than an entry")
             return
 
@@ -418,7 +419,7 @@ class TkTagViewer(metapho.Tagger):
         curcat = self.categories[self.current_category]
         newstr = entry.get().strip()
 
-        if tk_pho_widget.VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("Focus out #%d %s, now '%s'" % (entryno, entry._name[-1],
                                                   newstr))
 
@@ -429,7 +430,7 @@ class TkTagViewer(metapho.Tagger):
                 self.set_bindings(True)
                 return
         except IndexError:
-            if tk_pho_widget.VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("Something changed or it's a new tag")
             pass
 
@@ -439,11 +440,11 @@ class TkTagViewer(metapho.Tagger):
 
         # 1. guard against an existing tag string being erased
         if not newstr:
-            if tk_pho_widget.VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("Empty entry")
             if entryno < len(curcat):
                 if curcat[entryno]:
-                    if tk_pho_widget.VERBOSE:
+                    if tk_pho_image.VERBOSE:
                         print("entryno > len curcat, setting entry back to",
                               curcat[entryno])
                     entry.insert(0, curcat[entryno])
@@ -462,24 +463,24 @@ class TkTagViewer(metapho.Tagger):
 
         except ValueError:
             # It's a new tag, update_image_from_window() will deal with it
-            if tk_pho_widget.VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("new tag, doing nothing for now")
             self.set_bindings(True)
             return
 
         # It's already in the tag list
-        if tk_pho_widget.VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("Changing an entry %d to an already existing tag %s"
                   % (tagindex, newstr))
 
         # Is it already in the current category?
         try:
             catindex = curcat.index(tagindex)
-            if tk_pho_widget.VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("index in current category:", catindex,
                       "(entryno is", entryno, ")")
             if catindex != entryno:
-                if tk_pho_widget.VERBOSE:
+                if tk_pho_image.VERBOSE:
                     print("Duplicate tag, previously at position",
                           catindex, "now duped at",
                           entryno, file=sys.stderr)
@@ -506,7 +507,7 @@ class TkTagViewer(metapho.Tagger):
 
         except ValueError:
             # It's in the tag list, but not in the current category.
-            if tk_pho_widget.VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("It's in the tag list, but not n the current category.")
             # Is it new?
             if entryno >= len(curcat):
@@ -525,7 +526,7 @@ class TkTagViewer(metapho.Tagger):
         # Enable global key bindings
         self.set_bindings(True)
 
-        if tk_pho_widget.VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("End of on_focus_out:")
             self.print_imagelist()
 
@@ -566,7 +567,7 @@ class TkTagViewer(metapho.Tagger):
         # Then refuse to enable it.
         if (not self.entries[buttonno].get().strip() or
             (buttonno > 0 and not self.entries[buttonno-1].get().strip())):
-            if tk_pho_widget.VERBOSE:
+            if tk_pho_image.VERBOSE:
                 print("Refusing to go to tag", letter)
             return
 
@@ -678,7 +679,7 @@ class TkTagViewer(metapho.Tagger):
            settings from the previous image.
         """
         img = imagelist.current_image()
-        if tk_pho_widget.VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("update_window_from_image:")
             print("  img:", img, "tags:", img.tags)
 
@@ -689,20 +690,20 @@ class TkTagViewer(metapho.Tagger):
         # or the image has no tags set in any category,
         # leave the current category unchanged.
         # Otherwise, switch to the first category where this image has tags.
-        if tk_pho_widget.VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("Does it have tags in current category",
                   self.current_category, "?",
                   self.img_has_tags_in(img, self.current_category))
         if not self.img_has_tags_in(img, self.current_category):
             if not img.tags:
-                if tk_pho_widget.VERBOSE:
+                if tk_pho_image.VERBOSE:
                     print(img, "has no tags yet")
                 if self.last_image_shown:
-                    if tk_pho_widget.VERBOSE:
+                    if tk_pho_image.VERBOSE:
                         print("Copying tags from last image shown:",
                               self.last_image_shown.tags)
                     img.tags = list(self.last_image_shown.tags)
-                elif tk_pho_widget.VERBOSE:
+                elif tk_pho_image.VERBOSE:
                     print("No self.last_image_shown")
             elif allow_category_change:
                 for cat in self.categories:
@@ -716,7 +717,7 @@ class TkTagViewer(metapho.Tagger):
                     else:
                         print(img, "has no tags in", cat)
                 else:  # triggered if all for iterations completed, no break
-                    if tk_pho_widget.VERBOSE:
+                    if tk_pho_image.VERBOSE:
                         print(img, "has tags, but none in any category")
                     img.tags = self.last_image_shown.tags
 
@@ -741,7 +742,7 @@ class TkTagViewer(metapho.Tagger):
         self.focus_none()
 
         img = imagelist.current_image()
-        if tk_pho_widget.VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("update_image_from_window: img", img)
 
         # See what needs to be set/cleared in img.tags
@@ -764,7 +765,7 @@ class TkTagViewer(metapho.Tagger):
                 if not self.tag_button_set(b):
                     continue
                 # If the button is down, then add the new tag.
-                if tk_pho_widget.VERBOSE:
+                if tk_pho_image.VERBOSE:
                     print("Adding new tag", tagname)
                 tagindex = self.add_tag(tagname, img)
                 continue
@@ -775,7 +776,7 @@ class TkTagViewer(metapho.Tagger):
             # Did the tag name change?
             if tagname != self.tag_list[tagindex]:
                 # self.categories[self.current_category][i]:
-                if tk_pho_widget.VERBOSE:
+                if tk_pho_image.VERBOSE:
                     print("Tag", self.tag_list[tagindex],
                           "changing to", tagname)
                 self.change_tag(i, tagname)
@@ -783,14 +784,14 @@ class TkTagViewer(metapho.Tagger):
             # add or remove the tag, as appropriate
             if self.tag_button_set(b) and tagindex not in img.tags:
                 img.tags.append(tagindex)
-                if tk_pho_widget.VERBOSE:
+                if tk_pho_image.VERBOSE:
                     print("Adding tag", i, tagindex, "->", tagname)
             elif not self.tag_button_set(b) and tagindex in img.tags:
                 img.tags.remove(tagindex)
-                if tk_pho_widget.VERBOSE:
+                if tk_pho_image.VERBOSE:
                     print("Removing tag", i, tagindex, "->", tagname)
 
-        if tk_pho_widget.VERBOSE:
+        if tk_pho_image.VERBOSE:
             print("End of update_image_from_window:")
             print("   ", img, "tags are", img.tags)
             print()
@@ -872,7 +873,7 @@ class TkTagViewer(metapho.Tagger):
                       event.widget, event.widget.title(), file=sys.stderr)
                 return
 
-        self.pho_win.fullsize_handler()
+        self.pho_win.toggle_fullsize()
 
     # On Ctrl-p key, toggle between fullscreen mode and not for the pho_window
     def toggle_pho_fullscreen(self, event=None):
@@ -916,7 +917,7 @@ def main():
     if not args:
         Usage()
     if args[0] == '-v':
-        tk_pho_widget.VERBOSE = True
+        tk_pho_image.VERBOSE = True
         args = args[1:]
     elif args[0] == '-h' or args[0] == '--help':
         Usage()
