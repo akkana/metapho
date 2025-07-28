@@ -46,6 +46,8 @@ but it also installs a new Tk-based version. So you'll get:
 When 2.0 is released,  metapho and pho will become the TkInter versions,
 though gmetapho will still work if you have GTK3 libraries installed.
 
+On Debian, you'll need packages: python3-tk python3-pil python3-pil.imagetk
+
 ### Note About Tag Categories
 
 The GTK version of metapho includes ways of defining tag categories:
