@@ -71,17 +71,15 @@ def retreat():
 def add_images(newlist_or_img):
     """Pass either a list of MetaphoImage or a single MetaphoImage.
     """
-    if type(newlist_or_img) is list:
-        img_list.extend(newlist_or_img)
-    else:
-        img_list.append(newlist_or_img)
-        # XXX Should make sure it's a MetaphoImage, or create one
-        # if it's just a string, but trying to import metapho from here
-        # is a circular import so that needs to be solved first.
+    if type(newlist_or_img) is not list:
+        newlist_or_img = [ newlist_or_img ]
 
-    # else:
-    #     raise TypeError("Can't add_to_image_list with type %s"
-    #                     % type(newlist_or_img))
+    for newimg in newlist_or_img:
+        # Is it a valid image? E.g. not a Tags file.
+        if newimg.invalid:
+            print("Skipping non-image file", newimg)
+        else:
+            img_list.append(newimg)
 
 def remove_image(img=None):
     """Remove the indicated image. If img is None, remove the current image.
@@ -90,7 +88,9 @@ def remove_image(img=None):
        otherwise don't disturb the pointer.
     """
     global cur_imgno
-    if not img:
+    if cur_imgno == -1:
+        move_pointer = False
+    elif not img:
         img = current_image()
         move_pointer = True
     elif img == current_image():

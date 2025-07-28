@@ -158,6 +158,7 @@ class Tagger(object):
     def read_all_tags_for_images(self):
         """Read tags in all directories used by known images,
            plus the common dir, plus .
+           Leave the pointer where it was before.
         """
         dirs = set()
 

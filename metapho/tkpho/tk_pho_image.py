@@ -55,6 +55,8 @@ class tkPhoImage (MetaphoImage):
             extra += ' orig %dx%d' % self.orig_img.size
         if self.display_img:
             extra += ' displayed %dx%d' % self.display_img.size
+        if self.invalid:
+            extra += ' INVALID'
         return f'<tkPhoImage {self.relpath}{extra}>'
 
     # Properties
