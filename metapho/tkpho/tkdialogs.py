@@ -58,6 +58,8 @@ class InfoDialog(tk.Toplevel):
         # self.focus_set()
         self.bind("<Return>", self.popdown)
         self.bind("<Escape>", self.popdown)
+        # Iconify on the titlebar 'x' as well
+        self.protocol('WM_DELETE_WINDOW', self.popdown)
 
     def update_msg(self, cur_im, tagger=None):
         """Update the message shown in the info dialog.
