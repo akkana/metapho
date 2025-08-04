@@ -21,6 +21,8 @@ def commonprefix(paths):
     return os.path.sep.join(x[0] for x in takewhile(allnamesequal,
                                                     bydirectorylevels))
 
+DEFAULT_CAT = "Tags"
+
 
 class Tagger(object):
     """Manages tags for images.
@@ -179,6 +181,12 @@ class Tagger(object):
 
         MetaphoImage.clean_up_nonexistent_files(self.commondir)
 
+        # Don't keep the default category if there's nothing in it
+        # and we have other categories
+        if self.tag_list and len(self.categories) > 1 and \
+           DEFAULT_CAT in self.categories and not self.categories[DEFAULT_CAT]:
+            del self.categories[DEFAULT_CAT]
+
     def read_tags(self, dirname, recursive=True):
         """Read in tags from files named in the given directory,
            and tag images in the imagelist appropriately.
@@ -217,7 +225,7 @@ tag Bruny Island: img 008.jpg
         """
         # The default category name is Tags.
         if not self.current_category:
-            self.current_category = "Tags"
+            self.current_category = DEFAULT_CAT
             self.categories[self.current_category] = []
 
         try:
@@ -331,14 +339,20 @@ tag Bruny Island: img 008.jpg
                 newim.tags.append(tagindex)
                 imagelist.add_images(newim)
 
-    def add_tag(self, tag, img):
-        """Add a tag to the given image.
+    def add_tag(self, tag, img, category=None):
+        """Add a tag to the given image,
+           in the given category or else the current one.
            img is a metapho.MetaphoImage.
            tag may be a string, which can be a new string or an existing one,
            or an integer index into the tag list.
            Return the index (in the global tags list) of the tag just added.
         """
         self.changed = True
+
+        if not category:
+            category = self.current_category
+        if category not in self.categories:
+            self.categories[category] = []
 
         if type(tag) is int:
             if tag not in img.tags:
@@ -348,8 +362,8 @@ tag Bruny Island: img 008.jpg
         # Else it's a string. Is it already in the tag list?
         if tag in self.tag_list:
             tagno = self.tag_list.index(tag)
-            if tagno not in self.categories[self.current_category]:
-                self.categories[self.current_category].append(tagno)
+            if tagno not in self.categories[category]:
+                self.categories[category].append(tagno)
             img.tags.append(tagno)
             return tagno
 
@@ -357,7 +371,7 @@ tag Bruny Island: img 008.jpg
         self.tag_list.append(tag)
         newindex = len(self.tag_list) - 1
         img.tags.append(newindex)
-        self.categories[self.current_category].append(newindex)
+        self.categories[category].append(newindex)
         return newindex
 
     def remove_tag(self, tag, img):
@@ -446,6 +460,19 @@ tag Bruny Island: img 008.jpg
             if tag in self.categories[cat]:
                 return True
 
+    def tagdict_for_img(self, img):
+        """Returns { catname: [tagno, tagnno] }
+        """
+        tagdict = {}
+        for cat in self.categories:
+            for tag in img.tags:
+                if tag in self.categories[cat]:
+                    if cat in tagdict:
+                        tagdict[cat].append(tag)
+                    else:
+                        tagdict[cat] = [tag]
+        return tagdict
+
     def find_untagged_files(self, topdir):
         """Return a list of untagged files and a list of directories
            in which nothing is tagged, under topdir.
@@ -492,6 +519,29 @@ tag Bruny Island: img 008.jpg
                 untagged_dirs.append(os.path.abspath(root))
 
         return untagged_files, untagged_dirs
+
+    def print_imagelist(self):
+        """Similar to imagelist.print_imagelist()
+           except it also prints tags.
+        """
+        print("imagelist:")
+        if imagelist.img_list:
+            for img in imagelist.img_list:
+                if img == imagelist.current_image():
+                    print(" >> ", end='')
+                else:
+                    print("    ", end='')
+                print(img, "tags:",
+                      '; '.join(["%d, %s" % (t, self.tag_list[t])
+                                 for t in img.tags ]))
+        else:
+            print("    No images in imagelist yet")
+
+        print("All tags:", self.tag_list)
+        if self.current_category:
+            print("Current category:", self.categories[self.current_category])
+        else:
+            print("No category set yet")
 
     @classmethod
     def ignore_directory(cls, d, path=None):

@@ -49,7 +49,7 @@ class InfoDialog(tk.Toplevel):
         tk.Toplevel.__init__(self, *args, **kwargs)
         self.__text = tk.StringVar()
         self.__text.set("Info Dialog")
-        tk.Label(self, textvariable = self.__text) \
+        tk.Label(self, textvariable = self.__text, justify="left" ) \
           .grid(row=0, column=0, columnspan=3, sticky=tk.NW+tk.SE)
         tk.Button(self, text="OK", command=self.destroy_func) \
           .grid(row=1, column=1, sticky=tk.NW+tk.SE)
@@ -78,8 +78,16 @@ class InfoDialog(tk.Toplevel):
 
         # What tags are set?
         if tagger:
-            message += "\n\nTags: " + ', '.join([ tagger.tag_list[t]
-                                                  for t in cur_im.tags ])
+            message += "\n\nTags:"
+            if cur_im.tags:
+                tagdict = tagger.tagdict_for_img(cur_im)
+                for cat in tagdict:
+                    message += "\n  %s: %s" % (cat, ','.join([
+                        tagger.tag_list[tagno] for tagno in tagdict[cat] ]))
+            else:
+                message += " None"
+            # message += "\n\nTags: " + ', '.join([ tagger.tag_list[t]
+            #                                       for t in cur_im.tags ])
         else:
             message += "\n\nTags: " + ', '.join([ str(t)
                                                   for t in cur_im.tags ])

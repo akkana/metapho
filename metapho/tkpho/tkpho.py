@@ -8,11 +8,18 @@ from . import tk_pho_image
 
 from .tk_pho_widget import tkPhoWidget
 
+import metapho
+from metapho import imagelist
+
 import tkinter as tk
 from .tkdialogs import InfoDialog, message_dialog, askyesno_with_bindings
 
 import random
 import sys, os
+
+# A name for the category used for the digit tags you can use to
+# mark an image in pho.
+NUMCAT = 'Flags'
 
 
 class tkPhoWindow:
@@ -22,13 +29,15 @@ class tkPhoWindow:
        through the image list, rotate, zoom, delete, etc.
     """
 
-    def __init__(self, parent=None,
-                 img_list=[], fixed_size=None, fullscreen=None):
+    def __init__(self, parent=None, img_list=[],
+                 fixed_size=None, fullscreen=None):
         # Run either as main window or as a Toplevel secondary window
         if parent:
             self.root = tk.Toplevel(parent)
         else:
             self.root = tk.Tk()
+
+        self.tagger = metapho.Tagger()
 
         self.root.option_add('*Dialog.msg.font', 'Helvetica 12')
         self.root.option_add("*Dialog.msg.wrapLength", "10i")
@@ -53,8 +62,8 @@ class tkPhoWindow:
 
         # To allow resizing, set self.fixed_size to None
         self.fixed_size = fixed_size
-        self.pho_widget = tkPhoWidget(self.root,
-                                      img_list, size=self.fixed_size)
+        self.pho_widget = tkPhoWidget(self.root, img_list,
+                                      size=self.fixed_size)
 
         # Middlemouse drag is only needed when fullscreen AND fullsize
         self.dragging_from = None
@@ -116,6 +125,8 @@ class tkPhoWindow:
         # Exit on either q or Ctrl-q. tkPhoWidget sets the ctrl-q binding.
         self.root.bind('<Key-q>', self.quit)
 
+        self.tagger.read_all_tags_for_images()
+
         if fullscreen:
             self.go_fullscreen(True)
 
@@ -161,7 +172,7 @@ class tkPhoWindow:
 
         # State may be normal, withdrawn or iconic
         if self.infobox and self.infobox.state() == 'normal':
-            self.infobox.update_msg(self.pho_widget.current_image())
+            self.infobox.update_msg(self.pho_widget.current_image(), self.tagger)
 
     def goto_imageno(self, imgno):
         self.pho_widget.goto_imageno(imgno)
@@ -175,7 +186,28 @@ class tkPhoWindow:
         self.root.title(title)
 
     def digit_handler(self, event):
-        self.pho_widget.current_image().toggle_tag(event.keysym)
+        digitstr = event.keysym
+        img = self.pho_widget.current_image()
+
+        if NUMCAT not in self.tagger.categories:
+            self.tagger.categories[NUMCAT] = []
+
+        try:
+            tagno = self.tagger.tag_list.index(digitstr)
+            if tagno not in self.tagger.categories[NUMCAT]:
+                self.tagger.categories[NUMCAT].append(tagno)
+            # Toggle it in the image
+            if tagno in img.tags:
+                img.tags.remove(tagno)
+            else:
+                img.tags.append(tagno)
+
+        except ValueError:
+            self.tagger.add_tag(digitstr, img,
+                                category=NUMCAT)
+
+        if self.infobox and self.infobox.state() == 'normal':
+            self.infobox.update_msg(img, self.tagger)
 
     def show_info(self, event=None):
         """Pop up the infobox (creating it if needed) and update its contents
@@ -185,7 +217,7 @@ class tkPhoWindow:
         else:
             self.infobox = InfoDialog()
 
-        self.infobox.update_msg(self.pho_widget.current_image())
+        self.infobox.update_msg(self.pho_widget.current_image(), self.tagger)
 
     def rotate_handler(self, event, rotation):
         self.pho_widget.rotate(rotation)
@@ -326,15 +358,24 @@ class tkPhoWindow:
         # If that stops working, focus_force after a delay might be more robust
         # self.root.after(150, self.root.focus_force)
 
+    def images_with_tag(self, tagno):
+        tagged_imgs = []
+        for img in imagelist.image_list():
+            if tagno in img.tags:
+                tagged_imgs.append(img)
+        return tagged_imgs
+
     def quit(self, event=None):
         if tk_pho_image.VERBOSE:
             print("Bye")
 
-        # Print any tags that were set
-        tagged = tkPhoImage.tagged_images()
-        for tag in tagged:
-            print("%s: %s" % (tag, ' '.join([img.relpath
-                                             for img in tagged[tag]])))
+        # Print any tags that were set in NUMCAT.
+        # Ignore non-numeric tags previously set: that's metapho's job.
+        if NUMCAT in self.tagger.categories:
+            for tagno in sorted(self.tagger.categories[NUMCAT]):
+                print(self.tagger.tag_list[tagno], ":",
+                      ' '.join([ im.relpath
+                                 for im in self.images_with_tag(tagno) ]))
 
         sys.exit(0)
 

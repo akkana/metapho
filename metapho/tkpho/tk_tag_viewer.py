@@ -285,15 +285,16 @@ class TkTagViewer(metapho.Tagger):
             flash_message("Too many tags, omitting %s" %
                           ', '.join(omitted), self.root)
 
-    def switch_category(self, newcat):
+    def switch_category(self, newcat, update_from_window=True):
         """Switch to a different current category, either because
            the user asked for it with the menu, or because the current
            image has no tags in the old current category but does
            in the new one.
         """
-        self.update_image_from_window()
         if tk_pho_image.VERBOSE:
             print("Change category to:", newcat)
+        if update_from_window:
+            self.update_image_from_window()
         self.current_category = newcat
         self.cat_menu_str.set(newcat)
         self.update_tag_entries()
@@ -343,7 +344,7 @@ class TkTagViewer(metapho.Tagger):
 
     def next_image(self, event=None):
         if tk_pho_image.VERBOSE:
-            print("\ntk_tag_viewer.next_image")
+            print("\n\n*** tk_tag_viewer.next_image")
             print("next_image: Current image:", imagelist.current_image())
             # self.print_imagelist()
         self.last_image_shown = imagelist.current_image()
@@ -680,7 +681,9 @@ class TkTagViewer(metapho.Tagger):
         """
         img = imagelist.current_image()
         if tk_pho_image.VERBOSE:
-            print("update_window_from_image:")
+            print("\nupdate_window_from_image:")
+            print("  category", self.current_category,
+                  "; allow category change?", allow_category_change)
             print("  img:", img, "tags:", img.tags)
 
         self.set_title()
@@ -688,38 +691,48 @@ class TkTagViewer(metapho.Tagger):
         # Decide what category to show.
         # If the image has tags set in the current category,
         # or the image has no tags set in any category,
+        # or the category is new with no tags inside,
         # leave the current category unchanged.
         # Otherwise, switch to the first category where this image has tags.
         if tk_pho_image.VERBOSE:
+            if not self.categories[self.current_category]:
+                print("New category", self.current_category)
             print("Does it have tags in current category",
                   self.current_category, "?",
                   self.img_has_tags_in(img, self.current_category))
-        if not self.img_has_tags_in(img, self.current_category):
-            if not img.tags:
+
+        if not img.tags:
+            # If the image isn't tagged yet, try to copy from the last  image
+            if tk_pho_image.VERBOSE:
+                print(img, "has no tags yet")
+            if self.last_image_shown:
                 if tk_pho_image.VERBOSE:
-                    print(img, "has no tags yet")
-                if self.last_image_shown:
+                    print("Copying tags from last image shown:",
+                          self.last_image_shown.tags)
+                img.tags = list(self.last_image_shown.tags)
+            elif tk_pho_image.VERBOSE:
+                print("No self.last_image_shown")
+        elif allow_category_change and \
+             not self.img_has_tags_in(img, self.current_category):
+            for cat in self.categories:
+                if cat == self.current_category:
+                    # already checked this case
+                    continue
+                if self.img_has_tags_in(img, cat):
+                    # switch_category will call update_window_from_image
+                    # recursively, so skip the next steps and trust that
+                    # we'll come back here that way.
                     if tk_pho_image.VERBOSE:
-                        print("Copying tags from last image shown:",
-                              self.last_image_shown.tags)
-                    img.tags = list(self.last_image_shown.tags)
+                        print(img, "has tags in", cat, ": switching categories")
+                    # switch_category normally calls update_image_from_window,
+                    # but we don't want it this time
+                    return self.switch_category(cat, update_from_window=False)
                 elif tk_pho_image.VERBOSE:
-                    print("No self.last_image_shown")
-            elif allow_category_change:
-                for cat in self.categories:
-                    if cat == self.current_category:
-                        continue
-                    if self.img_has_tags_in(img, cat):
-                        # switch_category will call update_window_from_image
-                        # so skip the next steps and trust that we'll
-                        # come back here that way.
-                        return self.switch_category(cat)
-                    else:
-                        print(img, "has no tags in", cat)
-                else:  # triggered if all for iterations completed, no break
-                    if tk_pho_image.VERBOSE:
-                        print(img, "has tags, but none in any category")
-                    img.tags = self.last_image_shown.tags
+                    print(img, "has no tags in", cat)
+            else:  # triggered if all for iterations completed, no break
+                if tk_pho_image.VERBOSE:
+                    print(img, "has tags, but none in any category")
+                img.tags = self.last_image_shown.tags
 
         self.clear_tag_buttons()
         for i, b in enumerate(self.buttons):
@@ -795,8 +808,6 @@ class TkTagViewer(metapho.Tagger):
             print("End of update_image_from_window:")
             print("   ", img, "tags are", img.tags)
             print()
-            self.print_imagelist()
-            print()
 
     def focus_find(self, event=None):
         """Open an entry where the user can type search strings,
@@ -826,21 +837,6 @@ class TkTagViewer(metapho.Tagger):
                 # its corresponding button
                 ent.config(bg=self.buttons[i].cget('bg'))
 
-    def print_imagelist(self):
-        print("imagelist:")
-        if imagelist.img_list:
-            for img in imagelist.img_list:
-                print("   ", img, "tags:",
-                      '; '.join(["%d, %s" % (t, self.tag_list[t])
-                                 for t in img.tags ]))
-        else:
-            print("    No images in imagelist yet")
-        print("All tags:", self.tag_list)
-        if self.current_category:
-            print("Current category:", self.categories[self.current_category])
-        else:
-            print("No category set yet")
-
     def popup_pho_window(self, event=None):
         if not self.pho_win:
             self.pho_win = tkPhoWindow(parent=self.root,
@@ -850,7 +846,6 @@ class TkTagViewer(metapho.Tagger):
         else:
             self.pho_win.root.deiconify()
 
-        # self.pho_win.pho_widget.goto_imageno(g_cur_imgno)
         self.pho_win.pho_widget.show_image()
 
         self.set_bindings(True, widget=self.pho_win.root, include_pho_win=True)

@@ -76,10 +76,10 @@ def add_images(newlist_or_img):
 
     for newimg in newlist_or_img:
         # Is it a valid image? E.g. not a Tags file.
-        if newimg.invalid:
-            print("Skipping non-image file", newimg)
-        else:
+        if not newimg.invalid:
             img_list.append(newimg)
+        # else:
+        #     print("Skipping non-image file", newimg)
 
 def remove_image(img=None):
     """Remove the indicated image. If img is None, remove the current image.
@@ -122,10 +122,13 @@ def pop_image(imgno=None):
 
 def print_imagelist():
     """For debugging"""
-    print("Imagelist:")
-    for im in img_list:
-        if current_image() == im:
-            print(" >>", im)
-        else:
-            print("   ", im)
-    print()
+    print("imagelist:")
+    if img_list:
+        for img in img_list:
+            if img == current_image():
+                print(" >>", end='')
+            else:
+                print("   ", end='')
+            print(img, "tags:", '; '.join(["%d" % t for t in img.tags ]))
+    else:
+        print("    No images in imagelist yet")

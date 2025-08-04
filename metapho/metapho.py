@@ -57,7 +57,7 @@ class MetaphoImage:
 
         basename = os.path.basename(filename)
 
-        # A list of tag numbers, indices into the tagger's tag_list.
+        # A list of indices into the tagger's tag_list.
         self.tags = []
 
         self.displayed = displayed
@@ -123,20 +123,24 @@ class MetaphoImage:
         os.unlink(self.filename)
         imagelist.remove_image(self)
 
-    def toggle_tag(self, newtag):
-        if newtag in self.tags:
-            self.tags.remove(newtag)
+    def toggle_tag(self, tagno):
+        """This is only called from gtk metapho and tkpho.
+           Tk metapho has its own toggle handler.
+           tagno should be a string, the actual tag.
+        """
+        if tagno in self.tags:
+            self.tags.remove(tagno)
         else:
-            self.tags.append(newtag)
+            self.tags.append(tagno)
 
-    def add_tag(self, newtag):
-        if newtag in self.tags:
+    def add_tag(self, tagno):
+        if tagno in self.tags:
             return
-        self.tags.append(newtag)
+        self.tags.append(tagno)
 
-    def remove_tag(self, newtag):
+    def remove_tag(self, tagno):
         try:
-            self.tags.remove(newtag)
+            self.tags.remove(tagno)
         except ValueError:
             pass
 
