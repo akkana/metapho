@@ -47,10 +47,9 @@ class InfoDialog(tk.Toplevel):
     """
     def __init__(self, *args, **kwargs):
         tk.Toplevel.__init__(self, *args, **kwargs)
-        self.__text = tk.StringVar()
-        self.__text.set("Info Dialog")
-        tk.Label(self, textvariable = self.__text, justify="left" ) \
-          .grid(row=0, column=0, columnspan=3, sticky=tk.NW+tk.SE)
+        self.textarea = tk.Text(self, width=100, height=15)
+        self.textarea.grid(row=0, column=0, columnspan=3, sticky=tk.NW+tk.SE)
+        self.textarea.insert(1.0, "Hello\nworld\nLorem\nipsum")
         tk.Button(self, text="OK", command=self.destroy_func) \
           .grid(row=1, column=1, sticky=tk.NW+tk.SE)
         # self.bind_all("<KeyDestroy>", self.destroy_func)
@@ -101,8 +100,21 @@ class InfoDialog(tk.Toplevel):
         # The message is now ready to show
         self.set_text(message)
 
+    @staticmethod
+    def string_size(text):
+        w = 0
+        h = 0
+        for line in text.splitlines():
+            w = max(w, len(line))
+            h += 1
+        return w, h
+
     def set_text(self, text):
-        self.__text.set(text)
+        tw, th = self.string_size(text)
+        self.textarea.config(state=tk.NORMAL, width=tw, height=th)
+        self.textarea.delete('1.0', tk.END)
+        self.textarea.insert(1.0, text)
+        self.textarea.config(state=tk.DISABLED)
         # self.focus_set()
 
     def popdown(self, event=None):
