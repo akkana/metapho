@@ -111,6 +111,10 @@ class tkPhoImage (MetaphoImage):
         try:
             if not self.orig_img:
                 self.load()
+            # Somewhere I saw a recommendation to call _getexif() rather
+            # than getexif(). Tiff images have getexif() but not _getexif();
+            # but they don't have exif anyway, so I guess that doesn't matter.
+            # Failure here will trigger the except and bail out of showing exif.
             items = self.orig_img._getexif().items()
             exif = {
                 ExifTags.TAGS[k]: v
@@ -120,9 +124,10 @@ class tkPhoImage (MetaphoImage):
             # Decode the GPS info, if any
             gpsinfo = {}
             for key in exif['GPSInfo'].keys():
-                decode = ExifTags.GPSTAGS.get(key,key)
+                decode = ExifTags.GPSTAGS.get(key, key)
                 gpsinfo[decode] = exif['GPSInfo'][key]
-            if gpsinfo:
+            if (gpsinfo and
+                'GPSLatitude' in gpsinfo and 'GPSLongitude' in gpsinfo):
                 # Now should have 'GPSLatitude', 'GPSLatitudeRef',
                 # 'GPSLongitude', 'GPSLongitudeRef'
                 # lat/lon are triples like (36.0, 16.0, 12.97)
@@ -140,9 +145,8 @@ class tkPhoImage (MetaphoImage):
                 exif['GPS coordinates'] = '%.6f, %.6f' % (latitude, longitude)
             return exif
         except Exception as e:
-            if VERBOSE:
-                print("Exception getting exif for", self.relpath,
-                      ":", e, file=sys.stderr)
+            print("Exception getting exif for", self.relpath,
+                  ":", e, file=sys.stderr)
             return {}
 
     def get_exif_rotation(self):
@@ -182,10 +186,14 @@ class tkPhoImage (MetaphoImage):
            Return self.display_img, a PILImage.
         """
         if VERBOSE:
-            print("TkPhoImage.resize_to_fit", bbox)
+            print("TkPhoImage.resize_to_fit, bbox=", bbox)
+            if self.display_img:
+                print("Current displayed size is %dx%d" % self.display_img.size)
+            else:
+                print("No current display_img")
         if not self.orig_img:
             if VERBOSE:
-                print("reloading orig_img")
+                print("Reloading orig_img")
             self.load()
 
         # Is there already a display_image of the correct size?

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import tkinter as tk
+import tkinter.scrolledtext as scrolledtext
 
 # This doesn't work:
 # from tkinter.messagebox import *
@@ -47,13 +48,24 @@ class InfoDialog(tk.Toplevel):
     """
     def __init__(self, *args, **kwargs):
         tk.Toplevel.__init__(self, *args, **kwargs)
-        self.textarea = tk.Text(self, width=100, height=15)
+
+        self.textarea = scrolledtext.ScrolledText(self, padx=7, pady=7)
         self.textarea.grid(row=0, column=0, columnspan=3, sticky=tk.NW+tk.SE)
-        self.textarea.insert(1.0, "Hello\nworld\nLorem\nipsum")
+
+        # textarea fonts
+        self.textarea.tag_configure('normal', font=('sans', 11))
+        self.textarea.tag_configure('bold', font=('sans', 11, 'bold'))
+        self.textarea.tag_configure('title', font=('Sans', 15, 'bold'))
+
         tk.Button(self, text="OK", command=self.destroy_func) \
           .grid(row=1, column=1, sticky=tk.NW+tk.SE)
         # self.bind_all("<KeyDestroy>", self.destroy_func)
+
         self.grid()
+        # On resizing, fill empty space with the textarea
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=0)
+
         # self.focus_set()
         self.bind("<Return>", self.popdown)
         self.bind("<Escape>", self.popdown)
@@ -67,38 +79,52 @@ class InfoDialog(tk.Toplevel):
         """
         self.title(cur_im.relpath)
 
-        message = cur_im.relpath
+        messagelist = []
+
+        messagelist.append((cur_im.relpath + '\n', 'title'))
         if cur_im.orig_img:
-            message += f'\nActual size: {cur_im.orig_img.size}'
+            messagelist.append(('Actual size: ', 'bold',
+                               str(cur_im.orig_img.size), 'normal'))
         if cur_im.display_img:
-            message += f'\nDisplayed size: {cur_im.display_img.size}'
-        message += f'\nRotation: {cur_im.rot}'
-        message += f'\nEXIF Rotation: {cur_im.exif_rotation}'
+            messagelist.append(('Displayed size: ', 'bold',
+                                str(cur_im.display_img.size), 'normal'))
+        messagelist.append(('Rotation: ', 'bold',
+                            str(cur_im.rot), 'normal'))
+        messagelist.append(('EXIF Rotation: ', 'bold',
+                            cur_im.exif_rotation, 'normal'))
 
         # What tags are set?
         if tagger:
-            message += "\n\nTags:"
+            messagelist.append(('', 'normal'))    # paragraph break
+            messagelist.append(('Tags: ', 'title'))
             if cur_im.tags:
                 tagdict = tagger.tagdict_for_img(cur_im)
                 for cat in tagdict:
-                    message += "\n  %s: %s" % (cat, ','.join([
+                    if cat != 'Tags':
+                        tagmessages = ['Category ' + cat + ': ', 'bold']
+                    else:
+                        tagmessages = []
+                    tagmessages.append(', '.join([
                         tagger.tag_list[tagno] for tagno in tagdict[cat] ]))
+                    tagmessages.append('normal')
+                    messagelist.append(tagmessages)
             else:
-                message += " None"
-            # message += "\n\nTags: " + ', '.join([ tagger.tag_list[t]
-            #                                       for t in cur_im.tags ])
+                tagmessages = ('None', 'normal')
         else:
-            message += "\n\nTags: " + ', '.join([ str(t)
-                                                  for t in cur_im.tags ])
+            messagelist += ( 'Tags: ', 'bold',
+                            ', '.join([ str(t) for t in cur_im.tags ]),
+                            'normal' )
 
         exif = cur_im.get_exif()
-        message += '\n'
-        for key in WANTED_EXIF_TAGS:
-            if key in exif:
-                message += f'\n{key}: {exif[key]}'
+        if exif:
+            messagelist.append(('', 'normal'))    # paragraph break
+            messagelist.append(('EXIF: ', 'title'))
+            for key in WANTED_EXIF_TAGS:
+                if key in exif:
+                    messagelist.append((key + ': ', 'bold', exif[key], 'normal'))
 
         # The message is now ready to show
-        self.set_text(message)
+        self.set_text(messagelist)
 
     @staticmethod
     def string_size(text):
@@ -109,12 +135,27 @@ class InfoDialog(tk.Toplevel):
             h += 1
         return w, h
 
-    def set_text(self, text):
-        tw, th = self.string_size(text)
+    def set_text(self, textlist):
+        """Text list is a list of tuples/lists
+           There will be a line break between each item in textlist.
+           The items themselves are lists alternating string and font.
+        """
+        # XXX tw, th = self.string_size(text)
+        tw = 80
+        th = 25
+
         self.textarea.config(state=tk.NORMAL, width=tw, height=th)
-        self.textarea.delete('1.0', tk.END)
-        self.textarea.insert(1.0, text)
-        self.textarea.config(state=tk.DISABLED)
+        self.textarea.delete('1.0', tk.END)      # enable editing
+
+        for line in textlist:
+            lineiter = iter(line)
+            for text, font in zip(lineiter, lineiter):
+                self.textarea.insert(tk.END, text, font)
+            self.textarea.insert(tk.END, '\n')
+
+        # self.textarea.insert(1.0, text)
+
+        self.textarea.config(state=tk.DISABLED)  # back to read-only
         # self.focus_set()
 
     def popdown(self, event=None):

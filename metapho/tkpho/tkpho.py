@@ -209,6 +209,10 @@ class tkPhoWindow:
         if self.infobox and self.infobox.state() == 'normal':
             self.infobox.update_msg(img, self.tagger)
 
+    def update_infobox(self):
+        if self.infobox:
+            self.infobox.update_msg(self.pho_widget.current_image(), self.tagger)
+
     def show_info(self, event=None):
         """Pop up the infobox (creating it if needed) and update its contents
         """
@@ -222,10 +226,12 @@ class tkPhoWindow:
     def rotate_handler(self, event, rotation):
         self.pho_widget.rotate(rotation)
         self.pho_widget.show_image()
+        self.update_infobox()
 
     def scale_handler(self, event, scale):
         self.pho_widget.rescale(scale)
         self.pho_widget.show_image()
+        self.update_infobox()
 
     def resize_handler(self, event):
         if (event.width, event.height) != self.fixed_size:
@@ -238,6 +244,7 @@ class tkPhoWindow:
                 self.pho_widget.show_image()
             elif tk_pho_image.VERBOSE:
                print("Resize event, but who cares?")
+        self.update_infobox()
 
     def fullscreen_handler(self, event):
         """f toggles, ESC gets out of fullscreen.
@@ -293,6 +300,7 @@ class tkPhoWindow:
             self.root.unbind("<B2-Motion>")
 
         # viewer.set_size() should redraw as necessary
+        self.update_infobox()
 
     def toggle_fullsize(self, event=None):
         if tk_pho_image.VERBOSE:
@@ -314,6 +322,7 @@ class tkPhoWindow:
         #       self.root.winfo_width(), self.root.winfo_height())
         if self.root.winfo_x() < 0 or self.root.winfo_y() < 0:
             self.root.geometry("+100+100")
+        self.update_infobox()
 
     def start_drag(self, event):
         self.dragging_from = event.x_root, event.y_root

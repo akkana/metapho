@@ -175,6 +175,8 @@ class tkPhoWidget (tk.Label):
 
     def rescale(self, factor):
         self.scale_factor *= factor
+        if imagelist.current_image():
+            imagelist.current_image().display_img = None
 
     def resize_to_fit(self):
         """Resize the current image to fit in the current widget.
@@ -184,6 +186,9 @@ class tkPhoWidget (tk.Label):
 
            Return self.display_img, a PIL Image ready to display.
         """
+        if tk_pho_image.VERBOSE:
+            print("tk_pho_widget resize_to_fit: scale factor is",
+                  self.scale_factor)
         cur_img = imagelist.current_image()
         if not cur_img:
             if tk_pho_image.VERBOSE:
@@ -243,8 +248,10 @@ class tkPhoWidget (tk.Label):
         elif not self.fixed_size:                  # resizable
             if tk_pho_image.VERBOSE:
                 print("Resizable widget")
-            target_size = (self.root.winfo_screenwidth() * FRAC_OF_SCREEN,
-                           self.root.winfo_screenheight() * FRAC_OF_SCREEN)
+            target_size = (self.root.winfo_screenwidth()
+                           * FRAC_OF_SCREEN * self.scale_factor,
+                           self.root.winfo_screenheight()
+                           * FRAC_OF_SCREEN * self.scale_factor)
             if tk_pho_image.VERBOSE:
                 print("TkPhoWidget.resize_to_fit, variable height ->",
                       target_size)
