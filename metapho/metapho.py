@@ -179,6 +179,10 @@ class MetaphoImage:
         """For any file that was referenced in a tag file but doesn't
            exist on disk, see if perhaps it's been moved to a different
            subdirectory under topdir. If so, adjust file path appropriately.
+
+           Return a set of filenames removed in case the caller wants
+           to warn the user or take other action.
+           XXX Maybe better to convert to a list before returning?
         """
         nefbases = set()
         nefdict = {}
@@ -211,6 +215,8 @@ class MetaphoImage:
             #     ' '.join([nefdict[f] for f in nefbases]))
             for f in nefbases:
                 imagelist.remove_image(nefdict[f])
+
+        return nefbases
 
 if __name__ == '__main__':
     main()

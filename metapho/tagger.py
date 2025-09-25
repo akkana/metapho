@@ -179,7 +179,9 @@ class Tagger(object):
         for d in dirs:
             self.read_tags(d, recursive=False)
 
-        MetaphoImage.clean_up_nonexistent_files(self.commondir)
+        # This is better handled at a higher level, so programs can
+        # warn the user about it in an appropriate way.
+        # MetaphoImage.clean_up_nonexistent_files(self.commondir)
 
         # Don't keep the default category if there's nothing in it
         # and we have other categories
@@ -190,6 +192,7 @@ class Tagger(object):
     def read_tags(self, dirname, recursive=True):
         """Read in tags from files named in the given directory,
            and tag images in the imagelist appropriately.
+           (Don't add any new images to the imagelist.)
            Tags will be appended to the tag_list.
            If recursive is True, we'll also look for
            Tags files in subdirectories.
@@ -334,10 +337,14 @@ tag Bruny Island: img 008.jpg
 
             # Did we find an image matching fil?
             # If not, add it as a non-displayed image.
-            if not tagged:
-                newim = MetaphoImage(fil, displayed=False)
-                newim.tags.append(tagindex)
-                imagelist.add_images(newim)
+            # NOT DOING THIS ANY MORE. It seems wrong to have images
+            # in the imagelist that weren't specified on the commandline
+            # or otherwise specified by the user.
+            #
+            # if not tagged:
+            #     newim = MetaphoImage(fil, displayed=False)
+            #     newim.tags.append(tagindex)
+            #     imagelist.add_images(newim)
 
     def add_tag(self, tag, img, category=None):
         """Add a tag to the given image,

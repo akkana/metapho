@@ -126,6 +126,9 @@ class tkPhoWindow:
         self.root.bind('<Key-q>', self.quit)
 
         self.tagger.read_all_tags_for_images()
+        nef = tkPhoImage.clean_up_nonexistent_files(self.tagger.commondir)
+        if nef:
+            print("Not found:", ' '.join(nef))
 
         if fullscreen:
             self.go_fullscreen(True)
