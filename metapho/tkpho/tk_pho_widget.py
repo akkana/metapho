@@ -452,7 +452,7 @@ class tkPhoWidget (tk.Label):
             return
         if imagenum < 0:
             # For negative numbers, count back, -1 being the last image
-            imagelist.set_current_imageno(num_images + imagenum - 1)
+            imagelist.set_current_imageno(num_images + imagenum + 1)
             self.prev_image()
             return
         imagelist.set_current_imageno(imagenum - 1)
