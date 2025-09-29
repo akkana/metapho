@@ -337,14 +337,13 @@ tag Bruny Island: img 008.jpg
 
             # Did we find an image matching fil?
             # If not, add it as a non-displayed image.
-            # NOT DOING THIS ANY MORE. It seems wrong to have images
-            # in the imagelist that weren't specified on the commandline
-            # or otherwise specified by the user.
-            #
-            # if not tagged:
-            #     newim = MetaphoImage(fil, displayed=False)
-            #     newim.tags.append(tagindex)
-            #     imagelist.add_images(newim)
+            # This isn't needed when running on an explicit image list,
+            # but it's needed for programs like notags that display
+            # images with particular tags.
+            if not tagged:
+                newim = MetaphoImage(fil, displayed=False)
+                newim.tags.append(tagindex)
+                imagelist.add_images(newim)
 
     def add_tag(self, tag, img, category=None):
         """Add a tag to the given image,
