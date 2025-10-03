@@ -490,10 +490,14 @@ PHO_CMD : command to run when pressing g (default: gimp).
                       file=sys.stderr)
                 args.images = [args.size] + args.images
 
-    pwin = tkPhoWindow(parent=None, img_list=args.images,
-                       fixed_size=win_size,
-                       fullscreen=args.presentation)
-    pwin.run()
+    try:
+        pwin = tkPhoWindow(parent=None, img_list=args.images,
+                           fixed_size=win_size,
+                           fullscreen=args.presentation)
+        pwin.run()
+    except KeyboardInterrupt:
+        print("Interrupt")
+        sys.exit(0)
 
 
 if __name__ == '__main__':
