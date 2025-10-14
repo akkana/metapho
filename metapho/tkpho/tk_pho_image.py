@@ -80,7 +80,7 @@ class tkPhoImage (MetaphoImage):
             self.rot = self.get_exif_rotation()
             self.display_img = None
 
-        except RuntimeError as e:
+        except Exception as e:
             self.orig_img = None
             self.display_img = None
             raise e

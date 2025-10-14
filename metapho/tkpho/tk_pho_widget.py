@@ -359,7 +359,7 @@ class tkPhoWidget (tk.Label):
                 imagelist.current_image().load()
 
             except (FileNotFoundError, UnidentifiedImageError,
-                    IsADirectoryError) as e:
+                    IsADirectoryError, PermissionError) as e:
                 print("Skipping", imagelist.current_image().relpath,
                       "because:", e)
                 # PIL prints its errors with full paths, even if it was
@@ -384,7 +384,7 @@ class tkPhoWidget (tk.Label):
                     print("AttributeError: Marked", imagelist.current_image(),
                           "as invalid")
                 continue
-            except RuntimeError as e:
+            except Exception as e:
                 print("Skipping an image for an unexpected reason:", type(e),
                       imagelist.current_image())
                 imagelist.remove_image()
