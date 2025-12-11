@@ -797,9 +797,11 @@ class TkTagViewer(metapho.Tagger):
             # add or remove the tag, as appropriate
             if self.tag_button_set(b) and tagindex not in img.tags:
                 img.tags.append(tagindex)
+                self.changed = True
                 if tk_pho_image.VERBOSE:
                     print("Adding tag", i, tagindex, "->", tagname)
             elif not self.tag_button_set(b) and tagindex in img.tags:
+                self.changed = True
                 img.tags.remove(tagindex)
                 if tk_pho_image.VERBOSE:
                     print("Removing tag", i, tagindex, "->", tagname)

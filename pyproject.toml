@@ -31,7 +31,7 @@ version = {attr = "metapho.__version__"}
 gtk = [ "PyGObject", "pycairo" ]
 
 [project.scripts]
-notags = 'metapho:main'
+notags = 'metapho:main'                     # Actually located in tagger.py
 fotogr = 'metapho.scripts.fotogr:main'
 photoshare = 'metapho.scripts.photoshare:main'
 
