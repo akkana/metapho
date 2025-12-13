@@ -32,7 +32,7 @@ class TkTagViewer(metapho.Tagger):
 
     PADDING = 1
 
-    def __init__(self, img_list):
+    def __init__(self, img_list, force_write=False):
 
         metapho.Tagger.__init__(self)
 
@@ -41,6 +41,8 @@ class TkTagViewer(metapho.Tagger):
         self.root = tk.Tk()
 
         self.num_rows = 26
+
+        self.force_write = force_write
 
         # A separate window to allow zooming or fullsize viewing
         self.pho_win = None
@@ -905,23 +907,32 @@ class TkTagViewer(metapho.Tagger):
 
 def main():
     def Usage():
-        print("Usage: %s [-v] image1.jpg image2.jpg ..."
+        print("Usage: %s [-v] [--force] image1.jpg image2.jpg ..."
               % os.path.basename(sys.argv[0]))
+        print("  -v:      Verbose mode (print out chatty information)")
+        print("  --force: Force update of Tags file even if nothing has changed")
         sys.exit(1)
 
     args = sys.argv[1:]
     # XXX possibly default to all images recursively under .?
     if not args:
         Usage()
-    if args[0] == '-v':
-        tk_pho_image.VERBOSE = True
-        args = args[1:]
-    elif args[0] == '-h' or args[0] == '--help':
-        Usage()
-    elif args[0][0] == '-':
-        Usage()
+    while args:
+        if args[0] == '-v':
+            tk_pho_image.VERBOSE = True
+            args = args[1:]
+        elif args[0] == '--force':
+            force = True
+            args = args[1:]
+        elif args[0] == '-h' or args[0] == '--help':
+            Usage()
+        elif args[0][0] == '-':
+            Usage()
+        else:
+            # No more - args, just image names
+            break
 
-    tagger = TkTagViewer(img_list=args)
+    tagger = TkTagViewer(img_list=args, force_write=force)
 
     try:
         tagger.root.mainloop()

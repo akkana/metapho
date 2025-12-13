@@ -71,6 +71,8 @@ class Tagger(object):
         # Don't update the Tags file if the user doesn't change anything.
         self.changed = False
 
+        self.force_write = False
+
         # What category are we currently processing? Default is Tags.
         self.current_category = ''
 
@@ -81,6 +83,7 @@ class Tagger(object):
     def __repr__(self):
         """Returns a string summarizing all known images and tags,
            suitable for printing on stdout or pasting into a Tags file.
+           Don't include images that no longer exist on disk.
         """
         outstr = ''
         commondirlen = len(self.commondir)
@@ -101,7 +104,10 @@ class Tagger(object):
                 imgstr = ''
                 imglist = []
                 for img in imagelist.image_list():
-                    if tagno in img.tags:
+                    # Does the image still exist on disk?
+                    # can't rely on img.invalid because that's only set
+                    # if the user has tried to view that image.
+                    if tagno in img.tags and os.path.exists(img.filename):
                         imglist.append(img)
 
                 # Now we have all the images in this category.
@@ -131,7 +137,7 @@ class Tagger(object):
            If there was a previous Tags file there, it will be saved
            as Tags.bak.
         """
-        if not self.changed:
+        if not self.changed and not self.force_write:
             print("No tags changed; not rewriting Tags file")
             return
 
@@ -197,8 +203,8 @@ class Tagger(object):
            If recursive is True, we'll also look for
            Tags files in subdirectories.
         """
-        dirname = os.path.abspath(dirname)
-        self.check_commondir(dirname)
+        absdirname = os.path.abspath(dirname)
+        self.check_commondir(absdirname)
 
         # Handle tag files in subdirectories first.
         # The tag file at the top level will override anything lower,
@@ -306,10 +312,8 @@ tag Bruny Island: img 008.jpg
 
     def process_tag(self, tagname, filenames):
         """After reading a tag from a tags file, add it to the global
-           tags list if it isn't there already, and add the given filenames
-           to it.
-           filenames are absolute normpaths in atual practice,
-           though relpaths aren't prohibited.
+           tags list if it isn't there already, and add the given filenames.
+           Filenames can be relpaths or absolute normpaths.
         """
         try:
             tagindex = self.tag_list.index(tagname)
@@ -444,7 +448,7 @@ tag Bruny Island: img 008.jpg
 
         # It's not there yet. See if it exists in the global tag list.
         # if tagno > len(self.tag_list):
-        #     print "Warning: adding a not yet existent tag", tagno
+        #     print("Warning: adding a not yet existent tag", tagno)
 
         img.tags.append(tagno)
 
