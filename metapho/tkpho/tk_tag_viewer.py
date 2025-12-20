@@ -913,6 +913,7 @@ def main():
         print("  --force: Force update of Tags file even if nothing has changed")
         sys.exit(1)
 
+    force = False
     args = sys.argv[1:]
     # XXX possibly default to all images recursively under .?
     if not args:

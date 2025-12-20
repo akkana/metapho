@@ -16,23 +16,26 @@ import sys
 
 
 WANTED_EXIF_TAGS = [
+    'ImageDescription',
     'Make', 'Model', 'Software',
-    'LensMake', 'LensModel',
+    'LensMake', 'LensModel', 'LensSpecification',
     'Orientation',
-    'DateTime',
-    'FocalLength', 'FNumber', 'ExposureTime',
-    'ShutterSpeedValue', 'ApertureValue', 'BrightnessValue',
+    'DateTime', 'DateTimeOriginal',
+    'FocalLength', 'FocalLengthIn35mmFilm', 'FNumber', 'ExposureTime',
+    'ShutterSpeedValue', 'ApertureValue', 'BrightnessValue', 'ExposureTime',
+    'ISOSpeedRatings',
 
     'GPS coordinates',    # As decoded by TkPhoImage
 
-    'WhiteBalance', 'ExposureBiasValue', 'MaxApertureValue',
-    'FocalLengthIn35mmFilm',
+    'WhiteBalance', 'ExposureBiasValue', 'MaxApertureValue', 'ColorSpace',
     'SubjectDistance',
-    'MeteringMode', 'Flash',
-    'DigitalZoomRatio',
-    # 'ColorSpace',
-    # 'SceneCaptureType', 'SensingMethod', 'ExposureProgram', 'ExposureMode',
-    # 'Contrast', 'Saturation', 'Sharpness', 'SubjectDistanceRange',
+    'MeteringMode', 'Flash', 'LightSource',
+    'ExposureProgram', 'ExposureMode',
+    'DigitalZoomRatio', 'SceneCaptureType'
+    'SubjectDistanceRange',
+    # 'UserComment', 'MakerNote',  # These are long unreadable gibberish
+    #  'SceneType', 'ColorSpace', 'SensingMethod', 'RecommendedExposureIndex',
+    # 'Contrast', 'Saturation', 'Sharpness',
     # 'CompositeImage'
 ]
 

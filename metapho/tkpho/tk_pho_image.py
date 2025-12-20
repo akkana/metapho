@@ -123,9 +123,13 @@ class tkPhoImage (MetaphoImage):
             }
             # Decode the GPS info, if any
             gpsinfo = {}
-            for key in exif['GPSInfo'].keys():
-                decode = ExifTags.GPSTAGS.get(key, key)
-                gpsinfo[decode] = exif['GPSInfo'][key]
+            try:
+                for key in exif['GPSInfo'].keys():
+                    decode = ExifTags.GPSTAGS.get(key, key)
+                    gpsinfo[decode] = exif['GPSInfo'][key]
+            except:
+                if VERBOSE:
+                    print("No GPS info")
             if (gpsinfo and
                 'GPSLatitude' in gpsinfo and 'GPSLongitude' in gpsinfo):
                 # Now should have 'GPSLatitude', 'GPSLatitudeRef',
