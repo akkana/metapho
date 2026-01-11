@@ -157,7 +157,7 @@ class Tagger(object):
         """Keep track of the dir common to all directories we use:
            XXX commondir code is still somewhat experimental.
         """
-        if self.commondir == None:
+        if self.commondir is None:
             self.commondir = d
         else:
             # self.commondir = os.path.commonprefix([self.commondir, d])

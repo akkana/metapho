@@ -268,7 +268,7 @@ class tkPhoWindow:
            fullscreen_on==False -> out of fullscreen
            fullscreen_on==None -> toggle
         """
-        if fullscreen_on == None:
+        if fullscreen_on is None:
             fullscreen_on = not self.root.attributes("-fullscreen")
 
         if fullscreen_on:    # Turn on fullscreen
