@@ -39,7 +39,7 @@ def search_for_keywords(grepdirs, orpats, andpats, notpats,
        ~ is allowed.
     """
     if DEBUG:
-        print("search_for_keywords", grepdirs)
+        print("search_for_keywords in", grepdirs)
 
     if ignorecase:
         orpats = [ p.lower() for p in orpats ]
@@ -250,18 +250,23 @@ def parse_args(args):
     if "taglines" not in ret:
         ret["taglines"] = False
 
-    ret["andpats"] = []
-    ret["orpats"]  = []
-    ret["notpats"] = []
-    for pat in args:
-        if pat[0] == '+':
-            ret["andpats"].append(pat[1:])
-        elif pat[0] == '-':
-            ret["notpats"].append(pat[1:])
-        else:
-            ret["orpats"].append(pat)
+    ret['orpats'], ret['andpats'], ret['notpats'] = parse_pattern_args(args)
 
     return ret
+
+
+def parse_pattern_args(args):
+    orpats  = []
+    andpats = []
+    notpats = []
+    for pat in args:
+        if pat[0] == '+':
+            andpats.append(pat[1:])
+        elif pat[0] == '-':
+            notpats.append(pat[1:])
+        else:
+            orpats.append(pat)
+    return orpats, andpats, notpats
 
 
 def main():
