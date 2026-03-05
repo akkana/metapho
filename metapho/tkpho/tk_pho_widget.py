@@ -322,14 +322,12 @@ class tkPhoWidget (tk.Label):
            Raises IndexError if there are no images left.
         """
         # Remove from the img_list
-        deleted = imagelist.pop_image(imagelist.current_imageno())
+        deleted = imagelist.pop_image(advance=True)
 
         # delete the file on disk
         os.unlink(deleted.filename)
 
-        # After removing, we'll be positioned on the previous image to
-        # the one that was deleted. Try to go forward one.
-        self.next_image()    # next_image will call show_image
+        self.show_image()
 
     def next_image(self):
         last_valid_image = imagelist.current_image()

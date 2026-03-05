@@ -34,6 +34,18 @@ def set_current_image(im):
     else:
         cur_imgno = -1
 
+# Iterator over valid images in the imagelist
+class ImageListIterator:
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            advance()
+            return current_image()
+        except IndexError:
+            raise StopIteration
+
 def image_list():
     return img_list
 
@@ -102,10 +114,12 @@ def remove_image(img=None):
     if move_pointer and index > 0:
         cur_imgno = index - 1
 
-def pop_image(imgno=None):
-    """Remove the indicated image and return it.
+def pop_image(imgno=None, advance=False):
+    """Remove the indicated image from the list and return it.
        If img is None, remove the current image.
-       Leave the pointer on the image before the removed one.
+       If deleting the current image, leave the pointer on the image
+       before the removed one unless advance is True;
+       if popping any other image, don't move the pointer.
     """
     global cur_imgno
     if imgno is None:
@@ -116,8 +130,10 @@ def pop_image(imgno=None):
     else:
         move_pointer = False
     ret = img_list.pop(imgno)
-    if move_pointer and imgno > 0:
-        cur_imgno = imgno - 1
+    if move_pointer:
+        if ((advance and imgno > len(img_list) - 1)
+            or (imgno > 0 and not advance)):
+            cur_imgno = imgno - 1
     return ret
 
 def print_imagelist():
