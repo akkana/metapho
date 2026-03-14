@@ -280,6 +280,8 @@ class tkPhoWindow:
             self.pho_widget.set_size((self.root.winfo_screenwidth(),
                                       self.root.winfo_screenheight()))
 
+            self.root.config(cursor="none")
+
             # if self.pho_widget.fullsize:
             #     self.pho_widget.center_fullsize()
 
@@ -297,6 +299,9 @@ class tkPhoWindow:
             self.pho_widget.set_fullscreen(False)
             if tk_pho_image.VERBOSE:
                 print("Out of fullscreen, fixed_size is", self.fixed_size)
+
+            # This seems to be the default cursor, which seems fine
+            self.root.config(cursor="left_ptr")
 
             # disable middlemouse dragging
             # self.root.bind("<B2-Motion>", None)
