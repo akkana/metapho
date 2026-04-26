@@ -126,6 +126,15 @@ class tkPhoWindow:
         self.root.bind('<Key-q>', self.quit)
 
         self.tagger.read_all_tags_for_images()
+
+        # No need for all the images that got added because they had tags,
+        # that aren't in the explicit image list.
+        # They're all MetaphoImages rather than tkPhoImages.
+        noneed = [img for img in imagelist.img_list
+                  if type(img) is not tkPhoImage ]
+        for delimg in noneed:
+            imagelist.remove_image(delimg)
+
         nef = tkPhoImage.clean_up_nonexistent_files(self.tagger.commondir)
         if nef:
             print("Not found:", ' '.join(nef))
