@@ -217,10 +217,10 @@ class tkPhoImage (MetaphoImage):
         else:
             ow, oh = self.orig_img.size
 
-        # Would the original image fit in the bbox?
-        if ow <= bbox[0] and oh <= bbox[1]:
+        # Is the original image the same size as the bbox?
+        if ow == bbox[0] and oh == bbox[1]:
             if VERBOSE:
-                print("Original image %dx%d fits in the bounding box %dx%d"
+                print("Original image %dx%d same size as bounding box %dx%d"
                       % (ow, oh, bbox[0], bbox[1]))
             # It would fit. Is there already a display image that size?
             if self.display_img and self.display_img.size == (ow, oh):

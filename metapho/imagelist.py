@@ -138,8 +138,8 @@ def pop_image(imgno=None, advance=False):
 
 def print_imagelist():
     """For debugging"""
-    print("imagelist:")
     if img_list:
+        print("imagelist: (%d images)" % len(img_list))
         for img in img_list:
             if img == current_image():
                 print(" >>", end='')
@@ -147,4 +147,4 @@ def print_imagelist():
                 print("   ", end='')
             print(img, "tags:", '; '.join(["%d" % t for t in img.tags ]))
     else:
-        print("    No images in imagelist yet")
+        print("imagelist:  No images in imagelist yet")

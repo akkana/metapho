@@ -147,8 +147,7 @@ class tkPhoWidget (tk.Label):
             # Any exception means it's not a valid image and should
             # be removed from the list.
             if not imagelist.current_image().invalid:
-                print("Eek, exception in show_image",
-                      file=sys.stderr)
+                print("Eek, exception in show_image", file=sys.stderr)
                 print("Exception was:", e)
             return
         if not pil_img:
@@ -161,6 +160,8 @@ class tkPhoWidget (tk.Label):
             return
 
         tkimg = ImageTk.PhotoImage(pil_img)
+        ws = self.widget_size
+        self.set_size((tkimg.width(), tkimg.height()))
         self.config(image=tkimg)
         # self.image = tkimg
         self.photo = tkimg
@@ -186,21 +187,41 @@ class tkPhoWidget (tk.Label):
 
            Return self.display_img, a PIL Image ready to display.
         """
-        if tk_pho_image.VERBOSE:
-            print("tk_pho_widget resize_to_fit: scale factor is",
-                  self.scale_factor)
         cur_img = imagelist.current_image()
         if not cur_img:
             if tk_pho_image.VERBOSE:
                 print("resize_to_fit: no current image")
             return None
 
+        # This will need the image size, so load the imageif it's not already
+        if not cur_img.orig_img:
+            cur_img.load()
+
         if tk_pho_image.VERBOSE:
-            print("TkPhoWidget.resize_to_fit, imgno =",
+            print("\nTkPhoWidget.resize_to_fit, imgno =",
                   imagelist.current_imageno(),
-                  "fullsize=", self.fullsize,
-                  "fullscreen=", self.fullscreen,
-                  "rot=", cur_img.rot)
+                  "\n  fullsize=", self.fullsize,
+                  "\n  fullscreen=", self.fullscreen,
+                  "\n  scale factor=", self.scale_factor,
+                  "\n  rot=", cur_img.rot,
+                  "\n  fullsize offset=", self.fullsize_offset,
+                  "\n  fixed size=", self.fixed_size)
+
+        def min_scaled_img_or_target(img, target):
+            """If the image scaled by scale_factor is smaller than the
+               window target size, don't scale it up any more than that.
+               target is width, height.
+            """
+            scaled_img_size = [x * self.scale_factor
+                               for x in cur_img.orig_img.size]
+            if tk_pho_image.VERBOSE:
+                print("scaled_img_size:", scaled_img_size, "for target", target)
+            if (scaled_img_size[0] < target[0]
+                and scaled_img_size[1] < target[1]):
+                if tk_pho_image.VERBOSE:
+                    print("Image smaller than target, using smaller window")
+                return scaled_img_size
+            return target
 
         if self.fullsize and self.fullscreen:
             if cur_img.display_img and (self.fullsize_offset[0]
@@ -212,6 +233,8 @@ class tkPhoWidget (tk.Label):
                 return cur_img.display_img
 
             target_size = cur_img.orig_img.size
+            if tk_pho_image.VERBOSE:
+                print("fullsize and fullscreen: target size =", target_size)
 
             if cur_img.rot:
                 if tk_pho_image.VERBOSE:
@@ -240,21 +263,20 @@ class tkPhoWidget (tk.Label):
                 print("TkPhoWidget.resize_to_fit in fullsize mode", target_size)
 
         elif self.fullscreen:
-            target_size = get_screen_size(self.root)
+            target_size = min_scaled_img_or_target(cur_img,
+                                                   get_screen_size(self.root))
             if tk_pho_image.VERBOSE:
                 print("TkPhoWidget.resize_to_fit, fullscreen, targeting",
                       target_size)
 
         elif not self.fixed_size:                  # resizable
-            if tk_pho_image.VERBOSE:
-                print("Resizable widget")
             target_size = (self.root.winfo_screenwidth()
                            * FRAC_OF_SCREEN * self.scale_factor,
                            self.root.winfo_screenheight()
                            * FRAC_OF_SCREEN * self.scale_factor)
+            target_size = min_scaled_img_or_target(cur_img, target_size)
             if tk_pho_image.VERBOSE:
-                print("TkPhoWidget.resize_to_fit, variable height ->",
-                      target_size)
+                print("Resizable widget; target size =", target_size)
 
         else:                                      # fixed-size window
             target_size = self.widget_size
@@ -264,19 +286,21 @@ class tkPhoWidget (tk.Label):
                 target_size = [ x * self.scale_factor for x in target_size ]
 
         if tk_pho_image.VERBOSE:
-            print("Target space:", target_size)
+            print("Target size:", target_size)
 
         return cur_img.resize_to_fit(target_size)
 
     def translate(self, dx, dy):
         """Calculate the offset of a fullsize image that has
            been dragged with the middle mouse.
+           The actual translation will happen via the affine transform
+           in center_fullsize.
         """
-        # print("tkPhoWidget.translate", dx, dy, "->",
-        #       self.fullsize_offset, end='')
         self.fullsize_offset = (self.fullsize_offset[0] + dx,
                                 self.fullsize_offset[1] + dy)
-        # print(" ->", self.fullsize_offset)
+        if tk_pho_image.VERBOSE:
+            print("tkPhoWidget.translate", dx, dy, "->",
+                  self.fullsize_offset, end='')
         imagelist.current_image().display_img = None
 
     def center_fullsize(self, pil_img):
@@ -288,23 +312,45 @@ class tkPhoWidget (tk.Label):
 
            Return the translated pil_img.
         """
+        # Currently, this is only used in fullscreen mode,
+        # so use the screen size.
+        ww = self.root.winfo_screenwidth()
+        wh = self.root.winfo_screenheight()
+
         # When in both fullscreen and fullsize, it's best to start
         # with the center of the image centered on the screen.
         # But also take into account fullsize_offset, which might
         # be set because the user dragged a fullscreen image.
         iw, ih = pil_img.size
-        if tk_pho_image.VERBOSE:
-            print("center_fullsize: transforming",
-                  int((iw - self.root.winfo_screenwidth())/2),
-                  int((ih - self.root.winfo_screenheight())/2))
 
-        return pil_img.transform(pil_img.size, PILImage.AFFINE,
-                                 (1, 0,
-                                  int((iw - self.root.winfo_screenwidth())/2)
-                                  - self.fullsize_offset[0],
-                                  0, 1,
-                                  int((ih - self.root.winfo_screenheight())/2
-                                      - self.fullsize_offset[1])))
+        # If there's no offset and the image is smaller than the screen,
+        # there's no need to transform anything.
+        if iw < ww and ih < wh and \
+           not self.fullsize_offset[0] and not self.fullsize_offset[1]:
+            if tk_pho_image.VERBOSE:
+                print("Small image, no need to translate")
+            return pil_img
+
+        # The dx and dy in the affine transformation move the image up and left
+        # if they're positive.
+        affine_dx = int((iw - ww)/2) - self.fullsize_offset[0]
+        affine_dy = int((ih - wh)/2) - self.fullsize_offset[1]
+
+        if tk_pho_image.VERBOSE:
+            print("center_fullsize: affine transforming by\n    ",
+                  '(', iw, '-', self.root.winfo_screenwidth(), ') / 2)',
+                  '-', self.fullsize_offset[0],
+                  '=', affine_dx,
+                  ',\n    ',
+                  '(', ih, '-', self.root.winfo_screenheight(), ') / 2)',
+                  '-', self.fullsize_offset[1],
+                  '=', affine_dy)
+        return pil_img.transform((ww, wh), PILImage.AFFINE,
+                                 # The 1, 1 on the diagonal are scale factors:
+                                 # i.e. don't scale the image.
+                                 (1, 0, affine_dx,
+                                  0, 1, affine_dy))
+
         # then crop, https://stackoverflow.com/a/44684388
         # but that doesn't seem to be needed.
         # Is there any point to cropping off the extra lower right parts?
