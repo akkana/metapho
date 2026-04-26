@@ -4,7 +4,7 @@
    Suitable for embedding in larger apps, or use it by itself
    as a standalone image viewer.
 
-   Copyright 2024,2025 by Akkana -- Share and enjoy under the GPLv2 or later.
+   Copyright 2024,2025,2026 by Akkana -- Share and enjoy under the GPLv2 or later.
 """
 
 
@@ -160,8 +160,8 @@ class tkPhoWidget (tk.Label):
             return
 
         tkimg = ImageTk.PhotoImage(pil_img)
-        ws = self.widget_size
-        self.set_size((tkimg.width(), tkimg.height()))
+        if not self.fullscreen and not self.fixed_size:
+            self.set_size((tkimg.width(), tkimg.height()))
         self.config(image=tkimg)
         # self.image = tkimg
         self.photo = tkimg
@@ -279,14 +279,11 @@ class tkPhoWidget (tk.Label):
                 print("Resizable widget; target size =", target_size)
 
         else:                                      # fixed-size window
-            target_size = self.widget_size
             if tk_pho_image.VERBOSE:
-                print("TkPhoWidget.resize_to_fit, fixed at", target_size)
+                print("TkPhoWidget.resize_to_fit, fixed widget size:",
+                      self.widget_size)
 
-                target_size = [ x * self.scale_factor for x in target_size ]
-
-        if tk_pho_image.VERBOSE:
-            print("Target size:", target_size)
+            target_size = [ x * self.scale_factor for x in self.widget_size ]
 
         return cur_img.resize_to_fit(target_size)
 
