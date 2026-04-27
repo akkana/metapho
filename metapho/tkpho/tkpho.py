@@ -329,6 +329,8 @@ class tkPhoWindow:
                 print("full-size mode not supported in a fixed-size window")
             return
         self.pho_widget.fullsize = not self.pho_widget.fullsize
+        # invalidate the current display image
+        imagelist.current_image().display_img = None
         self.pho_widget.show_image()
 
         # Going from fullsize to normal, it's all too easy

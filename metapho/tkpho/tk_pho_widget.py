@@ -205,7 +205,10 @@ class tkPhoWidget (tk.Label):
                   "\n  scale factor=", self.scale_factor,
                   "\n  rot=", cur_img.rot,
                   "\n  fullsize offset=", self.fullsize_offset,
+                  "\n  widget size=", self.widget_size,
                   "\n  fixed size=", self.fixed_size)
+            if cur_img.display_img:
+                print("  display img is", cur_img.display_img.size)
 
         def min_scaled_img_or_target(img, target):
             """If the image scaled by scale_factor is smaller than the

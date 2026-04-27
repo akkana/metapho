@@ -207,7 +207,8 @@ class tkPhoImage (MetaphoImage):
             if ((dw == bbox[0] and dh <= bbox[1]) or
                 (dw <= bbox[0] and dh == bbox[1])):
                 if VERBOSE:
-                    print("display image is already scaled to the window")
+                    print("display image (%dx%d) is already scaled to the window"
+                          % self.display_img.size)
                 return self.display_img
 
         # What are the original dimensions, taking rotation into account?
