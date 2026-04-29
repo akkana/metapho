@@ -136,6 +136,8 @@ class NotagsTests(unittest.TestCase):
 
         self.assertEqual(tagger.commondir, abstestdir)
 
+        print("==========\ntagger has:", sortlines(str(tagger)), "\n===========")
+        sys.stdout.flush()
         self.assertEqual(sortlines(str(tagger)), """category Tags
 tag ann : dir1/img1.jpg dir2/imgc.jpg
 tag phred : dir2/imgb.jpg

@@ -17,6 +17,7 @@ from .tkdialogs import InfoDialog, message_dialog, askyesno_with_bindings
 import random
 import sys, os
 
+
 # A name for the category used for the digit tags you can use to
 # mark an image in pho.
 NUMCAT = 'Flags'
@@ -30,12 +31,13 @@ class tkPhoWindow:
     """
 
     def __init__(self, parent=None, img_list=[],
-                 fixed_size=None, fullscreen=None):
+                 fixed_size=None, fullscreen=None,
+                 class_name='tkPho'):
         # Run either as main window or as a Toplevel secondary window
         if parent:
-            self.root = tk.Toplevel(parent)
+            self.root = tk.Toplevel(parent, className=class_name)
         else:
-            self.root = tk.Tk()
+            self.root = tk.Tk(className=class_name)
 
         self.tagger = metapho.Tagger()
 
@@ -115,7 +117,6 @@ class tkPhoWindow:
         self.root.bind('<Key-f>', self.toggle_fullsize)
 
         self.root.bind('<Key-d>', self.delete_handler)
-
 
         if self.fixed_size:
             # Allow the user to resize the window if it has a
@@ -405,7 +406,14 @@ class tkPhoWindow:
                       ' '.join([ im.relpath
                                  for im in self.images_with_tag(tagno) ]))
 
-        sys.exit(0)
+        self.root.destroy()
+        # People say to exit with root.destroy(), but if you don't also call
+        # sys.exit, you get:
+        # _tkinter.TclError: can't invoke "wm" command: application has been destroyed
+        # However, sys.exit causes unittest to report an error
+        # when the window exits; os._exit avoids that.
+        # sys.exit(0)
+        os._exit(0)
 
 
 def main():

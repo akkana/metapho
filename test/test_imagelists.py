@@ -22,14 +22,21 @@ class ImgListTests(unittest.TestCase):
 
     def test_image_lists(self):
         imagelist.add_images([ MetaphoImage(f)
-                               for f in os.listdir("test/files") ])
+                               for f in [ "test/files/1.jpg",
+                                          "test/files/2.jpg",
+                                          "test/files/3.jpg",
+                                          "test/files/4.jpg",
+                                          "test/files/portrait.jpg",
+                                          "Tags",
+                                          "Tags.bak"
+                                         ] ])
 
         # print(metapho.g_image_list)
 
         # There are 4 image files plus Tags and Tags.bak
-        self.assertEqual(imagelist.num_images(), 6)
+        self.assertEqual(imagelist.num_images(), 5)
 
         # Admittedly we haven't tested this by actually trying to open them,
         # but metapho should at least know that Tags and Tags.bak
         # aren't images.
-        self.assertEqual(imagelist.num_valid_images(), 4)
+        self.assertEqual(imagelist.num_valid_images(), 5)
