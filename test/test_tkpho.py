@@ -53,7 +53,6 @@ class TestTkPhoWindow(unittest.TestCase):
 
     def assert_compare_sizes(self, actual, expected):
         """each is a (width, height) pair"""
-        print("Comparing", actual, "to", expected)
         widthdiff = abs(actual[0] - expected[0])
         self.assertLess(widthdiff, 10)
         heightdiff = abs(actual[1] - expected[1])
@@ -99,7 +98,7 @@ class TestTkPhoWindow(unittest.TestCase):
 
         # Check title
         title = get_window_title(window_id)
-        print("Actual title: '%s'" % title)
+        # print("Actual title: '%s'" % title)
         self.assertEqual(title, "Pho: test/files/portrait.jpg (480 x 680)")
 
         # # Send right arrow to rotate

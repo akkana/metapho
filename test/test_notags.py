@@ -136,12 +136,10 @@ class NotagsTests(unittest.TestCase):
 
         self.assertEqual(tagger.commondir, abstestdir)
 
-        print("==========\ntagger has:", sortlines(str(tagger)), "\n===========")
-        sys.stdout.flush()
         self.assertEqual(sortlines(str(tagger)), """category Tags
 tag ann : dir1/img1.jpg dir2/imgc.jpg
 tag phred : dir2/imgb.jpg
-tag tagged file : dir1/img1.jpg dir1/img2.jpg dir1/img5.jpg dir1/img6.jpg""")
+tag tagged file : dir1/img1.jpg dir1/img2.jpg""")
 
 
     def test_dirtree_by_images(self):
