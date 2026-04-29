@@ -35,8 +35,10 @@ But after trying to port it to GTK4, I decided it would be easier
 to rewrite it in Tk, plus it would be easier for people on non-Linux OSes.
 So metapho 2.0 will be Tk based, without a GTK dependency.
 
-Currently (January 2025) the default metapho is still GTK3-based,
-but it also installs a new Tk-based version. So you'll get:
+I've been using tkpho and tkmetapho since January 2025 and it's working well.
+I plan to make Tk the default soon (written in April 2026).
+
+Currently what metapho installs is:
 
 - metapho: GTK3-based metapho tagging app
 - gmetapho: GTK3-based metapho tagging app
@@ -47,16 +49,6 @@ When 2.0 is released,  metapho and pho will become the TkInter versions,
 though gmetapho will still work if you have GTK3 libraries installed.
 
 On Debian, you'll need packages: python3-tk python3-pil python3-pil.imagetk
-
-### Note About Tag Categories
-
-The GTK version of metapho includes ways of defining tag categories:
-for example, you could have a category called People with tags like
-Jane, Sally and Nancy, and you could view only the People tags in the
-metapho window. The Tk version doesn't have this (I found I never used
-categories) but it could. If you're a user of metapho and you use
-categories, please let me know or file a GitHub issue! Otherwise
-it will be a low priority and I won't hold up the 2.0 release for it.
 
 ### Command-line Scripts
 
@@ -87,5 +79,7 @@ To install from the source directory, use `pip install .`
 The [Metapho Documentation](https://metapho.readthedocs.io/en/latest/)
 had more information on both the app and the API of the classes
 inside it. Sadly, this is now out of date because the tools I used
-to generate the documentation no longer work, and I haven't had time
-or energy to port the documentation to a different system.
+to generate the documentation no longer work, and porting the
+documentation to a different system hasn't been a high enough priority
+so far. However, the existing documentation should still tell you most
+of what you need to know about using the metapho app.
