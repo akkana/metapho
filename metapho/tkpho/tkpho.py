@@ -317,6 +317,11 @@ class tkPhoWindow:
             # self.root.bind("<B2-Motion>", None)
             self.root.unbind("<B2-Motion>")
 
+            # After coming out of fullscreen, the window gets fixed to
+            # whatever size the current image happens to be, and will
+            # no longer adjust to subsequent images. This seems to fix that:
+            self.root.geometry('')
+
         # viewer.set_size() should redraw as necessary
         self.update_infobox()
 

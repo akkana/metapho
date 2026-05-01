@@ -68,13 +68,20 @@ class TestTkPhoWindow(unittest.TestCase):
             pwin = tkpho.tkPhoWindow(
                 parent=None,
                 class_name=special_class_name,
-                img_list=["test/files/1.jpg", "test/files/portrait.jpg"]
+                img_list=[ "test/files/1.jpg",
+                           "test/files/portrait.jpg",
+                           "test/files/bigimg.png" ]
             )
             pwin.run()
             os._exit(0)
 
         # Parent process
         self.child_pid = pid
+
+        original_focus = subprocess.run(
+            ["xdotool", "getwindowfocus"],
+            capture_output=True, text=True
+        ).stdout.strip()
 
         time.sleep(1)
         window_id = int(subprocess.run(
@@ -107,15 +114,43 @@ class TestTkPhoWindow(unittest.TestCase):
         width, height = get_window_size(window_id)
         self.assert_compare_sizes((width, height), (640, 480))
 
+        # Try fullscreen
+        send_key(window_id, "p")
+        time.sleep(1)
+        width, height = get_window_size(window_id)
+        print("Fullscreen window size:", width, height)
+        # Lazy, not loading Tk libraries to get the actual screen size
+        self.assertGreater(width, 1023)
+        self.assertGreater(height, 767)
+
+        # Out of fullscreen
+        send_key(window_id, "p")
+        time.sleep(1)
+        print("Out of fullscreen")
+        subprocess.run(["xdotool", "windowfocus", "--sync", str(window_id)])
+        width, height = get_window_size(window_id)
+        self.assert_compare_sizes((width, height), (640, 480))
+
+        # Go to the big image
+        print("Going to the big image")
+        send_key(window_id, "space")
+        time.sleep(3)
+
+        width, height = get_window_size(window_id)
+        print("Big image window size:", width, height)
+        self.assert_compare_sizes((width, height), (1530, 1020))
+
+        send_key(window_id, "f")
+        time.sleep(1)
+        width, height = get_window_size(window_id)
+        print("Fullsize window size:", width, height)
+        self.assert_compare_sizes((width, height), (3000, 2000))
+
         print("Quitting ...")
         # For some reason, send_key(window_id, "q") results in an endless
         # stream of 'q's to the terminal after the test exits,
         # and sending keyup after key, or sending type instead of key,
         # doesn't help.
-        original_focus = subprocess.run(
-            ["xdotool", "getwindowfocus"],
-            capture_output=True, text=True
-        ).stdout.strip()
         subprocess.run(["xdotool", "windowfocus", "--sync", str(window_id)])
         subprocess.run(["xdotool", "key", "--clearmodifiers", "q"])
         # restore focus

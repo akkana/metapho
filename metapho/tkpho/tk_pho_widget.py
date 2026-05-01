@@ -121,8 +121,12 @@ class tkPhoWidget (tk.Label):
         # This can be called many times, so don't do anything
         # if nothing changed since last time.
         elif newsize == self.widget_size:
+            if tk_pho_image.VERBOSE:
+                print("Widget is already at size", self.widget_size)
             return
 
+        if tk_pho_image.VERBOSE:
+            print("Updating widget size to", newsize)
         self.widget_size = newsize
 
         self.show_image()
@@ -169,9 +173,14 @@ class tkPhoWidget (tk.Label):
         # self.image = tkimg
         self.photo = tkimg
 
+        if tk_pho_image.VERBOSE:
+            print("tk_pho_widget.show_image: display image %dx%d, widget %dx%d"
+                  % (tkimg.width(), tkimg.height(),
+                     self.winfo_reqwidth(), self.winfo_reqheight()))
+
         # At this point,
         # self.winfo_reqwidth(), self.winfo_reqheight()
-        # should be the size of the image,
+        # should be the size of the new image,
         # though in practice it adds 2 pixels to both height and width.
         # self.winfo_width(), self.winfo_height()
         # is the size of the previous image, i.e. the current widget size,
