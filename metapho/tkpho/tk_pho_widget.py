@@ -161,6 +161,9 @@ class tkPhoWidget (tk.Label):
 
         tkimg = ImageTk.PhotoImage(pil_img)
         if not self.fullscreen and not self.fixed_size:
+            if tk_pho_image.VERBOSE:
+                print("variable sized window: setting size to",
+                      tkimg.width(), tkimg.height())
             self.set_size((tkimg.width(), tkimg.height()))
         self.config(image=tkimg)
         # self.image = tkimg
@@ -216,7 +219,9 @@ class tkPhoWidget (tk.Label):
                target is width, height.
             """
             scaled_img_size = [x * self.scale_factor
-                               for x in cur_img.orig_img.size]
+                               for x in img.orig_img.size]
+            if img.rot % 180 != 0:
+                scaled_img_size = [ scaled_img_size[1], scaled_img_size[0] ]
             if tk_pho_image.VERBOSE:
                 print("scaled_img_size:", scaled_img_size, "for target", target)
             if (scaled_img_size[0] < target[0]
@@ -272,7 +277,7 @@ class tkPhoWidget (tk.Label):
                 print("TkPhoWidget.resize_to_fit, fullscreen, targeting",
                       target_size)
 
-        elif not self.fixed_size:                  # resizable
+        elif not self.fixed_size:                  # variable-size window
             target_size = (self.root.winfo_screenwidth()
                            * FRAC_OF_SCREEN * self.scale_factor,
                            self.root.winfo_screenheight()

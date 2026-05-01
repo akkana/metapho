@@ -99,15 +99,14 @@ class TestTkPhoWindow(unittest.TestCase):
         # Check title
         title = get_window_title(window_id)
         # print("Actual title: '%s'" % title)
-        self.assertEqual(title, "Pho: test/files/portrait.jpg (480 x 680)")
+        self.assertEqual(title, "Pho: test/files/portrait.jpg (480 x 640)")
 
-        # # Send right arrow to rotate
-        # send_key(window_id, "Right")
-        # time.sleep(1)
-        # width, height = get_window_size(window_id)
-        # self.assert_compare_sizes((width, height), (640, 480))
+        # Send right arrow to rotate
+        send_key(window_id, "Right")
+        time.sleep(1)
+        width, height = get_window_size(window_id)
+        self.assert_compare_sizes((width, height), (640, 480))
 
-        time.sleep(2)
         print("Quitting ...")
         # For some reason, send_key(window_id, "q") results in an endless
         # stream of 'q's to the terminal after the test exits,
@@ -121,6 +120,7 @@ class TestTkPhoWindow(unittest.TestCase):
         subprocess.run(["xdotool", "key", "--clearmodifiers", "q"])
         # restore focus
         subprocess.run(["xdotool", "windowfocus", "--sync", str(original_focus)])
+        time.sleep(1)
 
 if __name__ == "__main__":
     unittest.main()
