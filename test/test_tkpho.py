@@ -30,14 +30,16 @@ def get_window_title(window_id):
     ).stdout.strip()
     return result
 
-def send_key(window_id, keyname):
-    """Send a key event to the window.
+def send_key(window_id, keyname, delay=1):
+    """Send a key event to the window, with a short delay afterward.
        keyname is something like "space" or "a".
        Key names:
        https://gitlab.com/nokun/gestures/-/wikis/xdotool-list-of-key-codes
     """
     subprocess.run(["xdotool", "key", "--window", str(window_id), keyname])
+    time.sleep(1)
     # subprocess.run(["xdotool", "keyup", "--window", str(window_id), keyname])
+    # time.sleep(1)
 
 
 
@@ -97,7 +99,6 @@ class TestTkPhoWindow(unittest.TestCase):
 
         # Send space key to move to next image
         send_key(window_id, "space")
-        time.sleep(1)
 
         width, height = get_window_size(window_id)
         self.assert_compare_sizes((width, height), (480, 640))
@@ -108,25 +109,31 @@ class TestTkPhoWindow(unittest.TestCase):
 
         # Send right arrow to rotate
         send_key(window_id, "Right")
-        time.sleep(1)
         width, height = get_window_size(window_id)
         self.assert_compare_sizes((width, height), (640, 480))
 
         # half size
         send_key(window_id, "minus")
-        time.sleep(1)
         width, height = get_window_size(window_id)
         self.assert_compare_sizes((width, height), (320, 240))
 
         # normal size
         send_key(window_id, "plus")
-        time.sleep(1)
+        width, height = get_window_size(window_id)
+        self.assert_compare_sizes((width, height), (640, 480))
+
+        # double size
+        send_key(window_id, "plus")
+        width, height = get_window_size(window_id)
+        self.assert_compare_sizes((width, height), (1280, 960))
+
+        # normal size
+        send_key(window_id, "minus")
         width, height = get_window_size(window_id)
         self.assert_compare_sizes((width, height), (640, 480))
 
         # Try fullscreen
         send_key(window_id, "p")
-        time.sleep(1)
         width, height = get_window_size(window_id)
         # Lazy, not loading Tk libraries to get the actual screen size
         self.assertGreater(width, 1023)
@@ -134,7 +141,6 @@ class TestTkPhoWindow(unittest.TestCase):
 
         # Out of fullscreen
         send_key(window_id, "p")
-        time.sleep(1)
         # When coming out of fullscreen, focus is often lost,
         # and despite specifying the windowid to xdotool,
         # that actually doesn't work and it sends the character
@@ -143,28 +149,23 @@ class TestTkPhoWindow(unittest.TestCase):
         width, height = get_window_size(window_id)
         self.assert_compare_sizes((width, height), (640, 480))
 
-        # Go to the big image
-        send_key(window_id, "space")
-        time.sleep(3)
+        # Go to the big image. Use a longer delay because loading/scaling
+        # may take a little longer.
+        send_key(window_id, "space", delay=2)
         width, height = get_window_size(window_id)
         self.assert_compare_sizes((width, height), (1530, 1020))
 
         send_key(window_id, "f")
-        time.sleep(1)
         width, height = get_window_size(window_id)
         self.assert_compare_sizes((width, height), (3000, 2000))
 
         # Go back. The previous image is still rotated and we're
         # still in fullsize mode, but it's small so that's okay.
         send_key(window_id, "BackSpace")
-        time.sleep(1)
         title = get_window_title(window_id)
         self.assertEqual(title, "Pho: test/files/portrait.jpg (480 x 640)")
         width, height = get_window_size(window_id)
         self.assert_compare_sizes((width, height), (640, 480))
-
-        send_key(window_id, "f")
-        time.sleep(1)
 
         # Quit.
         # For some reason, send_key(window_id, "q") results in an endless
