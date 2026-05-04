@@ -93,7 +93,6 @@ class TestTkPhoWindow(unittest.TestCase):
         # Check window size.
         # It will be a little off due to windowmanager decorations.
         width, height = get_window_size(window_id)
-        # print("Actual size:", width, "x", height)
         self.assert_compare_sizes((width, height), (640, 480))
 
         # Send space key to move to next image
@@ -105,7 +104,6 @@ class TestTkPhoWindow(unittest.TestCase):
 
         # Check title
         title = get_window_title(window_id)
-        # print("Actual title: '%s'" % title)
         self.assertEqual(title, "Pho: test/files/portrait.jpg (480 x 640)")
 
         # Send right arrow to rotate
@@ -114,11 +112,22 @@ class TestTkPhoWindow(unittest.TestCase):
         width, height = get_window_size(window_id)
         self.assert_compare_sizes((width, height), (640, 480))
 
+        # half size
+        send_key(window_id, "minus")
+        time.sleep(1)
+        width, height = get_window_size(window_id)
+        self.assert_compare_sizes((width, height), (320, 240))
+
+        # normal size
+        send_key(window_id, "plus")
+        time.sleep(1)
+        width, height = get_window_size(window_id)
+        self.assert_compare_sizes((width, height), (640, 480))
+
         # Try fullscreen
         send_key(window_id, "p")
         time.sleep(1)
         width, height = get_window_size(window_id)
-        print("Fullscreen window size:", width, height)
         # Lazy, not loading Tk libraries to get the actual screen size
         self.assertGreater(width, 1023)
         self.assertGreater(height, 767)
@@ -126,36 +135,48 @@ class TestTkPhoWindow(unittest.TestCase):
         # Out of fullscreen
         send_key(window_id, "p")
         time.sleep(1)
-        print("Out of fullscreen")
+        # When coming out of fullscreen, focus is often lost,
+        # and despite specifying the windowid to xdotool,
+        # that actually doesn't work and it sends the character
+        # to the currently focused window instead. So put focus back.
         subprocess.run(["xdotool", "windowfocus", "--sync", str(window_id)])
         width, height = get_window_size(window_id)
         self.assert_compare_sizes((width, height), (640, 480))
 
         # Go to the big image
-        print("Going to the big image")
         send_key(window_id, "space")
         time.sleep(3)
-
         width, height = get_window_size(window_id)
-        print("Big image window size:", width, height)
         self.assert_compare_sizes((width, height), (1530, 1020))
 
         send_key(window_id, "f")
         time.sleep(1)
         width, height = get_window_size(window_id)
-        print("Fullsize window size:", width, height)
         self.assert_compare_sizes((width, height), (3000, 2000))
 
-        print("Quitting ...")
+        # Go back. The previous image is still rotated and we're
+        # still in fullsize mode, but it's small so that's okay.
+        send_key(window_id, "BackSpace")
+        time.sleep(1)
+        title = get_window_title(window_id)
+        self.assertEqual(title, "Pho: test/files/portrait.jpg (480 x 640)")
+        width, height = get_window_size(window_id)
+        self.assert_compare_sizes((width, height), (640, 480))
+
+        send_key(window_id, "f")
+        time.sleep(1)
+
+        # Quit.
         # For some reason, send_key(window_id, "q") results in an endless
         # stream of 'q's to the terminal after the test exits,
         # and sending keyup after key, or sending type instead of key,
-        # doesn't help.
+        # doesn't help. But this does:
         subprocess.run(["xdotool", "windowfocus", "--sync", str(window_id)])
         subprocess.run(["xdotool", "key", "--clearmodifiers", "q"])
         # restore focus
         subprocess.run(["xdotool", "windowfocus", "--sync", str(original_focus)])
         time.sleep(1)
+
 
 if __name__ == "__main__":
     unittest.main()

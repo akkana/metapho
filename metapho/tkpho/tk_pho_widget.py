@@ -222,15 +222,18 @@ class tkPhoWidget (tk.Label):
             if cur_img.display_img:
                 print("  display img is", cur_img.display_img.size)
 
+        def adjust_rot(imgsize):
+            if cur_img.rot % 180 != 0:
+                return [ imgsize[1], imgsize[0] ]
+            return imgsize
+
         def min_scaled_img_or_target(img, target):
             """If the image scaled by scale_factor is smaller than the
                window target size, don't scale it up any more than that.
                target is width, height.
             """
-            scaled_img_size = [x * self.scale_factor
-                               for x in img.orig_img.size]
-            if img.rot % 180 != 0:
-                scaled_img_size = [ scaled_img_size[1], scaled_img_size[0] ]
+            scaled_img_size = adjust_rot([x * self.scale_factor
+                                          for x in img.orig_img.size])
             if tk_pho_image.VERBOSE:
                 print("scaled_img_size:", scaled_img_size, "for target", target)
             if (scaled_img_size[0] < target[0]
@@ -275,7 +278,7 @@ class tkPhoWidget (tk.Label):
             return cur_img.display_img
 
         elif self.fullsize:
-            target_size = cur_img.orig_img.size
+            target_size = adjust_rot(cur_img.orig_img.size)
             if tk_pho_image.VERBOSE:
                 print("TkPhoWidget.resize_to_fit in fullsize mode", target_size)
 
