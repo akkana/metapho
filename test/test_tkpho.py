@@ -12,36 +12,6 @@ sys.path.insert(0, '..')
 
 from metapho.tkpho import tkpho
 
-def get_window_size(window_id):
-    result = subprocess.run(
-        ["xdotool", "getwindowgeometry", str(window_id)],
-        capture_output=True, text=True
-    ).stdout
-    geometry_line = [line for line in result.splitlines()
-                     if line.strip().startswith("Geometry:")][0]
-    width, height = geometry_line.split(":")[1].strip().split("x")
-    width, height = int(width), int(height)
-    return width, height
-
-def get_window_title(window_id):
-    result = subprocess.run(
-        ["xdotool", "getwindowname", str(window_id)],
-        capture_output=True, text=True
-    ).stdout.strip()
-    return result
-
-def send_key(window_id, keyname, delay=1):
-    """Send a key event to the window, with a short delay afterward.
-       keyname is something like "space" or "a".
-       Key names:
-       https://gitlab.com/nokun/gestures/-/wikis/xdotool-list-of-key-codes
-    """
-    subprocess.run(["xdotool", "key", "--window", str(window_id), keyname])
-    time.sleep(1)
-    # subprocess.run(["xdotool", "keyup", "--window", str(window_id), keyname])
-    # time.sleep(1)
-
-
 
 class TestTkPhoWindow(unittest.TestCase):
     def setUp(self):
@@ -53,6 +23,35 @@ class TestTkPhoWindow(unittest.TestCase):
         #     os.waitpid(self.child_pid, 0)
         pass
 
+    def get_window_size(self):
+        result = subprocess.run(
+            ["xdotool", "getwindowgeometry", str(self.window_id)],
+            capture_output=True, text=True
+        ).stdout
+        geometry_line = [line for line in result.splitlines()
+                         if line.strip().startswith("Geometry:")][0]
+        width, height = geometry_line.split(":")[1].strip().split("x")
+        width, height = int(width), int(height)
+        return width, height
+
+    def get_window_title(self):
+        result = subprocess.run(
+            ["xdotool", "getwindowname", str(self.window_id)],
+            capture_output=True, text=True
+        ).stdout.strip()
+        return result
+
+    def send_key(self, keyname, delay=1):
+        """Send a key event to the window, with a short delay afterward.
+           keyname is something like "space" or "a".
+           Key names:
+           https://gitlab.com/nokun/gestures/-/wikis/xdotool-list-of-key-codes
+        """
+        subprocess.run(["xdotool", "key", "--window", str(self.window_id), keyname])
+        time.sleep(1)
+        # subprocess.run(["xdotool", "keyup", "--window", str(self.window_id), keyname])
+        # time.sleep(1)
+
     def assert_compare_sizes(self, actual, expected):
         """each is a (width, height) pair"""
         widthdiff = abs(actual[0] - expected[0])
@@ -61,7 +60,7 @@ class TestTkPhoWindow(unittest.TestCase):
         # titlebars take up a surprising amount of s
         self.assertLess(heightdiff, 60)
 
-    def test_window(self):
+    def create_window(self, img_list, args=[]):
         special_class_name = 'TkPhoTest'
 
         pid = os.fork()
@@ -70,112 +69,115 @@ class TestTkPhoWindow(unittest.TestCase):
             pwin = tkpho.tkPhoWindow(
                 parent=None,
                 class_name=special_class_name,
-                img_list=[ "test/files/1.jpg",
-                           "test/files/portrait.jpg",
-                           "test/files/bigimg.png" ]
-            )
+                img_list=img_list)
             pwin.run()
             os._exit(0)
 
         # Parent process
         self.child_pid = pid
 
-        original_focus = subprocess.run(
+        self.original_focus = subprocess.run(
             ["xdotool", "getwindowfocus"],
             capture_output=True, text=True
         ).stdout.strip()
 
         time.sleep(1)
-        window_id = int(subprocess.run(
+        self.window_id = int(subprocess.run(
             ["xdotool", "search", "--class", special_class_name],
             capture_output=True, text=True
         ).stdout)
-        # print("window_id is 0x%x = %d" % (window_id, window_id))
+        # print("window_id is 0x%x = %d" % (self.window_id, self.window_id))
+
+    def test_window(self):
+        self.create_window([ "test/files/1.jpg",
+                             "test/files/portrait.jpg",
+                             "test/files/bigimg.png" ])
 
         # Check window size.
         # It will be a little off due to windowmanager decorations.
-        width, height = get_window_size(window_id)
+        width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (640, 480))
 
         # Send space key to move to next image
-        send_key(window_id, "space")
+        self.send_key("space")
 
-        width, height = get_window_size(window_id)
+        width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (480, 640))
 
         # Check title
-        title = get_window_title(window_id)
+        title = self.get_window_title()
         self.assertEqual(title, "Pho: test/files/portrait.jpg (480 x 640)")
 
         # Send right arrow to rotate
-        send_key(window_id, "Right")
-        width, height = get_window_size(window_id)
+        self.send_key("Right")
+        width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (640, 480))
 
         # half size
-        send_key(window_id, "minus")
-        width, height = get_window_size(window_id)
+        self.send_key("minus")
+        width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (320, 240))
 
         # normal size
-        send_key(window_id, "plus")
-        width, height = get_window_size(window_id)
+        self.send_key("plus")
+        width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (640, 480))
 
         # double size
-        send_key(window_id, "plus")
-        width, height = get_window_size(window_id)
+        self.send_key("plus")
+        width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (1280, 960))
 
         # normal size
-        send_key(window_id, "minus")
-        width, height = get_window_size(window_id)
+        self.send_key("minus")
+        width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (640, 480))
 
         # Try fullscreen
-        send_key(window_id, "p")
-        width, height = get_window_size(window_id)
+        self.send_key("p")
+        width, height = self.get_window_size()
         # Lazy, not loading Tk libraries to get the actual screen size
         self.assertGreater(width, 1023)
         self.assertGreater(height, 767)
 
         # Out of fullscreen
-        send_key(window_id, "p")
+        self.send_key("p")
         # When coming out of fullscreen, focus is often lost,
         # and despite specifying the windowid to xdotool,
         # that actually doesn't work and it sends the character
         # to the currently focused window instead. So put focus back.
-        subprocess.run(["xdotool", "windowfocus", "--sync", str(window_id)])
-        width, height = get_window_size(window_id)
+        subprocess.run(["xdotool", "windowfocus", "--sync", str(self.window_id)])
+        width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (640, 480))
 
         # Go to the big image. Use a longer delay because loading/scaling
         # may take a little longer.
-        send_key(window_id, "space", delay=2)
-        width, height = get_window_size(window_id)
+        self.send_key("space", delay=2)
+        width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (1530, 1020))
 
-        send_key(window_id, "f")
-        width, height = get_window_size(window_id)
+        self.send_key("f")
+        width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (3000, 2000))
 
         # Go back. The previous image is still rotated and we're
         # still in fullsize mode, but it's small so that's okay.
-        send_key(window_id, "BackSpace")
-        title = get_window_title(window_id)
+        self.send_key("BackSpace")
+        title = self.get_window_title()
         self.assertEqual(title, "Pho: test/files/portrait.jpg (480 x 640)")
-        width, height = get_window_size(window_id)
+        width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (640, 480))
 
         # Quit.
-        # For some reason, send_key(window_id, "q") results in an endless
+        # For some reason, self.send_key("q") results in an endless
         # stream of 'q's to the terminal after the test exits,
         # and sending keyup after key, or sending type instead of key,
         # doesn't help. But this does:
-        subprocess.run(["xdotool", "windowfocus", "--sync", str(window_id)])
+        subprocess.run(["xdotool", "windowfocus", "--sync", str(self.window_id)])
         subprocess.run(["xdotool", "key", "--clearmodifiers", "q"])
         # restore focus
-        subprocess.run(["xdotool", "windowfocus", "--sync", str(original_focus)])
+        subprocess.run(["xdotool", "windowfocus", "--sync",
+                        str(self.original_focus)])
         time.sleep(1)
 
 
