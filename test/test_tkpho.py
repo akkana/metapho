@@ -7,6 +7,9 @@ import time
 import subprocess
 import unittest
 
+from Xlib import display, X
+from PIL import Image
+
 import sys, os
 sys.path.insert(0, '..')
 
@@ -180,6 +183,48 @@ class TestTkPhoWindow(unittest.TestCase):
                         str(self.original_focus)])
         time.sleep(1)
 
+    def take_screenshot(self):
+        """
+        Capture the contents of the current X11 window by its window ID.
+
+        Returns:
+            A PIL Image of the window's current contents.
+        """
+        # Tip: if we ever need to debug a failing test and want to see where
+        # the mismatch is,
+        # img.crop((x, y, x+width, y+height)).save("debug.png")
+        # is a quick way to save just the region being checked,
+        # which makes it easy to see what the window actually rendered.
+
+        d = display.Display()
+        window = d.create_resource_object("window", self.window_id)
+
+        # Get window geometry (size and position relative to its parent)
+        geom = window.get_geometry()
+        width, height = geom.width, geom.height
+
+        # Capture the window contents via XGetImage
+        raw = window.get_image(0, 0, width, height, X.ZPixmap, 0xFFFFFFFF)
+
+        # XGetImage returns 32-bit BGRX data; convert to RGBA then RGB
+        image = Image.frombytes(
+            "RGBA",
+            (width, height),
+            raw.data,
+            "raw",
+            "BGRA",
+        )
+        return image.convert("RGB")
+
+    @staticmethod
+    def region_is_color(img, x, y, width, height, color, tolerance=0):
+        for py in range(y, y + height):
+            for px in range(x, x + width):
+                if any(abs(a - b) > tolerance
+                       for a, b in zip(img.getpixel((px, py)), color)):
+                    return False
+        return True
+
     def test_fixed_size_window(self):
         self.create_window([ "test/files/1.jpg",
                              "test/files/bigimg.png" ],
@@ -187,7 +232,6 @@ class TestTkPhoWindow(unittest.TestCase):
 
         # Check window size.
         width, height = self.get_window_size()
-        print("window size is", width, height)
         self.assert_compare_sizes((width, height), (1024, 768))
 
         # half size
@@ -209,6 +253,18 @@ class TestTkPhoWindow(unittest.TestCase):
         self.send_key("minus")
         width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (1024, 768))
+
+        # Take a screenshot and check some of the contents
+        screenshot = self.take_screenshot()
+        print("Made a screenshot, got an image that's", screenshot.size)
+        # screenshot.show()
+        # Thick black band on the left edge, where the image is
+        # smaller than the window
+        self.assertTrue(self.region_is_color(screenshot, 0, 0, 192, 480,
+                                              (0, 0, 0)))
+        # The white left edge of the image, left of where the numeral 1 is
+        self.assertTrue(self.region_is_color(screenshot, 194, 145, 200, 478,
+                                              (255, 255, 255)))
 
         # Quit.
         subprocess.run(["xdotool", "windowfocus", "--sync", str(self.window_id)])
