@@ -60,7 +60,7 @@ class TestTkPhoWindow(unittest.TestCase):
         # titlebars take up a surprising amount of s
         self.assertLess(heightdiff, 60)
 
-    def create_window(self, img_list, args=[]):
+    def create_window(self, img_list, fixed_size=None):
         special_class_name = 'TkPhoTest'
 
         pid = os.fork()
@@ -69,7 +69,7 @@ class TestTkPhoWindow(unittest.TestCase):
             pwin = tkpho.tkPhoWindow(
                 parent=None,
                 class_name=special_class_name,
-                img_list=img_list)
+                img_list=img_list, fixed_size=fixed_size)
             pwin.run()
             os._exit(0)
 
@@ -88,7 +88,7 @@ class TestTkPhoWindow(unittest.TestCase):
         ).stdout)
         # print("window_id is 0x%x = %d" % (self.window_id, self.window_id))
 
-    def test_window(self):
+    def test_basic_window(self):
         self.create_window([ "test/files/1.jpg",
                              "test/files/portrait.jpg",
                              "test/files/bigimg.png" ])
@@ -173,6 +173,44 @@ class TestTkPhoWindow(unittest.TestCase):
         # stream of 'q's to the terminal after the test exits,
         # and sending keyup after key, or sending type instead of key,
         # doesn't help. But this does:
+        subprocess.run(["xdotool", "windowfocus", "--sync", str(self.window_id)])
+        subprocess.run(["xdotool", "key", "--clearmodifiers", "q"])
+        # restore focus
+        subprocess.run(["xdotool", "windowfocus", "--sync",
+                        str(self.original_focus)])
+        time.sleep(1)
+
+    def test_fixed_size_window(self):
+        self.create_window([ "test/files/1.jpg",
+                             "test/files/bigimg.png" ],
+                           fixed_size=[1024, 768])
+
+        # Check window size.
+        width, height = self.get_window_size()
+        print("window size is", width, height)
+        self.assert_compare_sizes((width, height), (1024, 768))
+
+        # half size
+        self.send_key("minus")
+        width, height = self.get_window_size()
+        self.assert_compare_sizes((width, height), (1024, 768))
+
+        # normal size
+        self.send_key("plus")
+        width, height = self.get_window_size()
+        self.assert_compare_sizes((width, height), (1024, 768))
+
+        # double size
+        self.send_key("plus")
+        width, height = self.get_window_size()
+        self.assert_compare_sizes((width, height), (1024, 768))
+
+        # normal size
+        self.send_key("minus")
+        width, height = self.get_window_size()
+        self.assert_compare_sizes((width, height), (1024, 768))
+
+        # Quit.
         subprocess.run(["xdotool", "windowfocus", "--sync", str(self.window_id)])
         subprocess.run(["xdotool", "key", "--clearmodifiers", "q"])
         # restore focus

@@ -218,13 +218,14 @@ class tkPhoImage (MetaphoImage):
         else:
             ow, oh = self.orig_img.size
 
-        # Is the original image the same size as the bbox?
-        if ow == bbox[0] and oh == bbox[1]:
+        # Is the original image the same size as the bbox or smaller?
+        if ow <= bbox[0] and oh <= bbox[1]:
             if VERBOSE:
-                print("Original image %dx%d same size as bounding box %dx%d"
+                print("Original image %dx%d fits in bounding box %dx%d"
                       % (ow, oh, bbox[0], bbox[1]))
             # It would fit. Is there already a display image that size?
-            if self.display_img and self.display_img.size == (ow, oh):
+            if self.display_img and self.display_img.size[0] <= ow \
+               and self.display_img.size[1] <= oh:
                 if VERBOSE:
                     print("display image is already small enough")
                 return self.display_img
@@ -238,8 +239,8 @@ class tkPhoImage (MetaphoImage):
         # display_img is bigger than the bbox.
         # Need to scale down from orig_img, which may first involve rotating it
         if VERBOSE:
-            print("Original image of %dx%d is bigger than the bounding box"
-                  % (ow, oh))
+            print("Original image of %dx%d is bigger than the bounding box %dx%d"
+                  % (ow, oh, bbox[0], bbox[1]))
 
         if self.rot % 180:
             self.display_img = self.orig_img.rotate(self.rot, expand=True)

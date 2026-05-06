@@ -299,11 +299,18 @@ class tkPhoWidget (tk.Label):
                 print("Resizable widget; target size =", target_size)
 
         else:                                      # fixed-size window
+            img_size = [ x * self.scale_factor for x in cur_img.orig_img.size ]
+            target_size = [ x * self.scale_factor for x in self.widget_size ]
+            # Nifty trick for comparing two arrays:
+            if all(x < y for x, y in zip(img_size, target_size)):
+                target_size = img_size
+                # XXX This doesn't work for scaling up a small image to be
+                # larger than the fixed-size window, but that's such a rare
+                # edge case I'm not sure it matters.
+
             if tk_pho_image.VERBOSE:
                 print("TkPhoWidget.resize_to_fit, fixed widget size:",
-                      self.widget_size)
-
-            target_size = [ x * self.scale_factor for x in self.widget_size ]
+                      self.widget_size, "scaling to", target_size)
 
         return cur_img.resize_to_fit(target_size)
 
