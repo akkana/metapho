@@ -105,10 +105,22 @@ class TestTkPhoWindow(unittest.TestCase):
 
     @staticmethod
     def region_is_color(img, x, y, width, height, color, tolerance=0):
+        def print_color_summary():
+            colorfreq = {}
+            for py in range(y, y + height):
+                for px in range(x, x + width):
+                    c = img.getpixel((px, py))
+                    if c not in colorfreq:
+                        colorfreq[c] = 1
+                    else:
+                        colorfreq[c] += 1
+            print(colorfreq)
+
         for py in range(y, y + height):
             for px in range(x, x + width):
                 if any(abs(a - b) > tolerance
                        for a, b in zip(img.getpixel((px, py)), color)):
+                    print_color_summary()
                     return False
         return True
 
@@ -222,27 +234,50 @@ class TestTkPhoWindow(unittest.TestCase):
         width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (640, 480))
 
-        # Move to the colorsquares image
+        # Move to the colorsquares image, still in fullsize
         self.send_key("End")
         title = self.get_window_title()
         self.assertEqual(title, "Pho: test/files/colorsquares.png (400 x 300)")
         width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (400, 300))
 
+        # Take a screenshot and check some of the contents
+        screenshot = self.take_screenshot()
+        if screenshot.size == (402, 302):
+            screenshot = screenshot.crop((1, 1, 401, 301))
+        self.assertEqual(screenshot.size, (400, 300))
+        self.assertTrue(self.region_is_color(screenshot, 100, 100, 100, 100,
+                                              (255, 0, 0)))
+
         # Make sure double size doesn't work in fullsize mode
         self.send_key("plus")
         width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (400, 300))
+        screenshot = self.take_screenshot()
+        if screenshot.size == (402, 302):
+            screenshot = screenshot.crop((1, 1, 401, 301))
+        self.assertTrue(self.region_is_color(screenshot, 100, 100, 100, 100,
+                                              (255, 0, 0)))
 
         # Get out of fullsize. The previous plus should have had no effect
         self.send_key("f")
         width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (400, 300))
+        screenshot = self.take_screenshot()
+        if screenshot.size == (402, 302):
+            screenshot = screenshot.crop((1, 1, 401, 301))
+        self.assertTrue(self.region_is_color(screenshot, 100, 100, 100, 100,
+                                              (255, 0, 0)))
 
         # double size
         self.send_key("plus")
         width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (800, 600))
+        screenshot = self.take_screenshot()
+        if screenshot.size == (802, 602):
+            screenshot = screenshot.crop((1, 1, 801, 601))
+        self.assertTrue(self.region_is_color(screenshot, 200, 200, 200, 200,
+                                              (255, 0, 0)))
 
         # Quit.
         # For some reason, self.send_key("q") results in an endless
