@@ -50,18 +50,67 @@ class TestTkPhoWindow(unittest.TestCase):
            Key names:
            https://gitlab.com/nokun/gestures/-/wikis/xdotool-list-of-key-codes
         """
-        subprocess.run(["xdotool", "key", "--window", str(self.window_id), keyname])
+        subprocess.run(["xdotool", "key", "--window",
+                        str(self.window_id), keyname])
         time.sleep(1)
-        # subprocess.run(["xdotool", "keyup", "--window", str(self.window_id), keyname])
+        # subprocess.run(["xdotool", "keyup", "--window",
+        #                 str(self.window_id), keyname])
         # time.sleep(1)
 
     def assert_compare_sizes(self, actual, expected):
-        """each is a (width, height) pair"""
-        widthdiff = abs(actual[0] - expected[0])
-        self.assertLess(widthdiff, 10)
-        heightdiff = abs(actual[1] - expected[1])
-        # titlebars take up a surprising amount of s
-        self.assertLess(heightdiff, 60)
+        """each is a (width, height) pair.
+        """
+        # width diff
+        if (abs(actual[0] - expected[0]) < 10 and
+            # height difference: titlebars take up a surprising amount of space
+            abs(actual[1] - expected[1]) < 60):
+            return
+        # I haven't found a way to write a unittest assert and control
+        # its output, so this is a hack.
+        self.assertFalse("Actual size %d x %d too different from expected %d x %d"
+                         % (actual + expected))
+
+    def take_screenshot(self):
+        """
+        Capture the contents of the current X11 window by its window ID.
+
+        Returns:
+            A PIL Image of the window's current contents.
+        """
+        # Tip: if we ever need to debug a failing test and want to see where
+        # the mismatch is,
+        # img.crop((x, y, x+width, y+height)).save("debug.png")
+        # is a quick way to save just the region being checked,
+        # which makes it easy to see what the window actually rendered.
+
+        d = display.Display()
+        window = d.create_resource_object("window", self.window_id)
+
+        # Get window geometry (size and position relative to its parent)
+        geom = window.get_geometry()
+        width, height = geom.width, geom.height
+
+        # Capture the window contents via XGetImage
+        raw = window.get_image(0, 0, width, height, X.ZPixmap, 0xFFFFFFFF)
+
+        # XGetImage returns 32-bit BGRX data; convert to RGBA then RGB
+        image = Image.frombytes(
+            "RGBA",
+            (width, height),
+            raw.data,
+            "raw",
+            "BGRA",
+        )
+        return image.convert("RGB")
+
+    @staticmethod
+    def region_is_color(img, x, y, width, height, color, tolerance=0):
+        for py in range(y, y + height):
+            for px in range(x, x + width):
+                if any(abs(a - b) > tolerance
+                       for a, b in zip(img.getpixel((px, py)), color)):
+                    return False
+        return True
 
     def create_window(self, img_list, fixed_size=None):
         special_class_name = 'TkPhoTest'
@@ -94,7 +143,9 @@ class TestTkPhoWindow(unittest.TestCase):
     def test_basic_window(self):
         self.create_window([ "test/files/1.jpg",
                              "test/files/portrait.jpg",
-                             "test/files/bigimg.png" ])
+                             "test/files/bigimg.png",
+                             "test/files/colorsquares.png",
+                            ])
 
         # Check window size.
         # It will be a little off due to windowmanager decorations.
@@ -171,6 +222,28 @@ class TestTkPhoWindow(unittest.TestCase):
         width, height = self.get_window_size()
         self.assert_compare_sizes((width, height), (640, 480))
 
+        # Move to the colorsquares image
+        self.send_key("End")
+        title = self.get_window_title()
+        self.assertEqual(title, "Pho: test/files/colorsquares.png (400 x 300)")
+        width, height = self.get_window_size()
+        self.assert_compare_sizes((width, height), (400, 300))
+
+        # Make sure double size doesn't work in fullsize mode
+        self.send_key("plus")
+        width, height = self.get_window_size()
+        self.assert_compare_sizes((width, height), (400, 300))
+
+        # Get out of fullsize. The previous plus should have had no effect
+        self.send_key("f")
+        width, height = self.get_window_size()
+        self.assert_compare_sizes((width, height), (400, 300))
+
+        # double size
+        self.send_key("plus")
+        width, height = self.get_window_size()
+        self.assert_compare_sizes((width, height), (800, 600))
+
         # Quit.
         # For some reason, self.send_key("q") results in an endless
         # stream of 'q's to the terminal after the test exits,
@@ -182,48 +255,6 @@ class TestTkPhoWindow(unittest.TestCase):
         subprocess.run(["xdotool", "windowfocus", "--sync",
                         str(self.original_focus)])
         time.sleep(1)
-
-    def take_screenshot(self):
-        """
-        Capture the contents of the current X11 window by its window ID.
-
-        Returns:
-            A PIL Image of the window's current contents.
-        """
-        # Tip: if we ever need to debug a failing test and want to see where
-        # the mismatch is,
-        # img.crop((x, y, x+width, y+height)).save("debug.png")
-        # is a quick way to save just the region being checked,
-        # which makes it easy to see what the window actually rendered.
-
-        d = display.Display()
-        window = d.create_resource_object("window", self.window_id)
-
-        # Get window geometry (size and position relative to its parent)
-        geom = window.get_geometry()
-        width, height = geom.width, geom.height
-
-        # Capture the window contents via XGetImage
-        raw = window.get_image(0, 0, width, height, X.ZPixmap, 0xFFFFFFFF)
-
-        # XGetImage returns 32-bit BGRX data; convert to RGBA then RGB
-        image = Image.frombytes(
-            "RGBA",
-            (width, height),
-            raw.data,
-            "raw",
-            "BGRA",
-        )
-        return image.convert("RGB")
-
-    @staticmethod
-    def region_is_color(img, x, y, width, height, color, tolerance=0):
-        for py in range(y, y + height):
-            for px in range(x, x + width):
-                if any(abs(a - b) > tolerance
-                       for a, b in zip(img.getpixel((px, py)), color)):
-                    return False
-        return True
 
     def test_fixed_size_window(self):
         self.create_window([ "test/files/1.jpg",
@@ -256,8 +287,9 @@ class TestTkPhoWindow(unittest.TestCase):
 
         # Take a screenshot and check some of the contents
         screenshot = self.take_screenshot()
-        print("Made a screenshot, got an image that's", screenshot.size)
+        # print("Made a screenshot, got an image that's", screenshot.size)
         # screenshot.show()
+
         # Thick black band on the left edge, where the image is
         # smaller than the window
         self.assertTrue(self.region_is_color(screenshot, 0, 0, 192, 480,

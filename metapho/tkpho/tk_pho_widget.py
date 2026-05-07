@@ -145,6 +145,10 @@ class tkPhoWidget (tk.Label):
             print("tkPhoWidget.show_image, widget size is", self.widget_size,
                   "rotation", imagelist.current_image().rot)
 
+        # fullsize mode should cancel any scaling.
+        if self.fullsize:
+            self.scale_factor = 1
+
         try:
             pil_img = self.resize_to_fit()
         except (FileNotFoundError, UnidentifiedImageError) as e:
@@ -289,7 +293,7 @@ class tkPhoWidget (tk.Label):
                 print("TkPhoWidget.resize_to_fit, fullscreen, targeting",
                       target_size)
 
-        elif not self.fixed_size:                  # variable-size window
+        elif not self.fixed_size:                  # normal variable-size window
             target_size = (self.root.winfo_screenwidth()
                            * FRAC_OF_SCREEN * self.scale_factor,
                            self.root.winfo_screenheight()
@@ -301,8 +305,15 @@ class tkPhoWidget (tk.Label):
         else:                                      # fixed-size window
             img_size = [ x * self.scale_factor for x in cur_img.orig_img.size ]
             target_size = [ x * self.scale_factor for x in self.widget_size ]
+            # Is the scaled image size smaller than the target size?
+            # If so, don't scale up.
             # Nifty trick for comparing two arrays:
             if all(x < y for x, y in zip(img_size, target_size)):
+                if tk_pho_image.VERBOSE:
+                    print("Fixed-size window, scaled image smaller than window:"
+                          " not scaling up")
+                if cur_img.display_img:
+                    return cur_img.display_img
                 target_size = img_size
                 # XXX This doesn't work for scaling up a small image to be
                 # larger than the fixed-size window, but that's such a rare
