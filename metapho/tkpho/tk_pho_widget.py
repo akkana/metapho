@@ -69,10 +69,10 @@ class tkPhoWidget (tk.Label):
 
         if size:
             super().__init__(parent, width=size[0], height=size[1],
-                             padx=0, pady=0)
+                             borderwidth=0, highlightthickness=0)
             self.pack(fill="both", expand=False, padx=0, pady=0)
         else:
-            super().__init__(parent)
+            super().__init__(parent, borderwidth=0, highlightthickness=0)
             self.pack(fill="both", expand=True, padx=0, pady=0)
 
         self.configure(background='black')

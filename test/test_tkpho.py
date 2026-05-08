@@ -8,12 +8,20 @@ import subprocess
 import unittest
 
 from Xlib import display, X
-from PIL import Image
+from PIL import Image, ImageDraw
 
 import sys, os
 sys.path.insert(0, '..')
 
 from metapho.tkpho import tkpho
+
+
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
 
 
 class TestTkPhoWindow(unittest.TestCase):
@@ -139,23 +147,47 @@ class TestTkPhoWindow(unittest.TestCase):
         width, height = image.size
         # tk is adding a one-pixel border, and I'm okay with that,
         # but it throws off the checking of contents.
-        if width % 10 == 2 and height % 10 == 2:
-            image = image.crop((1, 1, width-1, height-1))
+        # I think this has been fixed by adding
+        # borderwidth=0, highlightthickness=0
+        # in the tk_label_widget constructor.
+        # if autocrop:
+        #     if ((width % 10 == 2 and height % 10 == 2) or
+        #         (width == 1026 and height == 770)):
+        #         image = image.crop((1, 1, width-1, height-1))
+
+        # print("Made a screenshot, got an image that's", image.size)
+        # image.show()
 
         return image.convert("RGB")
 
     @staticmethod
     def region_is_color(img, x, y, width, height, color, tolerance=0):
         def print_color_summary():
+            print("region_is_color:", x, y, width, height, color, "?")
             colorfreq = {}
             for py in range(y, y + height):
                 for px in range(x, x + width):
+                    # print(px, py, end=' -- ')
                     c = img.getpixel((px, py))
                     if c not in colorfreq:
                         colorfreq[c] = 1
                     else:
                         colorfreq[c] += 1
             print(colorfreq)
+
+            cropimg = img.crop((x, y, x+width, y+height))
+            # img.show() uses feh or another system-configured viewer.
+            # Should probably use a tkpho window.
+
+            draw = ImageDraw.Draw(img)
+            linecolor = YELLOW
+            draw.line((x, y, x+width, y), fill=linecolor)
+            draw.line((x+width, y, x+width, y+height), fill=linecolor)
+            draw.line((x, y, x, y+height), fill=linecolor)
+            draw.line((x, y+height, x+width, y+height), fill=linecolor)
+
+            img.show()
+            cropimg.show()
 
         for py in range(y, y + height):
             for px in range(x, x + width):
@@ -245,35 +277,32 @@ class TestTkPhoWindow(unittest.TestCase):
         # Take a screenshot and check some of the contents
         screenshot = self.take_screenshot()
         self.assertEqual(screenshot.size, (400, 300))
-        self.assertTrue(self.region_is_color(screenshot, 100, 100, 100, 100,
-                                              (255, 0, 0)))
+        self.assertTrue(self.region_is_color(screenshot, 100, 100, 100, 100, RED))
 
         # Make sure double size doesn't work in fullsize mode
         self.send_key("plus")
         self.assert_compare_sizes(self.get_window_size(), (400, 300))
         screenshot = self.take_screenshot()
-        self.assertTrue(self.region_is_color(screenshot, 100, 100, 100, 100,
-                                              (255, 0, 0)))
+        self.assertTrue(self.region_is_color(screenshot, 100, 100, 100, 100, RED))
 
         # Get out of fullsize. The previous plus should have had no effect
         self.send_key("f")
         self.assert_compare_sizes(self.get_window_size(), (400, 300))
         screenshot = self.take_screenshot()
-        self.assertTrue(self.region_is_color(screenshot, 100, 100, 100, 100,
-                                              (255, 0, 0)))
+        self.assertTrue(self.region_is_color(screenshot, 100, 100, 100, 100, RED))
 
         # double size
         self.send_key("plus")
         self.assert_compare_sizes(self.get_window_size(), (800, 600))
         screenshot = self.take_screenshot()
-        self.assertTrue(self.region_is_color(screenshot, 200, 200, 200, 200,
-                                              (255, 0, 0)))
+        self.assertTrue(self.region_is_color(screenshot, 200, 200, 200, 200, RED))
 
         self.close_window()
 
     def test_fixed_size_window(self):
         self.create_window([ "test/files/1.jpg",
-                             "test/files/bigimg.png" ],
+                             "test/files/bigimg.png",
+                             "test/files/colorsquares.png" ],
                            fixed_size=[1024, 768])
 
         # Check window size.
@@ -295,21 +324,54 @@ class TestTkPhoWindow(unittest.TestCase):
         self.send_key("minus")
         self.assert_compare_sizes(self.get_window_size(), (1024, 768))
 
+        # Next image, the big image, which shouldn't make the window any bigger
+        self.send_key("space")
+        self.assert_compare_sizes(self.get_window_size(), (1024, 768))
+
+        # Fullsize shouldn't change the window size either
+        self.send_key("f")
+        self.assert_compare_sizes(self.get_window_size(), (1024, 768))
+        self.send_key("f")
+
+        # Move on to the colorsquares to check content
+        self.send_key("space")
+        self.assert_compare_sizes(self.get_window_size(), (1024, 768))
+
         # Take a screenshot and check some of the contents
         screenshot = self.take_screenshot()
-        # print("Made a screenshot, got an image that's", screenshot.size)
-        # screenshot.show()
+        self.assertEqual(screenshot.size, (1024, 768))
 
-        # Thick black band on the left edge, where the image is
-        # smaller than the window
-        self.assertTrue(self.region_is_color(screenshot, 0, 0, 192, 480,
-                                              (0, 0, 0)))
-        # The white left edge of the image, left of where the numeral 1 is
-        self.assertTrue(self.region_is_color(screenshot, 194, 145, 200, 478,
-                                              (255, 255, 255)))
+        # The red square
+        self.assertTrue(self.region_is_color(screenshot, 412, 334, 100, 100, RED))
+
+        # The black left margin, where the image is smaller than the window
+        self.assertTrue(self.region_is_color(screenshot, 0, 0, 312, 768, BLACK))
+        self.send_key("f")
+        self.assert_compare_sizes(self.get_window_size(), (1024, 768))
+
+        self.send_key("f")
+
+        self.send_key("plus")
+        self.assert_compare_sizes(self.get_window_size(), (1024, 768))
+        screenshot = self.take_screenshot()
+        # the black margin
+        self.assertTrue(self.region_is_color(screenshot, 0, 0, 111, 768, BLACK))
+        # The blue square
+        self.assertTrue(self.region_is_color(screenshot, 512, 484, 200, 200,
+                                             # ending up around 613, 627
+                                             BLUE))
+
+        self.send_key("plus")
+        self.assert_compare_sizes(self.get_window_size(), (1024, 768))
+        screenshot = self.take_screenshot()
+        # the lower left white square -- there is no black margin
+        self.assertTrue(self.region_is_color(screenshot, 0, 400, 400, 368, WHITE))
+        # The red square
+        self.assertTrue(self.region_is_color(screenshot, 400, 400, 400, 368, RED))
+        # The green partial square
+        self.assertTrue(self.region_is_color(screenshot, 800, 0, 224, 400, GREEN))
 
         self.close_window()
-
 
 if __name__ == "__main__":
     unittest.main()

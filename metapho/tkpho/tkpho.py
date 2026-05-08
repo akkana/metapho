@@ -43,6 +43,8 @@ class tkPhoWindow:
 
         self.root.option_add('*Dialog.msg.font', 'Helvetica 12')
         self.root.option_add("*Dialog.msg.wrapLength", "10i")
+        # Try to prevent any extra space being added by the root
+        # self.root.configure(padx=0, pady=0, bd=0)
 
         # pho has several display window options:
         # Default: image is displayed in a window, scaled a little smaller
