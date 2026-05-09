@@ -88,10 +88,10 @@ class TestTkPhoWindow(unittest.TestCase):
         """
         subprocess.run(["xdotool", "key", "--window",
                         str(self.window_id), keyname])
-        time.sleep(1)
+        time.sleep(delay)
         # subprocess.run(["xdotool", "keyup", "--window",
         #                 str(self.window_id), keyname])
-        # time.sleep(1)
+        # time.sleep(delay)
 
     def close_window(self):
         # Quit.
