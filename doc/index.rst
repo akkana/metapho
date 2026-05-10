@@ -6,7 +6,7 @@
 MetaPho Documentation
 ======================================
 
-.. include:: ../../README.rst
+.. include:: ../README.rst
 
 MetaPho Manual Pages
 ===================================
@@ -15,11 +15,11 @@ MetaPho Manual Pages
    :maxdepth: 2
    :caption: Contents:
 
-   pho-manual
-   metapho-manual
-   notags-manual
-   fotogr-manual
-   photoshare-manual
+   pho
+   metapho
+   notags
+   fotogr
+   photoshare
 
 
 MetaPho API Documentation
@@ -29,7 +29,7 @@ MetaPho API Documentation
    :maxdepth: 2
    :caption: Contents:
 
-   modules
+   metapho-module
 
 
 Indices and tables

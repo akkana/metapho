@@ -114,7 +114,6 @@ p
     Magnify: show the image at twice the current size.
 
 -
-.TP
     Unmagnify: show the image at half the current size..TP
 
 q

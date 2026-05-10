@@ -2,9 +2,7 @@ HTML docs are generated with Sphinx following
 https://samnicholls.net/2016/06/15/how-to-sphinx-readthedocs/
 
 To generate the HTML docs:
-    cd sphinxdoc
     make html
 
 To generate man pages:
-    cd sphinxdoc
     make man

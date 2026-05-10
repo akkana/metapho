@@ -17,7 +17,6 @@ import re
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('../..'))
 
 
 # -- Project information -----------------------------------------------------
@@ -28,7 +27,7 @@ author = 'Akkana Peck'
 
 def get_version():
     '''Read the module versions from __init__.py'''
-    with open("../../metapho/__init__.py") as fp:
+    with open("../metapho/__init__.py") as fp:
         for line in fp:
             line = line.strip()
             if line.startswith("__version__"):
@@ -57,7 +56,8 @@ version = re.sub('[a-z].*', '', release)
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
+    # 'sphinx.ext.autodoc',
+    'sphinx.ext.apidoc',
     'sphinx.ext.viewcode'
 ]
 
@@ -66,8 +66,6 @@ extensions = [
 # source_parsers = {
 #     '.md': CommonMarkParser,
 # }
-
-source_suffix = ['.rst', '.md']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -167,16 +165,16 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 # build with "make man"
 man_pages = [
-    ( 'metapho-manual', 'metapho',
+    ( 'metapho', 'metapho',
       'view images and tag them with words or phrases', [author], 1),
-    ( 'pho-manual', 'pho',
+    ( 'pho', 'pho',
       'a fast and lightweight image viewer', [author], 1),
-    ( 'fotogr-manual', 'fotogr',
+    ( 'fotogr', 'fotogr',
       'Search for tagged images', [author], 1),
-    ( 'notags-manual', 'notags',
+    ( 'notags', 'notags',
       'search for files and directories that need metapho-style tagging',
       [author], 1),
-    ( 'photoshare-manual', 'photoshare',
+    ( 'photoshare', 'photoshare',
       'Manage a list of which photos (or other files) you’ve shared, '
       'using metapho’s tagging system and the special tag ‘share’.',
       [author], 1),
@@ -211,6 +209,27 @@ epub_title = project
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
+
+# -- API documentation -------------------------------------------------
+
+apidoc_modules = [
+    {'path': '../metapho', 'destination': 'build/source'},
+    {
+        # 'path': 'path/to/another_module',
+        # 'destination': 'source/',
+        # 'exclude_patterns': ['**/test*'],
+        'max_depth': 4,
+        'follow_links': False,
+        'separate_modules': False,
+        # 'include_private': False,
+        'no_headings': False,
+        'module_first': False,
+        'implicit_namespaces': False,
+        'automodule_options': {
+            'members', 'show-inheritance', 'undoc-members'
+        },
+    },
+]
 
 
 # -- Extension configuration -------------------------------------------------

@@ -44,8 +44,26 @@ and making quick numeric tags, like keeping track of which images
 you want to share right now.
 It's also useful for giving photo-based presentations.
 
-A Note about GTK vs. Tk
------------------------
+Command-line Scripts
+====================
+
+Installing also gets you three command-line scripts:
+
+notags:
+  Examine the current directory recursively and tell you about files and
+  directories that still need to be tagged. Run it at the root of an
+  image directory that might have untagged subdirectories.
+
+fotogr:
+  Search for files with particular tags. For instance, ``fotogr cat``
+  will print the names of all files you’ve tagged with “cat”.
+
+photoshare:
+  Manage files tagged with “share” or “wallpaper”. See ``photoshare -h``
+  for more info.
+
+A Note about GTK versus Tk
+--------------------------
 
 Historically, metapho has been built on GTK (currently GTK3), though it
 never needed gnome or any other desktop services. But after trying to
@@ -69,24 +87,6 @@ though gmetapho will still work if you have GTK3 libraries installed.
 On Debian, you’ll need packages: python3-tk python3-pil
 python3-pil.imagetk
 
-Command-line Scripts
---------------------
-
-Installing also gets you three command-line scripts:
-
-| notags:
-| Examine the current directory recursively and tell you about files and
-  directories that still need to be tagged. Run it at the root of an
-  image directory that might have untagged subdirectories.
-
-| fotogr:
-| Search for files with particular tags. For instance, ``fotogr cat``
-  will print the names of all files you’ve tagged with “cat”.
-
-| photoshare:
-| Manage files tagged with “share” or “wallpaper”. See ``photoshare -h``
-  for more info.
-
 How to Install Metapho
 ----------------------
 
@@ -97,10 +97,14 @@ always have the very latest features and bug fixes).
 
 To install from the source directory, use ``pip install .``
 
-The `Metapho Documentation <https://metapho.readthedocs.io/en/latest/>`
+Documentation
+-------------
+
+The `Metapho Documentation on ReadTheDocs
+<https://metapho.readthedocs.io/en/latest/>`__
 has more information on both the app and the API of the classes inside it.
 It was out of date for a while because of a tools issue,
-but it's now up to date again.
+but it's updated.
 
 There are also man pages that you can install on Linux/Unix. Unfortunately,
 Python pip doesn't have a way to install man pages; but you can build them
@@ -109,5 +113,5 @@ with
 ::
     make man
 
-in the docs/sphinxdoc directory, then install them to anywhere you
-keep section 1 man pages.
+in the docs directory, which produces files in `build/man`
+which you can install to anywhere you keep section 1 man pages.
