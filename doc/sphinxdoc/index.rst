@@ -6,7 +6,7 @@
 MetaPho Documentation
 ======================================
 
-.. mdinclude:: ../../README.md
+.. include:: ../../README.rst
 
 MetaPho Manual Pages
 ===================================
@@ -17,6 +17,8 @@ MetaPho Manual Pages
 
    metapho-manual
    notags-manual
+   fotogr-manual
+   photoshare-manual
 
 
 MetaPho API Documentation
