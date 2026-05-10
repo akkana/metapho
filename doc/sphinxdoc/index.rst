@@ -15,6 +15,7 @@ MetaPho Manual Pages
    :maxdepth: 2
    :caption: Contents:
 
+   pho-manual
    metapho-manual
    notags-manual
    fotogr-manual

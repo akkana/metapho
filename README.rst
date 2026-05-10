@@ -1,7 +1,14 @@
 metapho
 =======
 
-An app for tagging and organizing large numbers of photos efficiently.
+.. image:: metapho.jpg
+  :alt: Icon for metapho: a noodle bowl with chopsticks pulling out a string of images
+  :width: 212px
+  :height: 340px
+  :align: right
+
+
+An app for viewing, tagging and organizing large numbers of photos efficiently.
 
 This arose out of my `Pho <http://shallowsky.com/software/pho/>`__ image
 viewer (`Pho on GitHub <https://github.com/akkana/pho>`__), which was
@@ -27,6 +34,15 @@ and once you’ve tagged them all, it creates a file named *Tags*.
 Metapho can be driven entirely from the keyboard: you should be able to
 do everything you need without moving your hands to the mouse, though
 you can use the mouse if you find that easier.
+
+pho
+===
+
+Metapho also includes a basic image view called pho.
+Pho is optimized for viewing a large number of images quickly
+and making quick numeric tags, like keeping track of which images
+you want to share right now.
+It's also useful for giving photo-based presentations.
 
 A Note about GTK vs. Tk
 -----------------------
@@ -81,11 +97,17 @@ always have the very latest features and bug fixes).
 
 To install from the source directory, use ``pip install .``
 
-The `Metapho
-Documentation <https://metapho.readthedocs.io/en/latest/>`__ had more
-information on both the app and the API of the classes inside it. Sadly,
-this is now out of date because the tools I used to generate the
-documentation no longer work, and porting the documentation to a
-different system hasn’t been a high enough priority so far. However, the
-existing documentation should still tell you most of what you need to
-know about using the metapho app.
+The `Metapho Documentation <https://metapho.readthedocs.io/en/latest/>`
+has more information on both the app and the API of the classes inside it.
+It was out of date for a while because of a tools issue,
+but it's now up to date again.
+
+There are also man pages that you can install on Linux/Unix. Unfortunately,
+Python pip doesn't have a way to install man pages; but you can build them
+with
+
+::
+    make man
+
+in the docs/sphinxdoc directory, then install them to anywhere you
+keep section 1 man pages.

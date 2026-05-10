@@ -2,6 +2,9 @@ HTML docs are generated with Sphinx following
 https://samnicholls.net/2016/06/15/how-to-sphinx-readthedocs/
 
 To generate the HTML docs:
-Make sure you have the m2r module installed, then:
     cd sphinxdoc
     make html
+
+To generate man pages:
+    cd sphinxdoc
+    make man

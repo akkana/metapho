@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'metapho'
-copyright = '2019, Akkana Peck'
+copyright = '2019-2026, Akkana Peck'
 author = 'Akkana Peck'
 
 def get_version():
@@ -165,9 +165,21 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
+# build with "make man"
 man_pages = [
-    (master_doc, 'metapho', 'metapho Documentation',
-     [author], 1)
+    ( 'metapho-manual', 'metapho',
+      'view images and tag them with words or phrases', [author], 1),
+    ( 'pho-manual', 'pho',
+      'a fast and lightweight image viewer', [author], 1),
+    ( 'fotogr-manual', 'fotogr',
+      'Search for tagged images', [author], 1),
+    ( 'notags-manual', 'notags',
+      'search for files and directories that need metapho-style tagging',
+      [author], 1),
+    ( 'photoshare-manual', 'photoshare',
+      'Manage a list of which photos (or other files) you’ve shared, '
+      'using metapho’s tagging system and the special tag ‘share’.',
+      [author], 1),
 ]
 
 
