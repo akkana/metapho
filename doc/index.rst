@@ -3,7 +3,7 @@
 MetaPho |version| Documentation
 ======================================
 
-.. include:: ../README.rst
+.. include:: README.rst
 
 Manual Pages
 ============

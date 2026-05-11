@@ -1,7 +1,7 @@
 metapho
 =======
 
-.. image:: metapho.jpg
+.. image:: doc/metapho.jpg
   :alt: Icon for metapho: a noodle bowl with chopsticks pulling out a string of images
   :width: 212px
   :height: 340px

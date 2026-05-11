@@ -234,3 +234,21 @@ apidoc_modules = [
 
 
 # -- Extension configuration -------------------------------------------------
+
+# The documentation uses the README.rst at the top level that also
+# needs to work as a GitHub README. That means that the metapho icon
+# image needs to work from two different locations.
+# So in the top-level README.rst, it's referred to as doc/metapho.jpg,
+# and when generating the documentation, the README.rst is copied into
+# the doc/ directory with the path rewritten to just metapho.jpg.
+#
+# Unfortunately that also leaves the generated README.rst file sitting
+# in the conf directory. I haven't found a way to run cleanup at the
+# end of sphinx, so I've just added it to .gitignore.
+print("****** Rewriting doc/ paths in README")
+with open("../README.rst") as infp:
+    with open("README.rst", 'w') as outfp:
+        for line in infp:
+            line = line.replace(' doc/', ' ')
+            outfp.write(line)
+print("****** Rewrote README")
