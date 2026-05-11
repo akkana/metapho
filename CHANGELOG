@@ -1,3 +1,82 @@
+2026-05-10  Akkana Peck  <akkana@shallowsky.com>
+	Extensive documentation work. Get sphinx and readthedocs
+	working again. Lots of minor updates to various documents.
+
+2026-05-08  Akkana Peck  <akkana@shallowsky.com>
+	Lots of Tk unit tests, and several bug fixes related to scaling
+	and transitions between modes.
+
+2026-04-29  Akkana Peck  <akkana@shallowsky.com>
+	Initial unittest framework for tkpho, plus some other testing tweaks.
+
+2026-04-27  Akkana Peck  <akkana@shallowsky.com>
+	Several bug fixes related to scaling, fullsize and fullscreen.
+
+2026-02-01  Akkana Peck  <akkana@shallowsky.com>
+	Flesh out the commands in photoshare.
+
+2025-12-20  Akkana Peck  <akkana@shallowsky.com>
+	Fix EXIF viewer when there's no GPS info.
+
+2025-12-13  Akkana Peck  <akkana@shallowsky.com>
+	Add a --force mode to force rewriting the Tags file.
+	This allows a way to remove formerly tagged files no longer on disk.
+
+2025-09-25  Akkana Peck  <akkana@shallowsky.com>
+	Improve tkpho reporting of nonexistent files
+
+2025-05-05  Akkana Peck  <akkana@shallowsky.com>
+	Lots of InfoDialog work, and fix +/- keys.
+
+	InfoDialog now uses a ScrolledText widget and can handle multiple
+	fonts, so it's prettier and more readable.
+	It's also updated more reliably for things like image size changes.
+
+	Fix the - and + keys for resizing bigger and smaller in a
+	variable-sized window.
+
+2025-08-04  Akkana Peck  <akkana@shallowsky.com>
+	Add the ability to show labeled tags from tkpho.
+	Digits typed during pho will be added to a new category called Tags.
+	Make text in the info dialog selectable.
+
+2025-07-15  Akkana Peck  <akkana@shallowsky.com>
+	tkpho: fix rotation when fullscreen and fullsize.
+
+2025-07-13  Akkana Peck  <akkana@shallowsky.com>
+	Metapho: add C-w delete-word binding in text fields.
+
+2025-06-16  Akkana Peck  <akkana@shallowsky.com>
+	Improve the info dialog display of current tags.
+	It's called from both pho (which doesn't have a Tagger and so
+	only knows numeric tags) and metapho (which has tag names).
+	Now it should be able to handle both.
+
+2025-06-10  Akkana Peck  <akkana@shallowsky.com>
+	Tk metapho: add fullscreen/fullsize handlers for pho window.
+	They're on ^P and ^F so as not to interfere with setting
+	the F and P tags.
+	Fix an image numbering bug.
+
+2025-05-30  Akkana Peck  <akkana@shallowsky.com>
+	Improvements in previous/next image logic.
+
+2025-04-24  Akkana Peck  <akkana@shallowsky.com>
+	Fix a user editing or deleting the string in a tag entry.
+
+2025-04-20  Akkana Peck  <akkana@shallowsky.com>
+	Implement search. Improve the category selector.
+
+2025-02-19  Akkana Peck  <akkana@shallowsky.com>
+	Detect duplicate and blank tags in tk tagger window.
+	Separate pho subwindow bindings within metapho, so ^Q or ^W
+	will close the pho window without quitting the app.
+	(You still have to be careful about plain q, though.)
+
+
+2025-03-29  Akkana Peck  <akkana@shallowsky.com>
+	Add categories to tkmetapho.
+
 2025-03-13  Akkana Peck  <akkana@shallowsky.com>
 	pho: show which tags are set in the info dialog.
 	metapho: flash a warning if too many tags are defined to fit in a-zA-Z.
