@@ -1,18 +1,15 @@
-.. metapho documentation master file, created by
-   sphinx-quickstart on Fri Dec 20 15:59:20 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. metapho sphinx documentation master file
 
-MetaPho Documentation
+MetaPho |version| Documentation
 ======================================
 
 .. include:: ../README.rst
 
-MetaPho Manual Pages
-===================================
+Manual Pages
+============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    pho
@@ -22,14 +19,17 @@ MetaPho Manual Pages
    photoshare
 
 
-MetaPho API Documentation
-===================================
+MetaPho Code Documentation
+==========================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   metapho-module
+   api/modules
+   api/metapho
+   api/metapho.tkpho
+   api/metapho.gtkpho
 
 
 Indices and tables

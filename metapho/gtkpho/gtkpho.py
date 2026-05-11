@@ -556,7 +556,6 @@ class TagViewer(metapho.Tagger, gtk.Table):
         """Set focus to the next available entry (user just hit Enter).
            If we're already typing in a new tag entry that hasn't been
            saved yet, save it first before switching to the new one.
-
            When testing this, try:
            - erase what's in the last entry, then hit Enter:
              should go to the entry just erased

@@ -56,7 +56,7 @@ version = re.sub('[a-z].*', '', release)
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    # 'sphinx.ext.autodoc',
+    'sphinx.ext.autodoc',
     'sphinx.ext.apidoc',
     'sphinx.ext.viewcode'
 ]
@@ -112,6 +112,7 @@ html_theme = 'classic'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ['_static']
+# html_css_files = ["custom.css"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -213,22 +214,22 @@ epub_exclude_files = ['search.html']
 # -- API documentation -------------------------------------------------
 
 apidoc_modules = [
-    {'path': '../metapho', 'destination': 'build/source'},
-    {
-        # 'path': 'path/to/another_module',
-        # 'destination': 'source/',
-        # 'exclude_patterns': ['**/test*'],
-        'max_depth': 4,
-        'follow_links': False,
-        'separate_modules': False,
-        # 'include_private': False,
-        'no_headings': False,
-        'module_first': False,
-        'implicit_namespaces': False,
-        'automodule_options': {
-            'members', 'show-inheritance', 'undoc-members'
-        },
-    },
+    {'path': '../metapho', 'destination': 'api'},
+    # {
+    #     'path': '../metapho/tkpho',
+    #     'destination': 'api/tkpho',
+    #     # 'exclude_patterns': ['**/test*'],
+    #     # 'max_depth': 4,
+    #     # 'follow_links': False,
+    #     # 'separate_modules': False,
+    #     # # 'include_private': False,
+    #     # 'no_headings': False,
+    #     # 'module_first': False,
+    #     # 'implicit_namespaces': False,
+    #     # 'automodule_options': {
+    #     #     'members', 'show-inheritance', 'undoc-members'
+    #     # },
+    # },
 ]
 
 

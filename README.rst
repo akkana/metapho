@@ -45,7 +45,7 @@ you want to share right now.
 It's also useful for giving photo-based presentations.
 
 Command-line Scripts
-====================
+--------------------
 
 Installing also gets you three command-line scripts:
 
@@ -65,23 +65,30 @@ photoshare:
 A Note about GTK versus Tk
 --------------------------
 
-Historically, metapho has been built on GTK (currently GTK3), though it
-never needed gnome or any other desktop services. But after trying to
-port it to GTK4, I decided it would be easier to rewrite it in Tk, plus
+In the past, metapho was built on GTK (most recently GTK3), though it
+never needed Gnome or any other desktop services. But after trying to
+port it to GTK4, I concluded it would be easier to rewrite it in Tk, plus
 it would be easier for people on non-Linux OSes. So metapho 2.0 will be
 Tk based, without a GTK dependency.
 
-I’ve been using tkpho and tkmetapho since January 2025 and it’s working
-well. I plan to make Tk the default soon (written in April 2026).
+I’ve been using the Tk versions of pho and tkmetapho since January 2025
+and they've been working well. I have now made them the default;
+the GTK versions are now obsolete. Metapho now also includes a Tk-based
+image viewer called pho, replacing my old GTK-based
+`pho <https://shallowsky.com/software/pho/>`__ image viewer.
 
 Currently what metapho installs is:
 
--  metapho: GTK3-based metapho tagging app
--  gmetapho: GTK3-based metapho tagging app
+-  metapho: TkInter-based metapho tagging app
 -  tkmetapho: TkInter-based metapho tagging app
 -  tkpho: TkInter-based pho image viewer
+-  gmetapho: GTK3-based metapho tagging app
+-  gmpiv: GTK MetaPho image viewer
 
-When 2.0 is released, metapho and pho will become the TkInter versions,
+plus several helper scripts.
+
+
+When 2.0 is released, metapho and pho will be the TkInter versions,
 though gmetapho will still work if you have GTK3 libraries installed.
 
 On Debian, you’ll need packages: python3-tk python3-pil
@@ -104,14 +111,16 @@ The `Metapho Documentation on ReadTheDocs
 <https://metapho.readthedocs.io/en/latest/>`__
 has more information on both the app and the API of the classes inside it.
 It was out of date for a while because of a tools issue,
-but it's updated.
+but it's updated now.
 
 There are also man pages that you can install on Linux/Unix. Unfortunately,
 Python pip doesn't have a way to install man pages; but you can build them
 with
 
 ::
+
     make man
 
-in the docs directory, which produces files in `build/man`
-which you can install to anywhere you keep section 1 man pages.
+in the `docs` directory, which produces files in `build/man`
+that you can install to anywhere you keep section 1 man pages.
+Or just read them fvia the links above.
