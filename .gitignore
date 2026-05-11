@@ -1,3 +1,9 @@
+# Generated file from make html, see comment at the end of doc/conf.py
+doc/README.rst
+
+# This is generated as part of sphinx make html
+doc/api
+
 *.py[cod]
 
 # C extensions
