@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-"""Test TkPho, at least the aspects of it I've managed to automate"""
+"""Test TkPho, at least the aspects of it I've managed to automate.
+   Assumes X11, uses xdotool, may need screen size of 1920x1200.
+"""
 
 import os
 import time
@@ -116,8 +118,8 @@ class TestTkPhoWindow(unittest.TestCase):
             return
         # I haven't found a way to write a unittest assert and control
         # its output, so this is a hack.
-        self.assertFalse("Actual size %d x %d too different from expected %d x %d"
-                         % (actual + expected))
+        self.assertFalse("Actual size %d x %d too different from expected "
+                         "%d x %d" % (actual + expected))
 
     def take_screenshot(self):
         """
@@ -161,7 +163,13 @@ class TestTkPhoWindow(unittest.TestCase):
         return image.convert("RGB")
 
     @staticmethod
-    def region_is_color(img, x, y, width, height, color, tolerance=0):
+    def region_is_color(img, x, y, width, height, color,
+                        tolerance=0, negate=False):
+        """Does the indicated region match (or not match, if notcolor is True)
+           the given color?
+           If returning False, also print a summary and show images
+           to show what's unexpected.
+        """
         def print_color_summary():
             print("region_is_color:", x, y, width, height, color, "?")
             colorfreq = {}
@@ -193,14 +201,20 @@ class TestTkPhoWindow(unittest.TestCase):
             for px in range(x, x + width):
                 if any(abs(a - b) > tolerance
                        for a, b in zip(img.getpixel((px, py)), color)):
+                    if negate:
+                        return True
                     print_color_summary()
                     return False
-        return True
+        if not negate:
+            return True
+        print_color_summary()
+        return False
 
     def test_basic_window(self):
         self.create_window([ "test/files/1.jpg",
                              "test/files/portrait.jpg",
                              "test/files/bigimg.png",
+                             "test/files/bigcolorimg.png",
                              "test/files/colorsquares.png",
                             ])
 
@@ -277,26 +291,68 @@ class TestTkPhoWindow(unittest.TestCase):
         # Take a screenshot and check some of the contents
         screenshot = self.take_screenshot()
         self.assertEqual(screenshot.size, (400, 300))
-        self.assertTrue(self.region_is_color(screenshot, 100, 100, 100, 100, RED))
+        self.assertTrue(self.region_is_color(screenshot,
+                                             100, 100, 100, 100, RED))
 
         # Make sure double size doesn't work in fullsize mode
         self.send_key("plus")
         self.assert_compare_sizes(self.get_window_size(), (400, 300))
         screenshot = self.take_screenshot()
-        self.assertTrue(self.region_is_color(screenshot, 100, 100, 100, 100, RED))
+        self.assertTrue(self.region_is_color(screenshot,
+                                             100, 100, 100, 100, RED))
 
         # Get out of fullsize. The previous plus should have had no effect
         self.send_key("f")
         self.assert_compare_sizes(self.get_window_size(), (400, 300))
         screenshot = self.take_screenshot()
-        self.assertTrue(self.region_is_color(screenshot, 100, 100, 100, 100, RED))
+        self.assertTrue(self.region_is_color(screenshot,
+                                             100, 100, 100, 100, RED))
 
         # double size
         self.send_key("plus")
         self.assert_compare_sizes(self.get_window_size(), (800, 600))
         screenshot = self.take_screenshot()
-        self.assertTrue(self.region_is_color(screenshot, 200, 200, 200, 200, RED))
+        self.assertTrue(self.region_is_color(screenshot,
+                                             200, 200, 200, 200, RED))
 
+        # back to normal size, nonfullscreen, nonfullsize
+        self.send_key("minus")
+
+        # previous image, the big color image
+        self.send_key("BackSpace", delay=2)
+        self.assertEqual(self.get_window_title(),
+                         "Pho: test/files/bigcolorimg.png (3000 x 2000)")
+        self.assert_compare_sizes(self.get_window_size(), (1530, 1020))
+
+        # fullscreen, fullsize
+        self.send_key("p")
+        self.send_key("f")
+
+        # check the color squares
+        screenshot = self.take_screenshot()
+        self.assertTrue(self.region_is_color(screenshot,
+                                             60, 200, 200, 200, BLUE))
+
+        # next image (colorsquares, not that that matters)
+        sys.stdout.flush()
+        self.send_key("space")
+
+        # out of fullsize, still in fullscreen
+        self.send_key("f")
+        # back to big color image
+        self.send_key("BackSpace")
+
+        # Now bigcolorimg should be in fullscreen/non-fullsize.
+        # Check for a bug where the scaled image wasn't getting reset.
+        # The image should be scaled to the screen size now
+        # with both color squares visible.
+        screenshot = self.take_screenshot()
+        self.assertTrue(self.region_is_color(screenshot,
+                                              180, 120, 120, 120, RED))
+        self.assertTrue(self.region_is_color(screenshot,
+                                              420, 360, 120, 120, BLUE))
+
+        # End of test
         self.close_window()
 
     def test_fixed_size_window(self):

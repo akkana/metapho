@@ -411,6 +411,8 @@ class tkPhoWidget (tk.Label):
         self.show_image()
 
     def next_image(self):
+        if tk_pho_image.VERBOSE:
+            print("\n========== TkPhoWidget.next_image")
         last_valid_image = imagelist.current_image()
 
         while True:
@@ -476,12 +478,22 @@ class tkPhoWidget (tk.Label):
                       "->", imagelist.current_image())
 
             self.fullsize_offset = 0, 0
+            # Clear the last display image. If we later go back to
+            # this image, the mode may be different,
+            # and no need to clutter up memory with display images
+            # for the whole list in any case.
+            if (imagelist.current_image() != last_valid_image
+                and last_valid_image.display_img):
+                last_valid_image.display_img = None
             self.show_image()
             if tk_pho_image.VERBOSE:
                 imagelist.print_imagelist()
             return
 
     def prev_image(self):
+        if tk_pho_image.VERBOSE:
+            print("\n========== TkPhoWidget.prev_image")
+
         if not imagelist.image_list():
             raise FileNotFoundError("No image list!")
 
