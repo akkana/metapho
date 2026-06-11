@@ -839,13 +839,44 @@ class TkTagViewer(metapho.Tagger):
         # print("update_find:", findstr)
         if len(findstr) < 3:
             return
-        for i, ent in enumerate(self.entries):
-            if findstr in ent.get():
-                ent.config(bg=self.highlight_bg_color)
-            else:
-                # Set the entry to the same background color as
-                # its corresponding button
-                ent.config(bg=self.buttons[i].cget('bg'))
+
+        def find_in_category(findstr, cat):
+            """Does at least one match exist in the given category?"""
+            for i, tagno in enumerate(self.categories[cat]):
+                tagname = self.tag_list[tagno]
+                if findstr in tagname:
+                    return True
+            return False
+
+        def highlight_in_current_category(findstr):
+            """In the current category, find and highlight all matches.
+               Return true if there were any
+            """
+            found = False
+            for i, ent in enumerate(self.entries):
+                if findstr in ent.get():
+                    ent.config(bg=self.highlight_bg_color)
+                    found = True
+                else:
+                    # Set the entry to the same background color as
+                    # its corresponding button
+                    ent.config(bg=self.buttons[i].cget('bg'))
+            return found
+
+        # First try looking in the current category
+        if highlight_in_current_category(findstr):
+            return
+
+        # If nothing was found in the current category, search other cats
+        if len(self.categories) <= 1:
+            return
+        for cat in self.categories:
+            if self.current_category == cat:
+                continue
+            if find_in_category(findstr, cat):
+                self.switch_category(cat)
+                if highlight_in_current_category(findstr):
+                    return
 
     def popup_pho_window(self, event=None):
         if not self.pho_win:
