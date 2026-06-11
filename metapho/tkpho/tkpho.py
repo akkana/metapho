@@ -35,8 +35,12 @@ class tkPhoWindow:
                  class_name='tkPho'):
         # Run either as main window or as a Toplevel secondary window
         if parent:
-            self.root = tk.Toplevel(parent, className=class_name)
+            # Toplevel no longer has a className argument
+            # (it used to work prior to June 2026)
+            # but _class can be passed through as the Tcl/Tk -class option
+            self.root = tk.Toplevel(parent, class_=class_name)
         else:
+            # tk.Tk has an explicit className argument
             self.root = tk.Tk(className=class_name)
 
         self.tagger = metapho.Tagger()

@@ -32,13 +32,13 @@ class TkTagViewer(metapho.Tagger):
 
     PADDING = 1
 
-    def __init__(self, img_list, force_write=False):
+    def __init__(self, img_list, force_write=False, class_name='tkMetapho'):
 
         metapho.Tagger.__init__(self)
 
         self.last_image_shown = None
 
-        self.root = tk.Tk()
+        self.root = tk.Tk(className=class_name)
 
         self.num_rows = 26
 
@@ -844,7 +844,8 @@ class TkTagViewer(metapho.Tagger):
     def popup_pho_window(self, event=None):
         if not self.pho_win:
             self.pho_win = tkPhoWindow(parent=self.root,
-                                       fixed_size=None, fullscreen=False)
+                                       fixed_size=None, fullscreen=False,
+                                       class_name='tkMetapho')
             self.pho_win.root.protocol("WM_DELETE_WINDOW",
                                        lambda: self.pho_win.root.withdraw())
         else:
