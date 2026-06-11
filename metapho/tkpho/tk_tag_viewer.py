@@ -126,7 +126,8 @@ class TkTagViewer(metapho.Tagger):
         self.cat_option_menu = tk.OptionMenu(catsel, self.cat_menu_str, [])
         self.cat_option_menu.pack(side=tk.LEFT)
 
-        b = tk.Button(catsel, text="New Category", command=self.new_category)
+        b = tk.Button(catsel, text="New Category",
+                      command=self.new_category)
         # b.grid(row=0, column=3, columnspan=2,
         #        padx=self.PADDING, pady=self.PADDING)
         b.pack(side=tk.LEFT)
@@ -231,8 +232,12 @@ class TkTagViewer(metapho.Tagger):
             self.categories["Tags"] = list(self.tag_list)
 
         # Now we should have categories.
-        # set current category to the first one
+        # Set current category to the first one
         self.current_category = next(iter(self.categories))
+
+        # If more than one category, highlight that by coloring the cat sel
+        if len(self.categories) > 1:
+            self.cat_option_menu.config(bg=self.highlight_bg_color)
 
         # fill the category option menu
         self.cat_option_menu['menu'].delete(0, 'end')
@@ -314,6 +319,7 @@ class TkTagViewer(metapho.Tagger):
         self.cat_option_menu['menu'].add_command(label=newcatname,
             command=lambda c=newcatname: self.switch_category(c))
         self.switch_category(newcatname)
+        self.cat_option_menu.config(bg=self.highlight_bg_color)
 
     def set_bindings(self, enable, widget=None, include_pho_win=False):
         """TkInter doesn't have a way to override window-wide key bindings
