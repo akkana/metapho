@@ -414,6 +414,9 @@ class tkPhoWidget (tk.Label):
         if tk_pho_image.VERBOSE:
             print("\n========== TkPhoWidget.next_image")
         last_valid_image = imagelist.current_image()
+        if not hasattr(last_valid_image, 'display_img'):
+            last_valid_image.invalid = True
+            last_valid_image = None
 
         while True:
             try:
@@ -432,6 +435,11 @@ class tkPhoWidget (tk.Label):
 
             # Is the current image valid?
             if imagelist.current_image().invalid:
+                continue
+
+            # Is it actually a TkPhoImage, e.g. it has a display_image?
+            if not hasattr(imagelist.current_image(), 'display_img'):
+                imagelist.current_image().invalid = True
                 continue
 
             try:
@@ -482,7 +490,8 @@ class tkPhoWidget (tk.Label):
             # this image, the mode may be different,
             # and no need to clutter up memory with display images
             # for the whole list in any case.
-            if (imagelist.current_image() != last_valid_image
+            if (last_valid_image
+                and imagelist.current_image() != last_valid_image
                 and last_valid_image.display_img):
                 last_valid_image.display_img = None
             self.show_image()

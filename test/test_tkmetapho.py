@@ -51,11 +51,15 @@ class TestTkMetaphoWindow(unittest.TestCase):
         ).stdout.strip()
 
         time.sleep(1)
-        self.window_id = int(subprocess.run(
-            ["xdotool", "search", "--class", special_class_name],
-            capture_output=True, text=True
-        ).stdout)
-        print("window_id is 0x%x = %d" % (self.window_id, self.window_id))
+        try:
+            self.window_id = int(subprocess.run(
+                ["xdotool", "search", "--class", special_class_name],
+                capture_output=True, text=True
+            ).stdout)
+            print("window_id is 0x%x = %d" % (self.window_id, self.window_id))
+        except ValueError:
+            print("Couldn't create window", file=sys.stderr)
+            self.window_id = 0
 
         # Focus doesn't always end up in the right window, so force it
         subprocess.run(["xdotool", "windowfocus", "--sync",
@@ -87,19 +91,7 @@ class TestTkMetaphoWindow(unittest.TestCase):
                         str(self.original_focus)])
         time.sleep(1)
 
-
-    def test_basic_window(self):
-        # 1, 2, 3 are referenced in Tags, 4 is not.
-        # Make sure there aren't any errors due to 2 and 3 not being
-        # in the argument list.
-        self.create_window([ "test/files/1.jpg",
-                             "test/files/2.jpg",
-                             "test/files/3.jpg",
-                             "test/files/4.jpg",
-                            ])
-
-        time.sleep(1)
-
+    def send_ctrl_q(self):
         # Closing the window with send_key(ctrl-q) results in
         # xdotool messing up the keyboard state so you get
         # qqqqqqqqqqqqqqqq repeating in the terminal where you ran the test,
@@ -115,6 +107,29 @@ class TestTkMetaphoWindow(unittest.TestCase):
 
         # self.close_window()
 
+    def test_basic_window(self):
+        self.create_window([ "test/files/1.jpg",
+                             "test/files/2.jpg",
+                             "test/files/3.jpg",
+                             "test/files/4.jpg",
+                            ])
+        if not self.window_id:
+            return
+
+        time.sleep(1)
+        self.send_ctrl_q()
+
+    def test_unreferenced_files(self):
+        # 1, 2, 3 are referenced in Tags, 4 is not.
+        # Make sure there aren't any errors due to 2 and 3 not being
+        # in the argument list.
+        self.create_window([ "test/files/1.jpg",
+                             "test/files/4.jpg",
+                            ])
+        if not self.window_id:
+            return
+
+        self.send_ctrl_q()
 
 if __name__ == "__main__":
     unittest.main()
