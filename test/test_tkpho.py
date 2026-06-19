@@ -264,7 +264,8 @@ class TestTkPhoWindow(unittest.TestCase):
         # and despite specifying the windowid to xdotool,
         # that actually doesn't work and it sends the character
         # to the currently focused window instead. So put focus back.
-        subprocess.run(["xdotool", "windowfocus", "--sync", str(self.window_id)])
+        subprocess.run(["xdotool", "windowfocus", "--sync",
+                        str(self.window_id)])
         self.assert_compare_sizes(self.get_window_size(), (640, 480))
 
         # Go to the big image. Use a longer delay because loading/scaling

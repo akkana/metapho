@@ -612,7 +612,7 @@ class TkTagViewer(metapho.Tagger):
         # and it also doesn't exit right away, leading to problems
         # trying to update UI elements that have been destroed.
         # so call sys.exit to be sure:
-        sys.exit(0)
+        os._exit(0)
 
     def new_tag(self, event=None):
         """The user hit Return to add a new tag.
@@ -977,7 +977,7 @@ def main():
         tagger.root.mainloop()
     except KeyboardInterrupt:
         print("Keyboard interrupt")
-        sys.exit(0)
+        os._exit(0)
 
 
 if __name__ == '__main__':
