@@ -414,7 +414,7 @@ class tkPhoWidget (tk.Label):
         if tk_pho_image.VERBOSE:
             print("\n========== TkPhoWidget.next_image")
         last_valid_image = imagelist.current_image()
-        if not hasattr(last_valid_image, 'display_img'):
+        if last_valid_image and not hasattr(last_valid_image, 'display_img'):
             last_valid_image.invalid = True
             last_valid_image = None
 

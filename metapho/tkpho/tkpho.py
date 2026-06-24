@@ -386,6 +386,10 @@ class tkPhoWindow:
             try:
                 self.pho_widget.delete_current()
             except IndexError:
+                if imagelist.current_image():
+                    print("IndexError deleting an image, but still one left",
+                          imagelist.current_image(), file=sys.stderr)
+            if not imagelist.current_image():
                 # Just deleted the last image
                 message_dialog("Last Image", "Last image. Quit?",
                                yes_bindings=['<Key-space>', '<Key-Return>',
