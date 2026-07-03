@@ -7,17 +7,19 @@ metapho
   :height: 340px
   :align: right
 
-
 An app for viewing, tagging and organizing large numbers of photos efficiently.
+
+Metapho is intended as a lightweight, flexible way of organizing large
+numbers of photos. It uses text files, not a proprietary database, so
+you’re not locked down to one app or a proprietary database, and you can
+view your tags databases at any time, or edit them in a text editor.
 
 This arose out of my `Pho <http://shallowsky.com/software/pho/>`__ image
 viewer (`Pho on GitHub <https://github.com/akkana/pho>`__), which was
 starting to get unwieldy as I added ever more tagging features to what
-was intended as just a fast, light image viewer. (Ironically, metapho
-will eventually replace pho: the new Tk version of metapho includes a
-tkpho image viewer script that’s intended to be feature-compatible with
-pho, while the original pho will die once GTK2 ceases to be easily
-available.)
+was intended as just a fast, light image viewer.
+Metapho will replace pho: the new Tk version of metapho includes a
+pho image viewer script that’s roughly feature-compatible with the old pho.
 
 .. image:: doc/images/metapho-ssT.jpg
   :target: doc/images/metapho-ss.jpg
@@ -33,17 +35,13 @@ available.)
   :height: 336
   :align: right
 
-Metapho is intended as a lightweight, flexible way of organizing large
-numbers of photos. It uses text files, not a proprietary database, so
-you’re not locked down to one app or a proprietary database, and you can
-view your tags databases at any time, or edit them in a text editor.
-Basically, you run it on a directory of images you’ve just uploaded:
+Run metapho on a directory of images you’ve just uploaded:
 
 ::
 
    metapho *.jpg
 
-and once you’ve tagged them all, it creates a file named *Tags*.
+and enter your tags. When you exit, it creates a file named *Tags*.
 
 Metapho can be driven entirely from the keyboard: you should be able to
 do everything you need without moving your hands to the mouse, though
@@ -57,6 +55,7 @@ Pho is optimized for viewing a large number of images quickly
 and making quick numeric tags, like keeping track of which images
 you want to share right now.
 It's also useful for giving photo-based presentations.
+Like metapho, it's intended to be keyboard driven.
 
 Command-line Scripts
 ====================
@@ -67,13 +66,20 @@ notags:
   Examine the current directory recursively and tell you about files and
   directories that still need to be tagged. Run it at the root of an
   image directory that might have untagged subdirectories.
+  `Documentation. <https://metapho.readthedocs.io/en/latest/notags.html>`__
 
 fotogr:
-  Search for files with particular tags. For instance, ``fotogr cat``
-  will print the names of all files you’ve tagged with “cat”.
+  Search for files with particular tags. For instance, ``fotogr flower``
+  will print the names of all files you’ve tagged with “flower”.
+  It has lots of options: you can search for combinations of tags,
+  and limit the search to particular directories.
+  See ``fotogr -h`` or the
+  `man page <https://metapho.readthedocs.io/en/latest/fotogr.html>`__
+  for details.
 
 photoshare:
   Manage files tagged with “share” or “wallpaper”. See ``photoshare -h``
+  or the `man page <https://metapho.readthedocs.io/en/latest/fotoshare.html>`__
   for more info.
 
 A Note about GTK versus Tk
