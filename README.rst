@@ -23,7 +23,7 @@ available.)
   :target: doc/images/metapho-ss.jpg
   :alt: Screenshot of metapho
   :width: 420
-  :height: 262
+  :height: 336
   :align: left
 
 .. image:: doc/images/metapho-ss-infoT.jpg
