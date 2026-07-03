@@ -1,7 +1,7 @@
 metapho
 =======
 
-.. image:: doc/metapho.jpg
+.. image:: doc/images/metapho.jpg
   :alt: Icon for metapho: a noodle bowl with chopsticks pulling out a string of images
   :width: 212px
   :height: 340px
@@ -18,6 +18,20 @@ will eventually replace pho: the new Tk version of metapho includes a
 tkpho image viewer script that’s intended to be feature-compatible with
 pho, while the original pho will die once GTK2 ceases to be easily
 available.)
+
+.. image:: doc/images/metapho-ssT.jpg
+   :target: doc/images/metapho-ss.jpg
+  :alt: Screenshot of metapho
+  :width: 420px
+  :height: 262px
+  :align: left
+
+.. image:: doc/images/metapho-ss-infoT.jpg
+   :target: doc/images/metapho-ss-info.jpg
+  :alt: Screenshot of metapho showing the info dialog
+  :width: 420px
+  :height: 336px
+  :align: right
 
 Metapho is intended as a lightweight, flexible way of organizing large
 numbers of photos. It uses text files, not a proprietary database, so
@@ -45,7 +59,7 @@ you want to share right now.
 It's also useful for giving photo-based presentations.
 
 Command-line Scripts
---------------------
+====================
 
 Installing also gets you three command-line scripts:
 
@@ -63,7 +77,7 @@ photoshare:
   for more info.
 
 A Note about GTK versus Tk
---------------------------
+==========================
 
 In the past, metapho was built on GTK (most recently GTK3), though it
 never needed Gnome or any other desktop services. But after trying to
@@ -94,8 +108,8 @@ though gmetapho will still work if you have GTK3 libraries installed.
 On Debian, you’ll need packages: python3-tk python3-pil
 python3-pil.imagetk
 
-How to Install Metapho
-----------------------
+How to Install
+==============
 
 `Metapho is available on
 PyPi <https://pypi.python.org/pypi/metapho/>`__, so you can install it
@@ -105,7 +119,7 @@ always have the very latest features and bug fixes).
 To install from the source directory, use ``pip install .``
 
 Documentation
--------------
+=============
 
 The `Metapho Documentation on ReadTheDocs
 <https://metapho.readthedocs.io/en/latest/>`__
