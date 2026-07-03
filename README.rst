@@ -79,7 +79,7 @@ fotogr:
 
 photoshare:
   Manage files tagged with “share” or “wallpaper”. See ``photoshare -h``
-  or the `man page <https://metapho.readthedocs.io/en/latest/fotoshare.html>`__
+  or the `man page <https://metapho.readthedocs.io/en/latest/photoshare.html>`__
   for more info.
 
 A Note about GTK versus Tk
