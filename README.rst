@@ -20,17 +20,17 @@ pho, while the original pho will die once GTK2 ceases to be easily
 available.)
 
 .. image:: doc/images/metapho-ssT.jpg
-   :target: doc/images/metapho-ss.jpg
+  :target: doc/images/metapho-ss.jpg
   :alt: Screenshot of metapho
-  :width: 420px
-  :height: 262px
+  :width: 420
+  :height: 262
   :align: left
 
 .. image:: doc/images/metapho-ss-infoT.jpg
-   :target: doc/images/metapho-ss-info.jpg
+  :target: doc/images/metapho-ss-info.jpg
   :alt: Screenshot of metapho showing the info dialog
-  :width: 420px
-  :height: 336px
+  :width: 420
+  :height: 336
   :align: right
 
 Metapho is intended as a lightweight, flexible way of organizing large
