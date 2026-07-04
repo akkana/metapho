@@ -8,7 +8,7 @@ name = 'metapho'
 description = 'Image viewer and tagger'
 authors = [ { name = 'Akkana Peck', email = 'akkana@shallowsky.com' } ]
 maintainers = [ { name = 'Akkana Peck', email = 'akkana@shallowsky.com' } ]
-readme = "README.md"
+readme = "README.rst"
 license = { text="GPL-2.0-or-later" }
 keywords = [ 'image', 'viewer', 'tagger' ]
 classifiers = [

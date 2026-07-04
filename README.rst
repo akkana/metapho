@@ -1,7 +1,7 @@
 metapho
 =======
 
-.. image:: doc/images/metapho.jpg
+.. image:: https://raw.githubusercontent.com/akkana/metapho/master/doc/images/metapho.jpg
   :alt: Icon for metapho: a noodle bowl with chopsticks pulling out a string of images
   :width: 212px
   :height: 340px
@@ -21,19 +21,17 @@ was intended as just a fast, light image viewer.
 Metapho will replace pho: the new Tk version of metapho includes a
 pho image viewer script that’s roughly feature-compatible with the old pho.
 
-.. image:: doc/images/metapho-ssT.jpg
-  :target: doc/images/metapho-ss.jpg
+.. image:: https://raw.githubusercontent.com/akkana/metapho/master/doc/images/metapho-ssT.jpg
+  :target: https://raw.githubusercontent.com/akkana/metapho/master/doc/images/metapho-ss.jpg
   :alt: Screenshot of metapho
   :width: 420
   :height: 336
-  :align: left
 
-.. image:: doc/images/metapho-ss-infoT.jpg
-  :target: doc/images/metapho-ss-info.jpg
+.. image:: https://raw.githubusercontent.com/akkana/metapho/master/doc/images/metapho-ss-infoT.jpg
+  :target: https://raw.githubusercontent.com/akkana/metapho/master/doc/images/metapho-ss-info.jpg
   :alt: Screenshot of metapho showing the info dialog
   :width: 420
   :height: 336
-  :align: right
 
 Run metapho on a directory of images you’ve just uploaded:
 
