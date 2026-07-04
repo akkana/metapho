@@ -1,3 +1,15 @@
+2026-07-04  Akkana Peck  <akkana@shallowsky.com>
+	Release version 1.9.
+
+2026-06-19  Akkana Peck  <akkana@shallowsky.com>
+	Fix a bug omitting images in the Tags file from metapho arguments.
+
+2026-06-11  Akkana Peck  <akkana@shallowsky.com>
+	When there's more than one category, colorize the category
+	selector button.
+	Make tkmetapho find search all categories
+	if a match isn't found in the current category.
+
 2026-05-10  Akkana Peck  <akkana@shallowsky.com>
 	Extensive documentation work. Get sphinx and readthedocs
 	working again. Lots of minor updates to various documents.

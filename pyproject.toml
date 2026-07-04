@@ -19,15 +19,16 @@ classifiers = [
     'Topic :: Multimedia :: Graphics :: Viewers',
     'Topic :: Utilities'
 ]
-dependencies = [
-]
+dependencies = [ "pillow" ]
 requires-python = ">= 3.8"
 
 [tool.setuptools.dynamic]
 version = {attr = "metapho.__version__"}
 
 [project.optional-dependencies]
-gtk = [ "PyGObject", "pycairo" ]
+test = [ "xlib" ]
+gtk = [ "PyGObject", "PIL", "pycairo" ]
+gtktest = [ "xlib", 'PyGObject' ]
 
 [project.scripts]
 notags = 'metapho:main'                     # Actually located in tagger.py

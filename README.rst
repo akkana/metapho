@@ -107,12 +107,13 @@ Currently what metapho installs is:
 
 plus several helper scripts.
 
+The default metapho and pho are now the TkInter versions.
+On Debian, you’ll need packages: python3-tk python3-pil python3-pil.imagetk
 
-When 2.0 is released, metapho and pho will be the TkInter versions,
-though gmetapho will still work if you have GTK3 libraries installed.
+If you still want to use gmetapho, you'll need GTK3 libraries.
+If you have trouble installing them, this may help:
+`PyGObject: Getting Started <https://pygobject.gnome.org/getting_started.html>`__
 
-On Debian, you’ll need packages: python3-tk python3-pil
-python3-pil.imagetk
 
 How to Install
 ==============
@@ -144,3 +145,11 @@ with
 in the `docs` directory, which produces files in `build/man`
 that you can install to anywhere you keep section 1 man pages.
 Or just read them fvia the links above.
+
+Testing
+=======
+
+To run the automated tests:
+
+``python3 -m unittest discover -s test``
+

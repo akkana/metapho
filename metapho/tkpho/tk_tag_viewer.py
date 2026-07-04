@@ -8,8 +8,7 @@ This also contains main() for the Tk version of metapho.
 # Copyright 2024,2025 by Akkana Peck: share and enjoy under the GPL v2 or later.
 
 import metapho
-from metapho import MetaphoImage
-from metapho import imagelist
+from metapho import MetaphoImage, imagelist, __version__
 
 from . import tk_pho_image    # For VERBOSE
 from .tk_pho_image import tkPhoImage
@@ -945,6 +944,7 @@ class TkTagViewer(metapho.Tagger):
 
 def main():
     def Usage():
+        print("Metapho", __version__)
         print("Usage: %s [-v] [--force] image1.jpg image2.jpg ..."
               % os.path.basename(sys.argv[0]))
         print("  -v:      Verbose mode (print out chatty information)")
