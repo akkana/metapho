@@ -410,13 +410,31 @@ class tkPhoWidget (tk.Label):
 
         self.show_image()
 
+    def before_navigate(self):
+        last_valid_image = imagelist.current_image()
+        if last_valid_image and \
+           not hasattr(last_valid_image, 'display_img'):
+            last_valid_image.invalid = True
+            last_valid_image = None
+        return last_valid_image
+
+    def after_navigate(self, last_valid_image):
+        # Clear the data for the last image.
+        # No point in keeping even the display-sized image,
+        # because if we go back to this image the mode mey be
+        # different anyway.
+        if last_valid_image:
+            last_valid_image.cleanup()
+
+        self.show_image()
+        if tk_pho_image.VERBOSE:
+            imagelist.print_imagelist()
+
     def next_image(self):
         if tk_pho_image.VERBOSE:
             print("\n========== TkPhoWidget.next_image")
-        last_valid_image = imagelist.current_image()
-        if last_valid_image and not hasattr(last_valid_image, 'display_img'):
-            last_valid_image.invalid = True
-            last_valid_image = None
+
+        last_valid_image = self.before_navigate()
 
         while True:
             try:
@@ -486,22 +504,16 @@ class tkPhoWidget (tk.Label):
                       "->", imagelist.current_image())
 
             self.fullsize_offset = 0, 0
-            # Clear the last display image. If we later go back to
-            # this image, the mode may be different,
-            # and no need to clutter up memory with display images
-            # for the whole list in any case.
-            if (last_valid_image
-                and imagelist.current_image() != last_valid_image
-                and last_valid_image.display_img):
-                last_valid_image.display_img = None
-            self.show_image()
-            if tk_pho_image.VERBOSE:
-                imagelist.print_imagelist()
+
+            self.after_navigate(last_valid_image)
+
             return
 
     def prev_image(self):
         if tk_pho_image.VERBOSE:
             print("\n========== TkPhoWidget.prev_image")
+
+        last_valid_image = self.before_navigate()
 
         if not imagelist.image_list():
             raise FileNotFoundError("No image list!")
@@ -541,10 +553,14 @@ class tkPhoWidget (tk.Label):
                 print("  to", imagelist.current_imageno(),
                       "->", imagelist.current_image())
             self.fullsize_offset = 0, 0
-            self.show_image()
+
+            self.after_navigate(last_valid_image)
+
             return
 
     def goto_imageno(self, imagenum):
+        last_valid_image = imagelist.current_image()
+
         num_images = imagelist.num_images()
         if imagenum >= num_images:
             imagelist.set_current_imageno(num_images)
@@ -557,7 +573,15 @@ class tkPhoWidget (tk.Label):
             return
         imagelist.set_current_imageno(imagenum - 1)
         self.fullsize_offset = 0, 0
+        # Not sure what to do about before/after navigate,
+        # since next_image will do that but with the last_valid_image.
         self.next_image()
+
+        # Can't rely on before/after navigate to clean up the last image,
+        # because this function calls next_image.
+        # So clean up manually.
+        if last_valid_image:
+            last_valid_image.cleanup()
         return
 
     def goto_image(self, image):

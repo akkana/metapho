@@ -123,6 +123,13 @@ class MetaphoImage:
         os.unlink(self.filename)
         imagelist.remove_image(self)
 
+    def cleanup(self, kbytes=0):
+        """Clean up any image data from GUI libraries.
+           If kbytes is set, clean up enough to stay under that size.
+           Does nothing in the base MetaphoImage class
+        """
+        pass
+
     def toggle_tag(self, tagno):
         """This is only called from gtk metapho and tkpho.
            Tk metapho has its own toggle handler.

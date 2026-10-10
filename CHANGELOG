@@ -1,3 +1,9 @@
+2026-10-10  Akkana Peck  <akkana@shallowsky.com>
+	Add slideshow mode; fix memory issue.
+	In Pho, PIL images for previously viewed images are no longer
+	cacheed, because in large directories that can lead to running
+	out of memory and the process being killed by the system.
+
 2026-07-04  Akkana Peck  <akkana@shallowsky.com>
 	Release version 1.9.
 

@@ -31,7 +31,7 @@ class tkPhoWindow:
     """
 
     def __init__(self, parent=None, img_list=[],
-                 fixed_size=None, fullscreen=None,
+                 fixed_size=None, fullscreen=None, slideshow_delay=0,
                  class_name='tkPho'):
         # Run either as main window or as a Toplevel secondary window
         if parent:
@@ -42,6 +42,12 @@ class tkPhoWindow:
         else:
             # tk.Tk has an explicit className argument
             self.root = tk.Tk(className=class_name)
+
+        self.slideshow_delay = int(slideshow_delay*1000)
+        if slideshow_delay:
+            self.slideshow_mode = True
+        else:
+            self.slideshow_mode = False
 
         self.tagger = metapho.Tagger()
 
@@ -103,6 +109,8 @@ class tkPhoWindow:
         self.root.bind('<Key-plus>', lambda e: self.scale_handler(e, 2))
         self.root.bind('<Key-equal>', lambda e: self.scale_handler(e, 2))
 
+        self.root.bind('<Key-s>', self.start_slideshow)
+
         self.root.bind("<ButtonPress-2>",   self.start_drag)
         self.root.bind("<B2-Motion>",       self.drag)
         self.root.bind("<ButtonRelease-2>", self.end_drag)
@@ -156,6 +164,10 @@ class tkPhoWindow:
         except Exception as e:
             print(e)
             sys.exit(1)
+
+        if self.slideshow_mode:
+            self.root.after(self.slideshow_delay, self.slideshow_next)
+
         try:
             self.root.mainloop()
         except KeyboardInterrupt:
@@ -164,7 +176,27 @@ class tkPhoWindow:
     def add_image(self, img):
         self.pho_widget.add_image(img)
 
+    def slideshow_next(self):
+        try:
+            self.pho_widget.next_image()
+        except IndexError:
+            # Stay on last slide rather than returning
+            return
+
+        if self.slideshow_mode:
+            self.root.after(self.slideshow_delay, self.slideshow_next)
+
+    def start_slideshow(self, e):
+        self.slideshow_mode = not self.slideshow_mode
+        if self.slideshow_mode:
+            if not self.slideshow_delay:
+                self.slideshow_delay = 1000
+            self.root.after(self.slideshow_delay, self.slideshow_next)
+
     def image_nav_handler(self, event):
+        # First, turn off slideshow mode since a key has been pressed
+        self.slideshow_mode = False
+
         try:
             if event.keysym == 'space' or event.keysym == 'Next':
                 self.pho_widget.next_image()
@@ -320,7 +352,6 @@ class tkPhoWindow:
             self.root.config(cursor="left_ptr")
 
             # disable middlemouse dragging
-            # self.root.bind("<B2-Motion>", None)
             self.root.unbind("<B2-Motion>")
 
             # After coming out of fullscreen, the window gets fixed to
@@ -464,6 +495,9 @@ k	Turn on keywords mode: show the keywords dialog
 o	Change the working file set (add files or make a new list)
 g	Run gimp on the current image
 	(or set PHO_CMD to an alternate command)
+s	Paulse/Start slideshow mode
+	(space and other navigation keys will pause a slideshow).
+	Default slideshow delay is 1 second, if not set in runtime arguments.
 q	Quit
 <esc>	Cancel/hide, if a dialog is currently focused
 
@@ -494,6 +528,8 @@ PHO_CMD : command to run when pressing g (default: gimp).
                         help="Fixed window size, WIDTHxHEIGHT")
     parser.add_argument('-d', "--debug", dest="debug", default=False,
                         action="store_true", help="Print debugging messages")
+    parser.add_argument('-s', "--slideshow", action="store", dest="slideshow",
+                        type=float, default=0.0, help="Slideshow mode (seconds)")
     parser.add_argument('images', nargs='+', help="Images to show")
 
     # Also look at PHO_ARGS environment variable
@@ -532,7 +568,8 @@ PHO_CMD : command to run when pressing g (default: gimp).
     try:
         pwin = tkPhoWindow(parent=None, img_list=args.images,
                            fixed_size=win_size,
-                           fullscreen=args.presentation)
+                           fullscreen=args.presentation,
+                           slideshow_delay=args.slideshow)
         pwin.run()
     except KeyboardInterrupt:
         print("Interrupt")

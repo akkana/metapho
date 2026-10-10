@@ -5,6 +5,7 @@ import sys, os
 import tkinter as tk
 from PIL import Image as PILImage
 from PIL import ImageTk, ExifTags, UnidentifiedImageError
+import gc
 
 from metapho import MetaphoImage
 
@@ -84,6 +85,32 @@ class tkPhoImage (MetaphoImage):
             self.orig_img = None
             self.display_img = None
             raise e
+
+    @staticmethod
+    def pil_bytes(img):
+        _BYTES_PER_PIXEL = {
+            "1": 1, "L": 1, "P": 1,
+            "I;16": 2,
+            # everything else Pillow commonly uses is 4 bytes per pixel
+        }
+        w, h = img.size
+        return w * h * _BYTES_PER_PIXEL.get(img.mode, 4)
+
+    def cleanup(self, kbytes=0):
+        # If images are large and there are too many of them,
+        # memory will grow and Linux, at least, kills the process
+        # when it gets over about 8M.
+        # This gives a way to clean up the image cache.
+        # print("freeing", self)
+        if self.orig_img:
+            if self.pil_bytes(self.orig_img) > kbytes:
+                self.orig_img = None
+        if self.display_img:
+            if self.pil_bytes(self.display_img):
+                self.display_img = None
+        # This probably doesn't matter because the PIL data is mostly
+        # in a C backend.
+        gc.collect()
 
     def rotate(self, degrees):
         if VERBOSE:
