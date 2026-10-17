@@ -34,7 +34,7 @@ class tkPhoImage (MetaphoImage):
         MetaphoImage.__init__(self, filename)
 
         # Rotation of the image as displayed
-        self.rot = 0
+        self.rot = -1
 
         # self.rot is initialized by MetaphoImage,
         # but it doesn't handle EXIF
@@ -78,7 +78,8 @@ class tkPhoImage (MetaphoImage):
             return
         try:
             self.orig_img = PILImage.open(self.relpath)
-            self.rot = self.get_exif_rotation()
+            if self.rot < 0:
+                self.rot = self.get_exif_rotation()
             self.display_img = None
 
         except Exception as e:

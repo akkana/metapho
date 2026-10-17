@@ -216,6 +216,7 @@ class TestTkPhoWindow(unittest.TestCase):
                              "test/files/bigimg.png",
                              "test/files/bigcolorimg.png",
                              "test/files/colorsquares.png",
+                             "test/files/exifrot.jpg",
                             ])
 
         # Check window size.
@@ -283,8 +284,22 @@ class TestTkPhoWindow(unittest.TestCase):
                          "Pho: test/files/portrait.jpg (480 x 640)")
         self.assert_compare_sizes(self.get_window_size(), (640, 480))
 
-        # Move to the colorsquares image, still in fullsize
+        # Move to the exifrot image at the end, still in fullsize
         self.send_key("End")
+        self.assertEqual(self.get_window_title(),
+                         "Pho: test/files/exifrot.jpg (640 x 480)")
+        self.assert_compare_sizes(self.get_window_size(), (480, 640))
+
+        self.send_key("Right")
+        self.assert_compare_sizes(self.get_window_size(), (640, 480))
+
+        # Move back and forward and make sure it remembers its rotation
+        self.send_key("BackSpace")
+        self.send_key("space")
+        self.assert_compare_sizes(self.get_window_size(), (640, 480))
+
+        # Move back to the colorsquares image, still in fullsize
+        self.send_key("BackSpace")
         self.assertEqual(self.get_window_title(),
                          "Pho: test/files/colorsquares.png (400 x 300)")
         self.assert_compare_sizes(self.get_window_size(), (400, 300))
@@ -338,9 +353,14 @@ class TestTkPhoWindow(unittest.TestCase):
         sys.stdout.flush()
         self.send_key("space")
 
-        # out of fullsize, still in fullscreen
+        # out of fullsize and fullscreen
+        # self.send_key("p")
         self.send_key("f")
-        # back to big color image
+        # self.assert_compare_sizes(self.get_window_size(), (400, 300))
+        # self.assertEqual(self.get_window_title(),
+        #                  "Pho: test/files/colorsquares.png (400 x 300)")
+
+        # One back to the bigcolorimg
         self.send_key("BackSpace")
 
         # Now bigcolorimg should be in fullscreen/non-fullsize.
