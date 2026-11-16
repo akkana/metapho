@@ -7,6 +7,23 @@ from PIL import Image as PILImage
 from PIL import ImageTk, ExifTags, UnidentifiedImageError
 import gc
 
+# Plugins for formats PIL doesn't support yet.
+# HEIC/HEIF support via pip install pillow-heif or apt install python3-pillow-heif
+# AVIF: newer pillow-heif versions may register it through the same call;
+# check Image.registered_extensions().get('.avif'). Otherwise try
+# pillow-avif-plugin (import pillow_avif, register_avif_opener).
+# Newer Pillows may have libavif built in.
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    pass
+try:
+    from pillow_heif import register_avif_opener
+    register_avif_opener()
+except ImportError:
+    pass
+
 from metapho import MetaphoImage
 
 
